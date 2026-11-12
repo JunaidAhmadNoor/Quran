@@ -140,7 +140,8 @@
     "repeatOne": "Repeat this recitation",
     "repeatAll": "Repeat queue",
     "queue": "Up next",
-    "error": "This recitation could not be played."
+    "error": "This recitation could not be played.",
+    "close": "Close player"
   },
   "upload": {
     "title": "Upload a recitation",

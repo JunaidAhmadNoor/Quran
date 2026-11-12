@@ -74,4 +74,13 @@ describe('PlayerBar', () => {
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Al-Mulk, evening' })).toBeInTheDocument();
   });
+
+  it('closes: stops playback, hides the bar and keeps the listening history', async () => {
+    renderWithProviders(<PlayerBar />);
+    act(() => usePlayer.getState().playQueue([track]));
+    await userEvent.click(await screen.findByRole('button', { name: 'Close player' }));
+    expect(screen.queryByRole('region', { name: 'Audio player' })).not.toBeInTheDocument();
+    expect(usePlayer.getState()).toMatchObject({ queue: [], playing: false });
+    expect(usePlayer.getState().history[0]?.track.id).toBe('t1');
+  });
 });

@@ -73,6 +73,8 @@ interface PlayerState {
   cycleRepeat: () => void;
   setExpanded: (expanded: boolean) => void;
   replaceTrack: (track: Track) => void;
+  /** Stops playback and empties the queue. The history (continue listening) is kept. */
+  close: () => void;
   onEnded: () => 'restart' | 'next' | 'stop';
 }
 
@@ -157,6 +159,16 @@ export const usePlayer = create<PlayerState>()(
       cycleRepeat: () =>
         set((s) => ({ repeat: s.repeat === 'off' ? 'one' : s.repeat === 'one' ? 'all' : 'off' })),
       setExpanded: (expanded) => set({ expanded }),
+      close: () =>
+        set({
+          queue: [],
+          index: 0,
+          playing: false,
+          position: 0,
+          duration: 0,
+          expanded: false,
+          pendingSeek: null,
+        }),
       replaceTrack: (track) =>
         set((s) => ({ queue: s.queue.map((t) => (t.id === track.id ? track : t)) })),
       onEnded: () => {

@@ -1,5 +1,5 @@
 'use client';
-import { ChevronUp } from 'lucide-react';
+import { ChevronUp, X } from 'lucide-react';
 import { m } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import { useSyncExternalStore } from 'react';
@@ -88,6 +88,17 @@ export function PlayerBar() {
               <ChevronUp />
             </Button>
           </div>
+          {/* Outside the group above so it is also available on phones. */}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => usePlayer.getState().close()}
+            aria-label={t('close')}
+            title={t('close')}
+            className="shrink-0 text-muted"
+          >
+            <X />
+          </Button>
         </div>
       </section>
       <NowPlaying />

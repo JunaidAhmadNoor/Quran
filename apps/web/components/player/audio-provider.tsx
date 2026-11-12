@@ -135,7 +135,15 @@ export function AudioProvider() {
     const unsubscribe = usePlayer.subscribe((state, prev) => {
       const track = currentTrack(state);
       if (!track) {
+        // Player closed: stop, release the stream, clear the lock-screen controls.
+        loadedId = null;
         audio.pause();
+        audio.removeAttribute('src');
+        audio.load();
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.metadata = null;
+          navigator.mediaSession.playbackState = 'none';
+        }
         return;
       }
       if (track.id !== loadedId) {

@@ -79,4 +79,16 @@ describe('player store', () => {
     cycleRepeat();
     expect(usePlayer.getState().repeat).toBe('off');
   });
+
+  it('close empties the queue but keeps history for "continue listening"', () => {
+    usePlayer.getState().playQueue([track('a'), track('b')], 1);
+    usePlayer.getState().close();
+    expect(usePlayer.getState()).toMatchObject({
+      queue: [],
+      index: 0,
+      playing: false,
+      position: 0,
+    });
+    expect(usePlayer.getState().history.map((h) => h.track.id)).toEqual(['b']);
+  });
 });
