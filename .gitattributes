@@ -1,0 +1,5 @@
+* text=auto eol=lf
+
+# The Quran source files are protected by SHA-256 checksums. Store and check them out
+# byte-for-byte; never convert their line endings. (Later lines override earlier ones.)
+packages/quran-data/source/** -text

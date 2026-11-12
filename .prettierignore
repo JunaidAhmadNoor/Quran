@@ -3,3 +3,4 @@ packages/contracts/openapi.json
 packages/quran-data/source/
 .next/
 coverage/
+packages/quran-data/generated/

@@ -1,0 +1,8 @@
+{
+  "algorithm": "sha256",
+  "files": {
+    "quran-uthmani.txt": "7f30c647331a61100ebf24a80507dc0fcdd9f2df97f1312b5b2dfcb982a7f326",
+    "quran-data.xml": "8867c1d88191472adec9db694b3cd9f135b1a2ef580574d32cf888dcb22c5c7a"
+  },
+  "note": "Tanzil source files are committed verbatim. If a checksum test fails, restore the file; never edit it."
+}
