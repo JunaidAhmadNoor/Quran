@@ -4,7 +4,12 @@ import { z } from 'zod';
 const optional = <T extends z.ZodType>(schema: T) =>
   z.preprocess((v) => (v === '' ? undefined : v), schema.optional());
 
-const secret = z.string().min(32, 'Generate with: openssl rand -base64 32');
+const secret = z
+  .string()
+  .min(
+    32,
+    'Missing or too short (needs at least 32 characters). Generate one with: openssl rand -base64 32',
+  );
 
 const EnvSchema = z
   .object({
