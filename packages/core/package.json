@@ -5,18 +5,30 @@
   "type": "module",
   "description": "Business logic: services, repositories, domain errors. No framework imports.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./testing": "./src/testing.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc7 --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --coverage"
   },
   "devDependencies": {
     "@tilawah/config": "workspace:*",
     "@types/node": "26.6.6",
+    "@vitest/coverage-v8": "5.1.0",
+    "aws-sdk-client-mock": "4.1.0",
     "eslint": "10.14.0",
+    "mongodb-memory-server-core": "11.3.0",
     "typescript": "6.0.3",
     "vitest": "5.1.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1165.0",
+    "@aws-sdk/s3-request-presigner": "3.1165.0",
+    "@tilawah/contracts": "workspace:*",
+    "@tilawah/db": "workspace:*",
+    "@tilawah/quran-data": "workspace:*",
+    "zod": "4.6.7"
   }
 }

@@ -12,6 +12,7 @@ export type { RecitationDoc } from './models/recitations';
 export type { LikeDoc, PlaylistDoc, ReportDoc } from './models/social';
 export type { UserDoc } from './models/users';
 export { Types } from 'mongoose';
+export type { ClientSession, Connection } from 'mongoose';
 
 export function createModels(connection: Connection) {
   return {
