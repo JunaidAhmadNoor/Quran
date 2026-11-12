@@ -38,3 +38,4 @@ pnpm dev                              # http://localhost:3000
 
 The Quran text comes only from the verified [Tanzil](https://tanzil.net) Uthmani file and is
 protected by a checksum test. It is never edited, generated or retyped.
+# Quran
