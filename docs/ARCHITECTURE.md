@@ -577,5 +577,13 @@ change before Phase 2.
   Form controls use `text-muted` for their border (5:1) instead of the decorative `border` token.
 - **Reciter studio and settings pages** were added for the mode switch (dashboard, uploads with
   review status and rejection reasons, storage) and for profile, appearance and account deletion.
+- **Record in the browser** (added after review): the upload page offers "Choose a file" or
+  "Record now". Recording uses `MediaRecorder` (WebM/Opus in Chrome and Firefox, MP4 in Safari,
+  64 kbps mono, no echo cancellation or noise suppression so the voice is not reshaped), with a
+  timer, level meter, pause/resume, preview, a 3-second minimum and automatic stop before 60 MB
+  or 60 minutes. The duration comes from the recorder's own clock because Chrome's WebM files
+  carry none; the file then goes through the same presigned upload and review as a picked file.
+  The audio stays on the device until Upload. Known limit: Chrome's WebM recordings have no seek
+  index, so seeking in them can be less precise than in MP3 files.
 - **The memorization page** has the range picker and the hidden-word layout with manual reveal;
   Phase 4 drives the same component from speech recognition.

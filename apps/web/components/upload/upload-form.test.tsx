@@ -1,7 +1,9 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
+import { act } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { installFakeMedia, uninstallFakeMedia } from '@/test/fake-media';
 import { server } from '@/test/msw';
 import { demoMe, renderWithProviders } from '@/test/render';
 import type * as UploadModule from '@/lib/upload';
@@ -127,5 +129,62 @@ describe('UploadForm', () => {
     await waitFor(() =>
       expect(screen.getByRole('alert')).toHaveTextContent('Your storage is full'),
     );
+  });
+
+  it('uploads a recording made in the browser, using the recorder’s duration', async () => {
+    // Only the recorder's clock is faked; setTimeout stays real for Testing Library's polling.
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+    installFakeMedia();
+    let presigned: unknown;
+    let confirmed: unknown;
+    server.use(
+      http.post('*/api/v1/uploads/presign', async ({ request }) => {
+        presigned = await request.json();
+        return HttpResponse.json({
+          uploadUrl: 'https://storage.test/incoming/u/2.webm?sig=x',
+          method: 'PUT',
+          headers: { 'Content-Type': 'audio/webm' },
+          uploadToken: 'token-rec',
+          expiresAt: '2026-11-12T09:00:00.000Z',
+        });
+      }),
+      http.options(
+        'https://storage.test/incoming/u/2.webm',
+        () => new HttpResponse(null, { status: 204, headers: R2_CORS }),
+      ),
+      http.put(
+        'https://storage.test/incoming/u/2.webm',
+        () => new HttpResponse(null, { status: 200, headers: R2_CORS }),
+      ),
+      http.post('*/api/v1/recitations', async ({ request }) => {
+        confirmed = await request.json();
+        return HttpResponse.json({ id: 'r2', status: 'pending' }, { status: 201 });
+      }),
+    );
+    renderWithProviders(<UploadForm />, { me: demoMe });
+    const user = userEvent.setup({ applyAccept: false });
+    await user.selectOptions(screen.getByLabelText('Surah'), '112');
+    await user.clear(screen.getByLabelText('To ayah'));
+    await user.type(screen.getByLabelText('To ayah'), '4');
+    await user.type(screen.getByLabelText('Title'), 'Recorded at home');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    await user.click(screen.getByRole('radio', { name: 'Record now' }));
+    await user.click(screen.getByRole('button', { name: 'Start recording' }));
+    await act(() => vi.advanceTimersByTimeAsync(6000));
+    await user.click(await screen.findByRole('button', { name: 'Stop' }));
+    await user.click(screen.getByRole('button', { name: 'Use this recording' }));
+
+    await user.click(screen.getByLabelText(/my own recitation/));
+    await user.click(screen.getByRole('button', { name: 'Upload' }));
+    expect(await screen.findByText('Uploaded. Waiting for review.')).toBeInTheDocument();
+    expect(presigned).toMatchObject({ contentType: 'audio/webm', surah: 112 });
+    expect(confirmed).toMatchObject({
+      uploadToken: 'token-rec',
+      durationSec: 6,
+      title: 'Recorded at home',
+    });
+    uninstallFakeMedia();
+    vi.useRealTimers();
   });
 });

@@ -22,7 +22,17 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // A fake microphone (a steady tone) so the in-browser recorder can be tested.
+        launchOptions: {
+          args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
+        },
+        permissions: ['microphone'],
+      },
+    },
     // axe results depend on the DOM, not the engine; it runs on Chromium (it can hang in WebKit).
     {
       name: 'webkit',

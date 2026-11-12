@@ -88,7 +88,7 @@ of the allowed pairs; no pure black or white; `tokens.css` is generated from the
 **API client (6 tests).** URLs from path params and query, cookie mode for web, Bearer mode for
 mobile, JSON bodies, 204, `ApiError` with the server code and details, non-JSON error pages.
 
-**Components (24 tests).** The player store (queue, next/previous, repeat modes, what happens at
+**Components (30 tests).** The player store (queue, next/previous, repeat modes, what happens at
 the end of a track) and the player bar (keyboard play/pause, speed menu, repeat, opening the
 full-screen view). The upload form: an impossible ayah range shows the designed error, a video
 file is refused before anything is sent, and the full path presign → direct XHR PUT to storage
@@ -96,7 +96,10 @@ file is refused before anything is sent, and the full path presign → direct XH
 The word-reveal component: placeholders keep each word's width, words reveal in order. The UI
 messages: Arabic and Urdu have exactly the English keys, every message is valid ICU and the
 placeholders match. The recitation list: two lists with the same data source keep separate
-caches (regression test for the playlist page once showing liked recitations).
+caches (regression test for the playlist page once showing liked recitations). The recorder,
+with a scripted fake `MediaRecorder`: format choice per browser, start/pause/resume/stop with the
+paused time excluded, microphone released after stopping, the 3-second minimum, a blocked
+microphone, an unsupported browser, and a recording uploaded with the recorder's duration.
 
 **End-to-end (Playwright, 3 projects).** Against the production build and an isolated stack
 (`apps/web/e2e/server.ts`: in-memory MongoDB, local-disk storage in a temp folder, seeded demo
@@ -107,7 +110,9 @@ accounts, a real 12-second MP3):
 - the player keeps playing while navigating between pages (position keeps advancing);
 - switching to Arabic sets `dir="rtl"` and no element overflows a 375 px screen;
 - skip link and keyboard operation of the player;
-- switching language mid-playback does not interrupt the audio (regression test).
+- switching language mid-playback does not interrupt the audio (regression test);
+- a reciter records in the browser (Chromium's fake microphone), previews, and uploads; the
+  recitation arrives for review as `audio/webm` with the recorded duration.
 
 **Accessibility (axe, 60 tests).** 15 pages (10 signed out, 5 signed in) × light/dark × LTR
 (English)/RTL (Arabic): no serious or critical WCAG 2.1 A/AA violations. One test per page, so a

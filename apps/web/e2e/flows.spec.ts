@@ -145,3 +145,45 @@ test('switching language does not interrupt playback', async ({ page }) => {
     page.getByRole('region', { name: 'مشغّل الصوت' }).getByRole('button', { name: 'إيقاف مؤقت' }),
   ).toBeVisible();
 });
+
+test('a reciter records in the browser and uploads the recording', async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'Only Chromium provides a fake microphone for automation');
+  const title = unique('Recorded e2e');
+  await signIn(page, accounts.reciter);
+  await page.goto('/upload');
+  await page.getByLabel('Surah').selectOption('112');
+  await page.getByLabel('To ayah').fill('4');
+  await page.getByLabel('Title').fill(title);
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await page.getByRole('radio', { name: 'Record now' }).click();
+  await page.getByRole('button', { name: 'Start recording' }).click();
+  await expect(page.getByText('Recording', { exact: true })).toBeVisible();
+  await expect(page.getByRole('timer')).toHaveText(/0:0[4-9]/, { timeout: 10_000 });
+  await page.getByRole('button', { name: 'Stop' }).click();
+  await expect(page.getByText(/Recording ready \(0:0[4-9]\)/)).toBeVisible();
+  await expect(page.getByLabel('Listen to your recording')).toBeVisible();
+  await page.getByRole('button', { name: 'Use this recording' }).click();
+
+  await page.getByLabel(/my own recitation/).check();
+  await page.getByRole('button', { name: 'Upload' }).click();
+  await expect(page.getByText('Uploaded. Waiting for review.')).toBeVisible();
+
+  const mine = await page.request.get('/api/v1/me/recitations');
+  const items = (
+    (await mine.json()) as {
+      items: {
+        title: string;
+        status: string;
+        durationSec: number;
+        stream: { contentType: string };
+      }[];
+    }
+  ).items;
+  const uploaded = items.find((r) => r.title === title);
+  expect(uploaded).toMatchObject({ status: 'pending', stream: { contentType: 'audio/webm' } });
+  expect(uploaded?.durationSec).toBeGreaterThanOrEqual(4);
+});

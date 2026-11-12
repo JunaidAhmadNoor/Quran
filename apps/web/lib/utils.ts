@@ -20,9 +20,12 @@ const arabicDigits = new Intl.NumberFormat('ar-u-nu-arab', { useGrouping: false 
 export const mushafNumber = (n: number): string => arabicDigits.format(n);
 
 export function formatBytes(bytes: number, locale: string): string {
+  const fmt = (n: number) =>
+    new Intl.NumberFormat(locale, { maximumFractionDigits: n < 10 ? 1 : 0 }).format(n);
   const mb = bytes / (1024 * 1024);
-  const fmt = new Intl.NumberFormat(locale, { maximumFractionDigits: mb < 10 ? 1 : 0 });
-  return mb >= 1024 ? `${fmt.format(mb / 1024)} GB` : `${fmt.format(mb)} MB`;
+  if (mb >= 1024) return `${fmt(mb / 1024)} GB`;
+  if (mb >= 1) return `${fmt(mb)} MB`;
+  return `${fmt(Math.max(1, Math.round(bytes / 1024)))} KB`;
 }
 
 /** A text field from FormData ('' when missing or a file). */

@@ -38,6 +38,7 @@ describe('UI messages', () => {
           pct: 50,
           used: '1',
           quota: '2',
+          duration: '0:05',
         });
         expect(String(formatted), `${locale}:${key}`).not.toBe('');
       }

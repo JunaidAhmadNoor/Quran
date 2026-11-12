@@ -68,6 +68,18 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.goto(path);
       await shot(page, name, scheme);
     }
+    // In-browser recording (Chromium's fake microphone).
+    await page.goto('/upload');
+    await page.getByLabel('Title').fill('Al-Ikhlas, recorded');
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await page.getByRole('radio', { name: 'Record now' }).click();
+    await page.getByRole('button', { name: 'Start recording' }).click();
+    await expect(page.getByRole('timer')).toHaveText(/0:0[3-9]/, { timeout: 10_000 });
+    await shot(page, 'upload-recording', scheme);
+    await page.getByRole('button', { name: 'Stop' }).click();
+    await expect(page.getByText(/Recording ready/)).toBeVisible();
+    await shot(page, 'upload-recorded', scheme);
+
     // Player bar and the full-screen view.
     await page.goto('/surahs/112');
     await page.getByRole('button', { name: /^Play: Al-Ikhlas/ }).click();

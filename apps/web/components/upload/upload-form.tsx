@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/field';
 import { ApiError, api } from '@/lib/api';
 import { putWithProgress, readDuration } from '@/lib/upload';
+import { Recorder } from './recorder';
 import { cn } from '@/lib/utils';
 
 const Details = z
@@ -52,6 +53,9 @@ export function UploadForm({ initialSurah }: { initialSurah?: number }) {
   const [phase, setPhase] = useState<Phase>({ step: 'details' });
   const [details, setDetails] = useState<DetailsOut | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [source, setSource] = useState<'file' | 'record'>('file');
+  /** Known for recordings (Chrome's recordings carry no duration in their metadata). */
+  const [knownDuration, setKnownDuration] = useState<number | null>(null);
   const [rights, setRights] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,7 +79,10 @@ export function UploadForm({ initialSurah }: { initialSurah?: number }) {
     if (!f) return;
     if (!AudioContentType.safeParse(f.type).success) setError(t('errorType'));
     else if (f.size > MAX_UPLOAD_BYTES) setError(t('errorSize'));
-    else setFile(f);
+    else {
+      setFile(f);
+      setKnownDuration(null);
+    }
   };
 
   const upload = async () => {
@@ -83,7 +90,7 @@ export function UploadForm({ initialSurah }: { initialSurah?: number }) {
     setError(null);
     setPhase({ step: 'uploading', pct: 0, confirming: false });
     try {
-      const durationSec = await readDuration(file);
+      const durationSec = knownDuration ?? (await readDuration(file));
       const presign = await api.presignUpload({
         body: {
           surah: details.surah,
@@ -128,6 +135,8 @@ export function UploadForm({ initialSurah }: { initialSurah?: number }) {
   const reset = () => {
     form.reset();
     setFile(null);
+    setKnownDuration(null);
+    setSource('file');
     setRights(false);
     setDetails(null);
     setPhase({ step: 'details' });
@@ -238,21 +247,58 @@ export function UploadForm({ initialSurah }: { initialSurah?: number }) {
 
       {phase.step === 'file' ? (
         <div className="space-y-4">
-          <label
-            htmlFor="audio-file"
-            className="flex cursor-pointer flex-col items-center rounded-card border border-dashed border-muted/60 bg-surface px-6 py-10 text-center hover:bg-surface-raised"
+          <div
+            role="radiogroup"
+            aria-label={t('sourceLabel')}
+            className="inline-flex rounded-control border border-border bg-surface p-0.5"
           >
-            <FileAudio aria-hidden className="mb-3 size-8 text-primary" />
-            <span className="font-medium text-text">{file ? file.name : t('chooseFile')}</span>
-            <span className="mt-1 text-xs text-muted">{t('fileHint')}</span>
-            <input
-              id="audio-file"
-              type="file"
-              accept={AudioContentType.options.join(',')}
-              className="sr-only"
-              onChange={(e) => chooseFile(e.target.files?.[0])}
+            {(['file', 'record'] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={source === value}
+                onClick={() => {
+                  setSource(value);
+                  setError(null);
+                }}
+                className={cn(
+                  'rounded-[4px] px-3 py-1.5 text-sm',
+                  source === value
+                    ? 'bg-primary text-primary-contrast'
+                    : 'text-muted hover:text-text',
+                )}
+              >
+                {value === 'file' ? t('sourceFile') : t('sourceRecord')}
+              </button>
+            ))}
+          </div>
+          {source === 'record' ? (
+            <Recorder
+              onUse={(recorded, durationSec) => {
+                setFile(recorded);
+                setKnownDuration(durationSec);
+                setPhase({ step: 'rights' });
+              }}
+              onChooseFile={() => setSource('file')}
             />
-          </label>
+          ) : (
+            <label
+              htmlFor="audio-file"
+              className="flex cursor-pointer flex-col items-center rounded-card border border-dashed border-muted/60 bg-surface px-6 py-10 text-center hover:bg-surface-raised"
+            >
+              <FileAudio aria-hidden className="mb-3 size-8 text-primary" />
+              <span className="font-medium text-text">{file ? file.name : t('chooseFile')}</span>
+              <span className="mt-1 text-xs text-muted">{t('fileHint')}</span>
+              <input
+                id="audio-file"
+                type="file"
+                accept={AudioContentType.options.join(',')}
+                className="sr-only"
+                onChange={(e) => chooseFile(e.target.files?.[0])}
+              />
+            </label>
+          )}
           {error ? (
             <p role="alert" className="text-sm text-danger">
               {error}
@@ -262,9 +308,12 @@ export function UploadForm({ initialSurah }: { initialSurah?: number }) {
             <Button variant="secondary" onClick={() => setPhase({ step: 'details' })}>
               {t('step1')}
             </Button>
-            <Button disabled={!file} onClick={() => setPhase({ step: 'rights' })}>
-              {t('next')}
-            </Button>
+            {/* Recordings move on with “Use this recording”; Continue is for picked files. */}
+            {source === 'file' ? (
+              <Button disabled={!file} onClick={() => setPhase({ step: 'rights' })}>
+                {t('next')}
+              </Button>
+            ) : null}
           </div>
         </div>
       ) : null}
