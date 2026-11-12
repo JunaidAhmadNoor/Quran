@@ -33,8 +33,8 @@ export function nextConfig({ tsconfigRootDir }) {
       },
     },
     {
-      // The composition root wires repositories to services; it is the single allowed exception.
-      files: ['server/container.ts', 'server/auth.ts'],
+      // The composition root wires repositories to services; dev scripts (seed, maintenance) share it.
+      files: ['server/container.ts', 'server/auth.ts', 'scripts/**'],
       rules: { 'no-restricted-imports': 'off' },
     },
   ];

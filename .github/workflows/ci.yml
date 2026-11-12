@@ -15,9 +15,13 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the API version check compares with the base branch
 
       - uses: pnpm/action-setup@v4
 
@@ -26,16 +30,45 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
 
+      # MongoDB binary used by the in-memory test database (mongodb-memory-server).
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-8.0.12-${{ runner.os }}
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm check:openapi
-      - run: pnpm test
-      - run: pnpm build
-        env:
-          NEXT_TELEMETRY_DISABLED: '1'
 
-      # Phase 2 adds: OpenAPI version-bump / breaking-change check against the base branch,
-      # integration tests (mongodb-memory-server), coverage gates, and Playwright with the
-      # report uploaded as an artifact on failure.
+      - name: OpenAPI is generated from the contracts
+        run: pnpm check:openapi
+
+      - name: API version bumped when the contract changes
+        if: github.event_name == 'pull_request'
+        run: node scripts/check-api-version.mjs origin/${{ github.base_ref }}
+
+      # Turned on with the repository variable API_RELEASED=true after the first production
+      # deploy; from then on, breaking changes need /api/v2.
+      - name: No breaking API changes
+        if: github.event_name == 'pull_request' && vars.API_RELEASED == 'true'
+        run: |
+          git show origin/${{ github.base_ref }}:packages/contracts/openapi.json > /tmp/base-openapi.json
+          docker run --rm -v /tmp:/base -v "$PWD/packages/contracts":/head tufin/oasdiff \
+            breaking /base/base-openapi.json /head/openapi.json --fail-on ERR
+
+      - name: Unit, integration and contract tests (coverage gates in core and recitation)
+        run: pnpm test
+
+      - run: pnpm build
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: packages/*/coverage/lcov.info
+          if-no-files-found: ignore
+
+      # Phase 3 adds Playwright (Chromium, WebKit, mobile viewport) and axe accessibility checks,
+      # uploading the Playwright report as an artifact when a test fails.

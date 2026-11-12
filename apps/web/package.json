@@ -9,20 +9,32 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc7 --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run",
+    "seed": "tsx --env-file-if-exists=.env.local scripts/seed.ts",
+    "maintenance": "tsx --env-file-if-exists=.env.local scripts/maintenance.ts",
+    "env:check": "tsx --env-file-if-exists=.env.local scripts/check-env.ts"
   },
   "dependencies": {
     "@tilawah/contracts": "workspace:*",
+    "@tilawah/core": "workspace:*",
+    "@tilawah/db": "workspace:*",
+    "@tilawah/quran-data": "workspace:*",
+    "better-auth": "1.7.20",
+    "mongodb": "7.8.0",
     "next": "16.4.6",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@tilawah/config": "workspace:*",
+    "@tilawah/core": "workspace:*",
     "@types/node": "26.6.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "eslint": "10.14.0",
+    "mongodb-memory-server-core": "11.3.0",
+    "tsx": "4.23.15",
     "typescript": "6.0.3",
     "vitest": "5.1.0"
   }

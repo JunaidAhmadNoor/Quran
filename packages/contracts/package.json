@@ -6,7 +6,8 @@
   "description": "Zod schemas for every API request and response, the endpoint registry, and the generated OpenAPI spec.",
   "exports": {
     ".": "./src/index.ts",
-    "./openapi.json": "./openapi.json"
+    "./openapi.json": "./openapi.json",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "lint": "eslint .",

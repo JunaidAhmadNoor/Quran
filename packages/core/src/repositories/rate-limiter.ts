@@ -17,17 +17,29 @@ export class RateLimiter {
 
   async consume(name: RateLimitName, subject: string): Promise<void> {
     const { limit, windowSec } = rateLimits[name];
+    const result = await this.hit(`${name}:${subject}`, windowSec, limit);
+    if (!result.allowed) {
+      throw new DomainError('RATE_LIMITED', 'Too many requests', {
+        retryAfterSec: result.retryAfterSec,
+      });
+    }
+  }
+
+  /** Counts one request against `key`; also backs Better Auth's sign-in limiter. */
+  async hit(
+    key: string,
+    windowSec: number,
+    limit: number,
+  ): Promise<{ allowed: boolean; retryAfterSec: number }> {
     const now = this.clock.now().getTime();
     const windowMs = windowSec * 1000;
     const windowStart = Math.floor(now / windowMs) * windowMs;
     const doc = await this.models.RateLimit.findOneAndUpdate(
-      { _id: `${name}:${subject}:${windowStart}` },
+      { _id: `${key}:${windowStart}` },
       { $inc: { count: 1 }, $setOnInsert: { expiresAt: new Date(windowStart + windowMs) } },
       { upsert: true, returnDocument: 'after' },
     ).lean();
-    if (doc.count > limit) {
-      const retryAfterSec = Math.ceil((windowStart + windowMs - now) / 1000);
-      throw new DomainError('RATE_LIMITED', 'Too many requests', { retryAfterSec });
-    }
+    const retryAfterSec = Math.ceil((windowStart + windowMs - now) / 1000);
+    return { allowed: doc.count <= limit, retryAfterSec };
   }
 }

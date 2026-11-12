@@ -46,24 +46,25 @@ Better Auth's user model is renamed to `users` and given additional fields.
 
 ### `recitations`
 
-| Field                            | Type                                         | Notes                                                                   |
-| -------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------- |
-| `uploaderId`                     | ObjectId → users                             |                                                                         |
-| `surah`                          | int 1–114                                    |                                                                         |
-| `ayahFrom`, `ayahTo`             | int                                          | `1 ≤ ayahFrom ≤ ayahTo ≤ ayahCount(surah)` (checked against quran-data) |
-| `title`                          | string ≤ 120                                 |                                                                         |
-| `riwayah`                        | enum of 20 ids, default `hafs`               | D10                                                                     |
-| `style`                          | `murattal \| mujawwad \| teaching`           |                                                                         |
-| `audioKey`                       | string                                       | `audio/{_id}.{ext}` in R2                                               |
-| `audioContentType` †             | one of the 4 allowed audio types             | needed to sign GET URLs and for the player                              |
-| `durationSec`                    | number                                       | reported by the client, sanity-checked against size                     |
-| `sizeBytes`                      | int                                          | from the R2 HEAD response, not the client                               |
-| `status`                         | `pending \| approved \| rejected \| removed` |                                                                         |
-| `playCount`, `likeCount`         | int ≥ 0                                      | denormalized counters (§3)                                              |
-| `rightsConfirmedAt` †            | date                                         | when the uploader ticked the permission box                             |
-| `moderationNote` †               | string \| null                               | reason for reject/remove; shown to the uploader                         |
-| `moderatedBy` †, `moderatedAt` † | ObjectId \| null, date \| null               | audit trail                                                             |
-| `createdAt`, `updatedAt`         | date                                         |                                                                         |
+| Field                            | Type                                         | Notes                                                                      |
+| -------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------- |
+| `uploaderId`                     | ObjectId → users                             |                                                                            |
+| `surah`                          | int 1–114                                    |                                                                            |
+| `ayahFrom`, `ayahTo`             | int                                          | `1 ≤ ayahFrom ≤ ayahTo ≤ ayahCount(surah)` (checked against quran-data)    |
+| `title`                          | string ≤ 120                                 |                                                                            |
+| `riwayah`                        | enum of 20 ids, default `hafs`               | D10                                                                        |
+| `style`                          | `murattal \| mujawwad \| teaching`           |                                                                            |
+| `audioKey`                       | string                                       | `audio/{_id}.{ext}` in R2                                                  |
+| `audioContentType` †             | one of the 4 allowed audio types             | needed to sign GET URLs and for the player                                 |
+| `audioDeletedAt` †               | date \| null                                 | set once the R2 object is deleted; lets the maintenance job retry failures |
+| `durationSec`                    | number                                       | reported by the client, sanity-checked against size                        |
+| `sizeBytes`                      | int                                          | from the R2 HEAD response, not the client                                  |
+| `status`                         | `pending \| approved \| rejected \| removed` |                                                                            |
+| `playCount`, `likeCount`         | int ≥ 0                                      | denormalized counters (§3)                                                 |
+| `rightsConfirmedAt` †            | date                                         | when the uploader ticked the permission box                                |
+| `moderationNote` †               | string \| null                               | reason for reject/remove; shown to the uploader                            |
+| `moderatedBy` †, `moderatedAt` † | ObjectId \| null, date \| null               | audit trail                                                                |
+| `createdAt`, `updatedAt`         | date                                         |                                                                            |
 
 | Index                                                  | Serves                                                                                          |
 | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |

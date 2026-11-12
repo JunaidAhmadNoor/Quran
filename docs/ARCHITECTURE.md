@@ -1,8 +1,8 @@
 # Tilawah — Architecture
 
-Status: **Phase 1, revised after the first review (2026-11-12).** Nothing below is implemented
-yet except the monorepo, configs, and `packages/contracts`. The decision log in
-[§18](#18-decision-log) records what was decided and what is still open.
+Status: **Phase 2 (backend + tests) complete, waiting for review.** Everything in §3–§13 is
+implemented except the web pages (Phase 3) and the speech engine (Phase 4). The decision log
+in [§18](#18-decision-log) records what was decided; §19 lists what Phase 2 settled or changed.
 
 Related: [DATA_MODEL.md](DATA_MODEL.md) · [API.md](API.md) ·
 [`packages/contracts/openapi.json`](../packages/contracts/openapi.json)
@@ -309,7 +309,10 @@ handle both.
   A test re-joins the words and compares with the source line, so the derivation provably
   changes nothing. Tanzil puts the bismillah at the start of ayah 1 of surahs 2–114 (except 9);
   the derivation moves it to a separate `bismillah` field and the test accounts for that
-  (D14).
+  (D14). Each surah keeps its own spelling: in 95 and 97 Tanzil writes بِّسْمِ with a shadda,
+  so there is no single shared bismillah string.
+- Pause marks (ۖ ۗ ۚ …), rub-el-hizb (۞) and sajdah (۩) are standalone tokens in Tanzil. They stay
+  in each ayah's `text` but are not `words`, so memorization positions count recitable words only.
 - The API serves the text (`GET /surahs/{n}/text`) with `Cache-Control: public, immutable` and
   an ETag of the checksum. The mobile app bundles `@tilawah/quran-data` directly for offline use.
 - Attribution required by the Tanzil license (text source + link to tanzil.net) is shown in the
@@ -359,15 +362,16 @@ long-lived Node process, surah metadata and text are loaded into memory once at 
 
 - The OpenAPI document is generated from the contracts (`pnpm openapi`) and committed.
   `pnpm check:openapi` (in CI and in the contract tests) fails if it is stale.
-- `info.version` is the version of `packages/contracts/package.json`. Until the first
-  production deploy, v1 is a draft and stays at 1.0.0. After that, any change to
-  `openapi.json` needs a version bump, checked against the base branch in CI (Phase 2).
+- `info.version` is the version of `packages/contracts/package.json`. Any change to
+  `openapi.json` needs a version bump; `scripts/check-api-version.mjs` enforces this on every
+  pull request against the base branch.
 - **Allowed in v1 (minor bump):** new endpoints, new optional request fields, new response
   fields, new `ErrorCode` values (clients must treat unknown codes by HTTP status).
 - **Requires `/api/v2`:** removing or renaming anything, making a field required or nullable,
   changing a type, adding a value to a response enum other than `ErrorCode`. Phase 2 adds an
-  `oasdiff` breaking-change check (free, open source) to CI. v1 stays served until no
-  installed app uses it.
+  `oasdiff` breaking-change check (free, open source) in CI, switched on by setting the
+  repository variable `API_RELEASED=true` at the first production deploy. v1 stays served
+  until no installed app uses it.
 - Better Auth's `/api/auth/*` endpoints are outside our versioning; the Better Auth version is
   pinned exactly and upgrades are tested against the Expo client before release.
 
@@ -450,14 +454,14 @@ No other services are planned. Any new one must be recorded here with its limits
 
 ## 16. Deployment (Railway)
 
-Set up at the end of Phase 2, when there is a health endpoint to check. Railway's older
+The health endpoint exists (`GET /api/v1/health`), so this can be set up whenever you are ready. Railway's older
 `railway.json` config-as-code is deprecated (legacy services until 2026-12-01), so the settings
 are recorded here and applied with Railway's current configuration method at that point.
 
 | Service       | Settings                                                                                                                                                                                                                                                                                                                       |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `web`         | Root: repository root. Build: `pnpm turbo run build --filter=@tilawah/web`. Start: `pnpm --filter @tilawah/web start` (Next reads Railway's `PORT`). Health check: `GET /api/v1/health`. Restart on failure. Variables: everything in `.env.example`, with `NEXT_PUBLIC_APP_URL` and `BETTER_AUTH_URL` set to the Railway URL. |
-| `maintenance` | Same image, cron schedule daily at 03:00 UTC, command `pnpm --filter @tilawah/db maintenance`: deletes audio of recitations rejected more than 7 days ago, retries failed R2 deletions, and prints `dbStats` against the size budget.                                                                                          |
+| `maintenance` | Same image, cron schedule daily at 03:00 UTC, command `pnpm --filter @tilawah/web maintenance`: deletes audio of recitations rejected more than 7 days ago, retries failed R2 deletions, and prints `dbStats` against the size budget.                                                                                         |
 
 Deploys happen from `main` after CI passes. Node and pnpm versions come from `.nvmrc` and
 `packageManager`.
@@ -471,7 +475,8 @@ schema; `check:openapi`; `oasdiff`) · R2 via `aws-sdk-client-mock` · Component
 E2E (Playwright: Chromium, WebKit, 375 px mobile; includes "switch to reciter → upload →
 switch back" without signing out) · Accessibility (`@axe-core/playwright`, light/dark,
 LTR/RTL). Coverage gate 80 % lines for `core` and `recitation`. No test touches a real
-database, R2, or the network. Phase 1 already ships 39 contract tests.
+database, R2, or the network. Phase 2 ships 268 tests across these layers; see
+[TESTING.md](TESTING.md).
 
 ## 18. Decision log
 
@@ -507,3 +512,29 @@ change before Phase 2.
   insists on an authenticated domain, and mail from a free-mailbox sender (for example Gmail)
   can land in spam, so the first real verification email is checked by hand at deploy time.
   When a domain exists, authenticate it in Brevo (SPF, DKIM, DMARC).
+
+## 19. What Phase 2 settled or changed
+
+- **Presigned uploads sign both `Content-Length` and `Content-Type`.** By default the AWS
+  presigner signs only the length; `signableHeaders` adds the type, so R2 itself rejects an
+  upload whose size or type differs from what was presigned. Confirm still checks with `HEAD`.
+- **The upload id is the recitation id.** A second confirm of the same token is a clean
+  `CONFLICT`, not a missing-file error.
+- **Likes:** a duplicate-key error aborts a MongoDB transaction, so the like transaction checks
+  for an existing like first and treats a concurrent duplicate as "already liked".
+- **Better Auth IP handling:** `disableIpTracking` would also turn off its IP-based sign-in rate
+  limit, so instead a database hook stores sessions without IP or user agent, and the limiter
+  keeps only HMAC-hashed keys in our `rateLimits` collection.
+- **Client IP for rate limits** is the last `X-Forwarded-For` entry (the one Railway's proxy
+  appends), then `X-Real-IP`. Confirm Railway's exact headers on the first deploy.
+- **Matcher:** isti'adha and a bismillah said before reciting are filtered as phrases, because
+  "بالله" is within the 0.8 similarity threshold of "الله". أعوذ still matches when it is the
+  expected word (surahs 113, 114).
+- **Seed script location:** `apps/web/scripts/seed.ts`, not `packages/db`, so demo accounts are
+  created through real Better Auth sign-up (correct password hashing) instead of copying Better
+  Auth internals into the db package. The maintenance job is `apps/web/scripts/maintenance.ts`.
+  Dev scripts share the composition root's permission to use the database (ESLint exception).
+- **Browser E2E and accessibility tests** need pages, so they arrive with Phase 3. Phase 2
+  covers the same main story at the API level (`apps/web/test/flow.test.ts`).
+- **`recitations.audioDeletedAt`** was added so audio deletion can be retried and audited.
+- **MongoDB in tests is 8.0.12**, matching Atlas M0, not the memory server's 8.2 default.

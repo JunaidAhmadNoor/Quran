@@ -4,7 +4,7 @@ A Spotify-style platform only for Quran recitations: listen to community recitat
 114 surahs, upload your own (reviewed before publishing), and practise memorization with
 hidden-text word reveal.
 
-**Status: Phase 1 (architecture) complete, awaiting review.** No feature code yet.
+**Status: Phase 2 (backend + tests) complete, awaiting review.** The API is built and tested; pages come in Phase 3.
 
 | Doc                                                                | What it covers                                                                 |
 | ------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
@@ -38,5 +38,3 @@ pnpm dev                              # http://localhost:3000
 
 The Quran text comes only from the verified [Tanzil](https://tanzil.net) Uthmani file and is
 protected by a checksum test. It is never edited, generated or retyped.
-
-# Quran
