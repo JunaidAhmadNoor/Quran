@@ -1,0 +1,5455 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Tilawah API",
+    "version": "1.0.0",
+    "description": "Versioned REST API shared by the Tilawah website and mobile app. All responses are JSON. Errors use ErrorResponse. Authentication endpoints (sign-in, sign-up, sign-out, password reset, OAuth) are provided by Better Auth under /api/auth and are not part of this document."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health"
+    },
+    {
+      "name": "Surahs"
+    },
+    {
+      "name": "Recitations"
+    },
+    {
+      "name": "Uploads"
+    },
+    {
+      "name": "Reciters"
+    },
+    {
+      "name": "Playlists"
+    },
+    {
+      "name": "Me"
+    },
+    {
+      "name": "Memorization"
+    },
+    {
+      "name": "Moderation"
+    },
+    {
+      "name": "Admin"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Health check",
+        "tags": [
+          "Health"
+        ],
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "public",
+        "x-cache": "none",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE: A dependency (for example the database) is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/surahs": {
+      "get": {
+        "operationId": "listSurahs",
+        "summary": "All 114 surahs with names, ayah count and revelation place",
+        "tags": [
+          "Surahs"
+        ],
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "public",
+        "x-cache": "static",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListSurahsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/surahs/{n}": {
+      "get": {
+        "operationId": "getSurah",
+        "summary": "One surah: metadata and the first page of approved recitations",
+        "tags": [
+          "Surahs"
+        ],
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "public",
+        "x-cache": "shared",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "n",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 114,
+              "description": "Surah number, 1 to 114.",
+              "examples": [
+                1
+              ]
+            },
+            "required": true,
+            "description": "Surah number, 1 to 114."
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "default": "popular",
+              "$ref": "#/components/schemas/RecitationSort"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSurahResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/surahs/{n}/text": {
+      "get": {
+        "operationId": "getSurahText",
+        "summary": "Verified Tanzil Uthmani text, ayah by ayah and word by word",
+        "tags": [
+          "Surahs"
+        ],
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "public",
+        "x-cache": "static",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "n",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 114,
+              "description": "Surah number, 1 to 114.",
+              "examples": [
+                1
+              ]
+            },
+            "required": true,
+            "description": "Surah number, 1 to 114."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurahTextResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/recitations": {
+      "get": {
+        "operationId": "listRecitations",
+        "summary": "Approved recitations with filters, sort and cursor pagination",
+        "tags": [
+          "Recitations"
+        ],
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "public",
+        "x-cache": "shared",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "$ref": "#/components/schemas/Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "surah",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 114,
+              "description": "Surah number, 1 to 114.",
+              "examples": [
+                1
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "reciterId",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            }
+          },
+          {
+            "in": "query",
+            "name": "style",
+            "schema": {
+              "$ref": "#/components/schemas/RecitationStyle"
+            }
+          },
+          {
+            "in": "query",
+            "name": "riwayah",
+            "schema": {
+              "$ref": "#/components/schemas/Riwayah"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "default": "newest",
+              "$ref": "#/components/schemas/RecitationSort"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecitationPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createRecitation",
+        "summary": "Confirm an upload and create the recitation",
+        "tags": [
+          "Recitations"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "none",
+        "description": "The server checks the upload token, confirms the object exists in R2 with the presigned size and type, and creates the record. Status is pending, or approved immediately for verified reciters.",
+        "x-rate-limit": {
+          "name": "upload",
+          "limit": 20,
+          "windowSec": 3600
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecitationBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecitationDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RECITER_PROFILE_REQUIRED: Switch to reciter mode once (PUT /me/mode) to turn on the reciter profile before uploading. | FORBIDDEN: Signed in, but not allowed to do this. | QUOTA_EXCEEDED: The caller has reached their storage quota.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT: The resource is not in a state that allows this action.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "UPLOAD_EXPIRED: The upload token has expired. Request a new presigned URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "UPLOAD_NOT_FOUND: No uploaded file was found in storage for this upload token. | UPLOAD_MISMATCH: The stored file size or type differs from what was presigned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/recitations/{id}": {
+      "get": {
+        "operationId": "getRecitation",
+        "summary": "One recitation with its stream URL",
+        "tags": [
+          "Recitations"
+        ],
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "public",
+        "x-cache": "private",
+        "description": "Approved recitations are visible to everyone. Pending, rejected and removed ones are visible only to the uploader and moderators; everyone else gets 404.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecitationDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateRecitation",
+        "summary": "Edit a recitation (owner or moderator)",
+        "tags": [
+          "Recitations"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "none",
+        "x-rate-limit": {
+          "name": "write",
+          "limit": 120,
+          "windowSec": 3600
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRecitationBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecitationDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN: Signed in, but not allowed to do this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT: The resource is not in a state that allows this action.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_AYAH_RANGE: The ayah range does not exist in that surah.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteRecitation",
+        "summary": "Remove a recitation (owner or moderator)",
+        "tags": [
+          "Recitations"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "none",
+        "description": "Sets status to removed and deletes the audio file from storage. Moderators removing someone else’s recitation should use the moderation decision endpoint so a reason is recorded.",
+        "x-rate-limit": {
+          "name": "write",
+          "limit": 120,
+          "windowSec": 3600
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success, no content"
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN: Signed in, but not allowed to do this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/recitations/{id}/play": {
+      "post": {
+        "operationId": "recordPlay",
+        "summary": "Count a play",
+        "tags": [
+          "Recitations"
+        ],
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "public",
+        "x-cache": "none",
+        "description": "Clients call this once playback passes 30 seconds, or half the duration for shorter audio. Repeat calls from the same listener within 6 hours return counted: false.",
+        "x-rate-limit": {
+          "name": "play",
+          "limit": 600,
+          "windowSec": 3600
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/recitations/{id}/like": {
+      "post": {
+        "operationId": "likeRecitation",
+        "summary": "Like a recitation (idempotent)",
+        "tags": [
+          "Recitations"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "none",
+        "x-rate-limit": {
+          "name": "like",
+          "limit": 300,
+          "windowSec": 3600
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "unlikeRecitation",
+        "summary": "Unlike a recitation (idempotent)",
+        "tags": [
+          "Recitations"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "none",
+        "x-rate-limit": {
+          "name": "like",
+          "limit": 300,
+          "windowSec": 3600
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/recitations/{id}/report": {
+      "post": {
+        "operationId": "reportRecitation",
+        "summary": "Report a problem with a recitation",
+        "tags": [
+          "Recitations"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "none",
+        "x-rate-limit": {
+          "name": "report",
+          "limit": 20,
+          "windowSec": 86400
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReportBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportReceipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ALREADY_REPORTED: The caller already has an open report on this recitation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/uploads/presign": {
+      "post": {
+        "operationId": "presignUpload",
+        "summary": "Get a presigned R2 URL for uploading audio (valid 10 minutes)",
+        "tags": [
+          "Uploads"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "none",
+        "x-rate-limit": {
+          "name": "upload",
+          "limit": 20,
+          "windowSec": 3600
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresignUploadBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresignUploadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RECITER_PROFILE_REQUIRED: Switch to reciter mode once (PUT /me/mode) to turn on the reciter profile before uploading. | QUOTA_EXCEEDED: The caller has reached their storage quota.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "FILE_TOO_LARGE: The file is larger than the 60 MB limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "UNSUPPORTED_MEDIA_TYPE: Only audio/mpeg, audio/mp4, audio/ogg and audio/webm are accepted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_AYAH_RANGE: The ayah range does not exist in that surah.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reciters": {
+      "get": {
+        "operationId": "listReciters",
+        "summary": "Verified reciters",
+        "tags": [
+          "Reciters"
+        ],
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "public",
+        "x-cache": "shared",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "$ref": "#/components/schemas/Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReciterPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reciters/{id}": {
+      "get": {
+        "operationId": "getReciter",
+        "summary": "Reciter profile and their approved recitations",
+        "tags": [
+          "Reciters"
+        ],
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "public",
+        "x-cache": "shared",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "$ref": "#/components/schemas/Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "default": "newest",
+              "$ref": "#/components/schemas/RecitationSort"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetReciterResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/playlists": {
+      "get": {
+        "operationId": "listPlaylists",
+        "summary": "The caller’s playlists",
+        "tags": [
+          "Playlists"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "private",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "$ref": "#/components/schemas/Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaylistPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createPlaylist",
+        "summary": "Create a playlist",
+        "tags": [
+          "Playlists"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "none",
+        "x-rate-limit": {
+          "name": "write",
+          "limit": 120,
+          "windowSec": 3600
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlaylistBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Playlist"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "QUOTA_EXCEEDED: The caller has reached their storage quota.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/playlists/{id}": {
+      "get": {
+        "operationId": "getPlaylist",
+        "summary": "One playlist with its recitations (public playlists or the owner’s own)",
+        "tags": [
+          "Playlists"
+        ],
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "public",
+        "x-cache": "private",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaylistDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updatePlaylist",
+        "summary": "Rename, change visibility, or replace the recitation list",
+        "tags": [
+          "Playlists"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "none",
+        "x-rate-limit": {
+          "name": "write",
+          "limit": 120,
+          "windowSec": 3600
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlaylistBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Playlist"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN: Signed in, but not allowed to do this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deletePlaylist",
+        "summary": "Delete a playlist",
+        "tags": [
+          "Playlists"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "none",
+        "x-rate-limit": {
+          "name": "write",
+          "limit": 120,
+          "windowSec": 3600
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success, no content"
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN: Signed in, but not allowed to do this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "getMe",
+        "summary": "The signed-in account",
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "private",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAccount"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateMe",
+        "summary": "Edit profile (name, bio, country)",
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "none",
+        "x-rate-limit": {
+          "name": "write",
+          "limit": 120,
+          "windowSec": 3600
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMeBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAccount"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteMe",
+        "summary": "Delete the account and its data",
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "none",
+        "description": "Requires a session created in the last 24 hours. Deletes the user, sessions, likes, playlists and memorization data; the user’s recitations become removed and their audio is deleted. Cannot be undone.",
+        "x-rate-limit": {
+          "name": "write",
+          "limit": 120,
+          "windowSec": 3600
+        },
+        "responses": {
+          "204": {
+            "description": "Success, no content"
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "REAUTH_REQUIRED: This action needs a recent sign-in. Sign in again and retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT: The resource is not in a state that allows this action.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/mode": {
+      "put": {
+        "operationId": "switchMode",
+        "summary": "Switch between listener and reciter mode without signing out",
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "none",
+        "description": "Idempotent. The first switch to reciter turns on the public reciter profile (sets reciterSince). The mode is read fresh on every request, so the session stays valid.",
+        "x-rate-limit": {
+          "name": "write",
+          "limit": 120,
+          "windowSec": 3600
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchModeBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAccount"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/reciter/stats": {
+      "get": {
+        "operationId": "getReciterStats",
+        "summary": "Reciter-mode dashboard: upload counts, plays, likes, storage used",
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "private",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReciterStats"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RECITER_PROFILE_REQUIRED: Switch to reciter mode once (PUT /me/mode) to turn on the reciter profile before uploading.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/library": {
+      "get": {
+        "operationId": "getLibrary",
+        "summary": "Liked recitations and playlists",
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "private",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "$ref": "#/components/schemas/Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/recitations": {
+      "get": {
+        "operationId": "listMyRecitations",
+        "summary": "The caller’s uploads in every status, including pending and rejected",
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "private",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "$ref": "#/components/schemas/Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "$ref": "#/components/schemas/RecitationStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyRecitationPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/memorization/sessions": {
+      "post": {
+        "operationId": "createMemorizationSession",
+        "summary": "Save a practice session and update progress",
+        "tags": [
+          "Memorization"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "none",
+        "x-rate-limit": {
+          "name": "session",
+          "limit": 120,
+          "windowSec": 3600
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemorizationSessionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMemorizationSessionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_AYAH_RANGE: The ayah range does not exist in that surah.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/memorization/progress": {
+      "get": {
+        "operationId": "getMemorizationProgress",
+        "summary": "Progress for every surah the caller has practised",
+        "tags": [
+          "Memorization"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "private",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemorizationProgressResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/moderation/queue": {
+      "get": {
+        "operationId": "getModerationQueue",
+        "summary": "Pending uploads or open reports",
+        "tags": [
+          "Moderation"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "moderator",
+        "x-cache": "private",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "$ref": "#/components/schemas/Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "schema": {
+              "default": "recitations",
+              "type": "string",
+              "enum": [
+                "recitations",
+                "reports"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationQueueResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN: Signed in, but not allowed to do this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/moderation/recitations/{id}/decision": {
+      "post": {
+        "operationId": "decideRecitation",
+        "summary": "Approve, reject or remove a recitation",
+        "tags": [
+          "Moderation"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "moderator",
+        "x-cache": "none",
+        "x-rate-limit": {
+          "name": "write",
+          "limit": 120,
+          "windowSec": 3600
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecitationDecisionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecitationDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN: Signed in, but not allowed to do this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT: The resource is not in a state that allows this action.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/moderation/reports/{id}/decision": {
+      "post": {
+        "operationId": "decideReport",
+        "summary": "Close a report as actioned or dismissed",
+        "tags": [
+          "Moderation"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "moderator",
+        "x-cache": "none",
+        "x-rate-limit": {
+          "name": "write",
+          "limit": 120,
+          "windowSec": 3600
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportDecisionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Report"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN: Signed in, but not allowed to do this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT: The resource is not in a state that allows this action.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "operationId": "findUsers",
+        "summary": "Look up an account by email",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "admin",
+        "x-cache": "private",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "email",
+            "schema": {
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+              "description": "Exact, case-insensitive match."
+            },
+            "required": true,
+            "description": "Exact, case-insensitive match."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindUsersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN: Signed in, but not allowed to do this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/{id}": {
+      "patch": {
+        "operationId": "updateUser",
+        "summary": "Change a user’s role or verified-reciter flag",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "admin",
+        "x-cache": "none",
+        "x-rate-limit": {
+          "name": "write",
+          "limit": 120,
+          "windowSec": 3600
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAccount"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN: Signed in, but not allowed to do this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT: The resource is not in a state that allows this action.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RecitationSort": {
+        "type": "string",
+        "enum": [
+          "newest",
+          "popular",
+          "trending"
+        ],
+        "description": "popular = all-time plays; trending = plays in the last 7 days."
+      },
+      "Cursor": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": "^[A-Za-z0-9_-]+$",
+        "description": "Opaque pagination cursor (base64url). Pass back unchanged with the same filters and sort."
+      },
+      "ObjectId": {
+        "type": "string",
+        "pattern": "^[a-f\\d]{24}$",
+        "description": "MongoDB ObjectId as 24 lowercase hex characters.",
+        "examples": [
+          "665f1c2e9b1d4a0012ab34cd"
+        ]
+      },
+      "RecitationStyle": {
+        "type": "string",
+        "enum": [
+          "murattal",
+          "mujawwad",
+          "teaching"
+        ]
+      },
+      "Riwayah": {
+        "type": "string",
+        "enum": [
+          "hafs",
+          "shubah",
+          "warsh",
+          "qalun",
+          "al_bazzi",
+          "qunbul",
+          "al_duri_abu_amr",
+          "al_susi",
+          "hisham",
+          "ibn_dhakwan",
+          "khalaf_an_hamzah",
+          "khallad",
+          "abu_al_harith",
+          "al_duri_al_kisai",
+          "ibn_wardan",
+          "ibn_jammaz",
+          "ruways",
+          "rawh",
+          "ishaq",
+          "idris"
+        ],
+        "description": "Transmission (riwayah). Default hafs."
+      },
+      "CreateRecitationBody": {
+        "type": "object",
+        "properties": {
+          "uploadToken": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "description": "The uploadToken returned by POST /uploads/presign."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "riwayah": {
+            "default": "hafs",
+            "$ref": "#/components/schemas/Riwayah"
+          },
+          "style": {
+            "$ref": "#/components/schemas/RecitationStyle"
+          },
+          "durationSec": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 21600,
+            "description": "Read by the client from the audio metadata."
+          }
+        },
+        "required": [
+          "uploadToken",
+          "title",
+          "style",
+          "durationSec"
+        ]
+      },
+      "UpdateRecitationBody": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "style": {
+            "$ref": "#/components/schemas/RecitationStyle"
+          },
+          "riwayah": {
+            "$ref": "#/components/schemas/Riwayah"
+          },
+          "surah": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 114,
+            "description": "Surah number, 1 to 114."
+          },
+          "ayahFrom": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Ayah number within the surah (1-based)."
+          },
+          "ayahTo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Ayah number within the surah (1-based)."
+          }
+        },
+        "description": "Owners may change any field. If a non-verified owner changes surah, ayah range or riwayah of an approved recitation, it returns to pending."
+      },
+      "CreateReportBody": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "$ref": "#/components/schemas/ReportReason"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "ReportReason": {
+        "type": "string",
+        "enum": [
+          "wrong_surah",
+          "recitation_mistake",
+          "not_quran",
+          "copyright",
+          "other"
+        ]
+      },
+      "PresignUploadBody": {
+        "type": "object",
+        "properties": {
+          "surah": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 114,
+            "description": "Surah number, 1 to 114."
+          },
+          "ayahFrom": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Ayah number within the surah (1-based)."
+          },
+          "ayahTo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Ayah number within the surah (1-based)."
+          },
+          "contentType": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "One of: audio/mpeg, audio/mp4, audio/ogg, audio/webm.",
+            "examples": [
+              "audio/mpeg"
+            ]
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "description": "File size in bytes, 10240 to 62914560."
+          },
+          "rightsConfirmed": {
+            "type": "boolean",
+            "const": true,
+            "description": "\"This is my own recitation or I have permission to share it.\" Must be true."
+          }
+        },
+        "required": [
+          "surah",
+          "ayahFrom",
+          "ayahTo",
+          "contentType",
+          "sizeBytes",
+          "rightsConfirmed"
+        ]
+      },
+      "CreatePlaylistBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "isPublic": {
+            "default": false,
+            "type": "boolean"
+          },
+          "recitationIds": {
+            "default": [],
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "description": "Ordered list, at most 200. Replaces the whole list."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdatePlaylistBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "recitationIds": {
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "description": "Ordered list, at most 200. Replaces the whole list."
+          }
+        }
+      },
+      "UpdateMeBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "bio": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Z]{2}$",
+                "description": "ISO 3166-1 alpha-2 country code.",
+                "examples": [
+                  "PK"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "description": "Email, password and image changes go through Better Auth (/api/auth/*)."
+      },
+      "SwitchModeBody": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/AccountMode"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "description": "Switching to reciter the first time sets reciterSince and makes the reciter profile public. Switching back to listener keeps the profile and its recitations public. No new sign-in is needed."
+      },
+      "AccountMode": {
+        "type": "string",
+        "enum": [
+          "listener",
+          "reciter"
+        ],
+        "description": "Which side of the app the user is in. Saved on the account, so web and app agree."
+      },
+      "RecitationStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "approved",
+          "rejected",
+          "removed"
+        ]
+      },
+      "CreateMemorizationSessionBody": {
+        "type": "object",
+        "properties": {
+          "surah": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 114,
+            "description": "Surah number, 1 to 114."
+          },
+          "ayahFrom": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Ayah number within the surah (1-based)."
+          },
+          "ayahTo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Ayah number within the surah (1-based)."
+          },
+          "mode": {
+            "$ref": "#/components/schemas/MemorizationMode"
+          },
+          "wordsTotal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Must equal the word count of the range in quran-data; the server checks it."
+          },
+          "wordsCorrect": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "mistakes": {
+            "maxItems": 2000,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Mistake"
+            }
+          },
+          "startedAt": {
+            "$ref": "#/components/schemas/DateTime"
+          },
+          "endedAt": {
+            "$ref": "#/components/schemas/DateTime"
+          }
+        },
+        "required": [
+          "surah",
+          "ayahFrom",
+          "ayahTo",
+          "mode",
+          "wordsTotal",
+          "wordsCorrect",
+          "mistakes",
+          "startedAt",
+          "endedAt"
+        ]
+      },
+      "MemorizationMode": {
+        "type": "string",
+        "enum": [
+          "reveal",
+          "check_ayah",
+          "listen_repeat"
+        ],
+        "description": "reveal = reveal as I recite; check_ayah = check after each ayah; listen_repeat = listen then repeat."
+      },
+      "Mistake": {
+        "type": "object",
+        "properties": {
+          "ayah": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Ayah number within the surah (1-based)."
+          },
+          "word": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "1-based word position within the ayah."
+          },
+          "type": {
+            "$ref": "#/components/schemas/MistakeType"
+          }
+        },
+        "required": [
+          "ayah",
+          "word",
+          "type"
+        ],
+        "description": "A word position only. The words the user said are never sent or stored."
+      },
+      "MistakeType": {
+        "type": "string",
+        "enum": [
+          "missed",
+          "hinted"
+        ],
+        "description": "missed = the word was skipped; hinted = the user needed a hint for it."
+      },
+      "DateTime": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+        "description": "UTC timestamp in ISO 8601 format.",
+        "examples": [
+          "2026-11-12T08:30:00.000Z"
+        ]
+      },
+      "RecitationDecisionBody": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "decision": {
+                "type": "string",
+                "const": "approve"
+              }
+            },
+            "required": [
+              "decision"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "decision": {
+                "type": "string",
+                "const": "reject"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "decision",
+              "reason"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "decision": {
+                "type": "string",
+                "const": "remove"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 500
+              },
+              "resolveReports": {
+                "default": true,
+                "description": "Mark open reports on this recitation as actioned.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "decision",
+              "reason"
+            ]
+          }
+        ],
+        "description": "approve: pending|rejected → approved. reject: pending → rejected. remove: pending|approved → removed. Other transitions return CONFLICT.",
+        "type": "object"
+      },
+      "ReportDecisionBody": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "actioned",
+              "dismissed"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "UpdateUserBody": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "verifiedReciter": {
+            "type": "boolean"
+          }
+        },
+        "description": "role changes staff permissions. Setting verifiedReciter to true also turns on the reciter profile if it is off. An admin cannot change their own role."
+      },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "user",
+          "moderator",
+          "admin"
+        ],
+        "description": "user is the default for new accounts."
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok"
+          },
+          "apiVersion": {
+            "type": "string",
+            "examples": [
+              "1.0.0"
+            ]
+          },
+          "time": {
+            "$ref": "#/components/schemas/DateTime"
+          },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "database": {
+                "type": "string",
+                "const": "ok"
+              }
+            },
+            "required": [
+              "database"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status",
+          "apiVersion",
+          "time",
+          "checks"
+        ],
+        "additionalProperties": false,
+        "description": "If the database is unreachable the endpoint returns 503 SERVICE_UNAVAILABLE."
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "$ref": "#/components/schemas/ErrorCode"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable, English. Not for display logic."
+              },
+              "details": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "details"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "error": {
+              "code": "FORBIDDEN",
+              "message": "Only moderators can approve recitations.",
+              "details": {}
+            }
+          }
+        ]
+      },
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "VALIDATION_ERROR",
+          "INVALID_AYAH_RANGE",
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "RECITER_PROFILE_REQUIRED",
+          "REAUTH_REQUIRED",
+          "NOT_FOUND",
+          "CONFLICT",
+          "ALREADY_REPORTED",
+          "UPLOAD_EXPIRED",
+          "UPLOAD_NOT_FOUND",
+          "UPLOAD_MISMATCH",
+          "FILE_TOO_LARGE",
+          "UNSUPPORTED_MEDIA_TYPE",
+          "QUOTA_EXCEEDED",
+          "RATE_LIMITED",
+          "INTERNAL_ERROR",
+          "SERVICE_UNAVAILABLE"
+        ]
+      },
+      "ListSurahsResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "minItems": 114,
+            "maxItems": 114,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SurahSummary"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "SurahSummary": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 114,
+            "description": "Surah number, 1 to 114."
+          },
+          "nameArabic": {
+            "type": "string",
+            "examples": [
+              "الفاتحة"
+            ]
+          },
+          "nameTransliterated": {
+            "type": "string",
+            "examples": [
+              "Al-Fatihah"
+            ]
+          },
+          "nameEnglish": {
+            "type": "string",
+            "examples": [
+              "The Opening"
+            ]
+          },
+          "ayahCount": {
+            "type": "integer",
+            "minimum": 3,
+            "maximum": 286
+          },
+          "revelationPlace": {
+            "$ref": "#/components/schemas/RevelationPlace"
+          },
+          "revelationOrder": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 114
+          },
+          "juz": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30
+            },
+            "description": "Juz numbers this surah spans, ascending."
+          }
+        },
+        "required": [
+          "number",
+          "nameArabic",
+          "nameTransliterated",
+          "nameEnglish",
+          "ayahCount",
+          "revelationPlace",
+          "revelationOrder",
+          "juz"
+        ],
+        "additionalProperties": false,
+        "description": "From Tanzil metadata in packages/quran-data."
+      },
+      "RevelationPlace": {
+        "type": "string",
+        "enum": [
+          "meccan",
+          "medinan"
+        ]
+      },
+      "GetSurahResponse": {
+        "type": "object",
+        "properties": {
+          "surah": {
+            "$ref": "#/components/schemas/SurahSummary"
+          },
+          "recitations": {
+            "description": "First page of approved recitations. Continue with GET /recitations?surah=n.",
+            "$ref": "#/components/schemas/RecitationPage"
+          }
+        },
+        "required": [
+          "surah",
+          "recitations"
+        ],
+        "additionalProperties": false
+      },
+      "Recitation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "surah": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 114,
+            "description": "Surah number, 1 to 114."
+          },
+          "ayahFrom": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Ayah number within the surah (1-based)."
+          },
+          "ayahTo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Ayah number within the surah (1-based)."
+          },
+          "title": {
+            "type": "string"
+          },
+          "riwayah": {
+            "$ref": "#/components/schemas/Riwayah"
+          },
+          "style": {
+            "$ref": "#/components/schemas/RecitationStyle"
+          },
+          "durationSec": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "status": {
+            "$ref": "#/components/schemas/RecitationStatus"
+          },
+          "playCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "likeCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/DateTime"
+          },
+          "reciter": {
+            "$ref": "#/components/schemas/ReciterSummary"
+          },
+          "stream": {
+            "$ref": "#/components/schemas/StreamInfo"
+          },
+          "viewer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ViewerState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "surah",
+          "ayahFrom",
+          "ayahTo",
+          "title",
+          "riwayah",
+          "style",
+          "durationSec",
+          "status",
+          "playCount",
+          "likeCount",
+          "createdAt",
+          "reciter",
+          "stream",
+          "viewer"
+        ],
+        "additionalProperties": false
+      },
+      "ReciterSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "image": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Z]{2}$",
+                "description": "ISO 3166-1 alpha-2 country code.",
+                "examples": [
+                  "PK"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verifiedReciter": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "image",
+          "country",
+          "verifiedReciter"
+        ],
+        "additionalProperties": false,
+        "description": "Public view of the user who uploaded a recitation."
+      },
+      "StreamInfo": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the signed URL stops working. null for permanent public URLs. Refetch the recitation to get a fresh URL."
+          },
+          "contentType": {
+            "$ref": "#/components/schemas/AudioContentType"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt",
+          "contentType"
+        ],
+        "additionalProperties": false
+      },
+      "AudioContentType": {
+        "type": "string",
+        "enum": [
+          "audio/mpeg",
+          "audio/mp4",
+          "audio/ogg",
+          "audio/webm"
+        ]
+      },
+      "ViewerState": {
+        "type": "object",
+        "properties": {
+          "liked": {
+            "type": "boolean"
+          },
+          "isOwner": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "liked",
+          "isOwner"
+        ],
+        "additionalProperties": false,
+        "description": "Present only when the request is authenticated."
+      },
+      "RecitationPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Recitation"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cursor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when there are no more items."
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "SurahTextResponse": {
+        "type": "object",
+        "properties": {
+          "surah": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 114,
+            "description": "Surah number, 1 to 114."
+          },
+          "bismillah": {
+            "description": "The bismillah shown above the surah, separated from ayah 1. null for surah 9; for surah 1 it is ayah 1 itself, so also null.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ayahs": {
+            "minItems": 3,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Ayah"
+            }
+          },
+          "source": {
+            "$ref": "#/components/schemas/TextSource"
+          }
+        },
+        "required": [
+          "surah",
+          "bismillah",
+          "ayahs",
+          "source"
+        ],
+        "additionalProperties": false
+      },
+      "Ayah": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Ayah number within the surah (1-based)."
+          },
+          "text": {
+            "type": "string",
+            "description": "Exact Tanzil Uthmani text of the ayah."
+          },
+          "words": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuranWord"
+            }
+          }
+        },
+        "required": [
+          "number",
+          "text",
+          "words"
+        ],
+        "additionalProperties": false
+      },
+      "QuranWord": {
+        "type": "object",
+        "properties": {
+          "position": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "1-based word position within the ayah."
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "position",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "TextSource": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "const": "Tanzil Quran Text"
+          },
+          "edition": {
+            "type": "string",
+            "const": "Uthmani"
+          },
+          "version": {
+            "type": "string",
+            "examples": [
+              "1.1"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "license": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f\\d]{64}$"
+          }
+        },
+        "required": [
+          "name",
+          "edition",
+          "version",
+          "url",
+          "license",
+          "sha256"
+        ],
+        "additionalProperties": false,
+        "description": "Attribution required by the Tanzil license. Clients must display it."
+      },
+      "RecitationDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "surah": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 114,
+            "description": "Surah number, 1 to 114."
+          },
+          "ayahFrom": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Ayah number within the surah (1-based)."
+          },
+          "ayahTo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Ayah number within the surah (1-based)."
+          },
+          "title": {
+            "type": "string"
+          },
+          "riwayah": {
+            "$ref": "#/components/schemas/Riwayah"
+          },
+          "style": {
+            "$ref": "#/components/schemas/RecitationStyle"
+          },
+          "durationSec": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "status": {
+            "$ref": "#/components/schemas/RecitationStatus"
+          },
+          "playCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "likeCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/DateTime"
+          },
+          "reciter": {
+            "$ref": "#/components/schemas/ReciterSummary"
+          },
+          "stream": {
+            "$ref": "#/components/schemas/StreamInfo"
+          },
+          "viewer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ViewerState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sizeBytes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "moderationNote": {
+            "description": "Reason given on reject or remove.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "surah",
+          "ayahFrom",
+          "ayahTo",
+          "title",
+          "riwayah",
+          "style",
+          "durationSec",
+          "status",
+          "playCount",
+          "likeCount",
+          "createdAt",
+          "reciter",
+          "stream",
+          "viewer",
+          "sizeBytes",
+          "moderationNote"
+        ],
+        "additionalProperties": false
+      },
+      "PlayResponse": {
+        "type": "object",
+        "properties": {
+          "counted": {
+            "type": "boolean",
+            "description": "false when this listener already counted a play recently."
+          },
+          "playCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "counted",
+          "playCount"
+        ],
+        "additionalProperties": false
+      },
+      "LikeResponse": {
+        "type": "object",
+        "properties": {
+          "liked": {
+            "type": "boolean"
+          },
+          "likeCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "liked",
+          "likeCount"
+        ],
+        "additionalProperties": false,
+        "description": "Like and unlike are idempotent."
+      },
+      "ReportReceipt": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReportStatus"
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/DateTime"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "ReportStatus": {
+        "type": "string",
+        "enum": [
+          "open",
+          "actioned",
+          "dismissed"
+        ]
+      },
+      "PresignUploadResponse": {
+        "type": "object",
+        "properties": {
+          "uploadUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Presigned R2 URL. PUT the raw file bytes here."
+          },
+          "method": {
+            "type": "string",
+            "const": "PUT"
+          },
+          "headers": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Headers the PUT must send exactly, including Content-Type."
+          },
+          "uploadToken": {
+            "type": "string",
+            "description": "Signed token describing this upload. Send it to POST /recitations to confirm."
+          },
+          "expiresAt": {
+            "$ref": "#/components/schemas/DateTime"
+          }
+        },
+        "required": [
+          "uploadUrl",
+          "method",
+          "headers",
+          "uploadToken",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "ReciterPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReciterSummary"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cursor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when there are no more items."
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false,
+        "description": "Verified reciters only."
+      },
+      "GetReciterResponse": {
+        "type": "object",
+        "properties": {
+          "reciter": {
+            "$ref": "#/components/schemas/ReciterProfile"
+          },
+          "recitations": {
+            "$ref": "#/components/schemas/RecitationPage"
+          }
+        },
+        "required": [
+          "reciter",
+          "recitations"
+        ],
+        "additionalProperties": false
+      },
+      "ReciterProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "image": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Z]{2}$",
+                "description": "ISO 3166-1 alpha-2 country code.",
+                "examples": [
+                  "PK"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verifiedReciter": {
+            "type": "boolean"
+          },
+          "bio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reciterSince": {
+            "$ref": "#/components/schemas/DateTime"
+          },
+          "stats": {
+            "type": "object",
+            "properties": {
+              "approvedRecitations": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "totalPlays": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "approvedRecitations",
+              "totalPlays"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "image",
+          "country",
+          "verifiedReciter",
+          "bio",
+          "reciterSince",
+          "stats"
+        ],
+        "additionalProperties": false,
+        "description": "Visible once the user has turned on reciter mode (reciterSince is set); otherwise 404, so listener-only accounts are never exposed."
+      },
+      "PlaylistPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Playlist"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cursor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when there are no more items."
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "Playlist": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "owner": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/components/schemas/ObjectId"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "recitationCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/DateTime"
+          },
+          "updatedAt": {
+            "$ref": "#/components/schemas/DateTime"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "isPublic",
+          "owner",
+          "recitationCount",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "PlaylistDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "owner": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/components/schemas/ObjectId"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "recitationCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/DateTime"
+          },
+          "updatedAt": {
+            "$ref": "#/components/schemas/DateTime"
+          },
+          "recitations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Recitation"
+            },
+            "description": "In playlist order. Recitations that are no longer approved are left out."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "isPublic",
+          "owner",
+          "recitationCount",
+          "createdAt",
+          "updatedAt",
+          "recitations"
+        ],
+        "additionalProperties": false
+      },
+      "UserAccount": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "emailVerified": {
+            "type": "boolean"
+          },
+          "image": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/AccountMode"
+          },
+          "reciterSince": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the user first switched to reciter mode, which turned on their public reciter profile. null if never."
+          },
+          "verifiedReciter": {
+            "type": "boolean",
+            "description": "Badge granted by moderators/admins. Verified uploads skip the review queue."
+          },
+          "bio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Z]{2}$",
+                "description": "ISO 3166-1 alpha-2 country code.",
+                "examples": [
+                  "PK"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/DateTime"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "emailVerified",
+          "image",
+          "role",
+          "mode",
+          "reciterSince",
+          "verifiedReciter",
+          "bio",
+          "country",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "ReciterStats": {
+        "type": "object",
+        "properties": {
+          "recitations": {
+            "type": "object",
+            "properties": {
+              "pending": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "approved": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "rejected": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "additionalProperties": false
+          },
+          "totalPlays": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "totalLikes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "playsLast7Days": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "storage": {
+            "type": "object",
+            "properties": {
+              "usedBytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "quotaBytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "usedBytes",
+              "quotaBytes"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "recitations",
+          "totalPlays",
+          "totalLikes",
+          "playsLast7Days",
+          "storage"
+        ],
+        "additionalProperties": false,
+        "description": "Dashboard numbers for reciter mode."
+      },
+      "LibraryResponse": {
+        "type": "object",
+        "properties": {
+          "likes": {
+            "description": "Liked recitations, most recently liked first.",
+            "$ref": "#/components/schemas/RecitationPage"
+          },
+          "playlists": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Playlist"
+            },
+            "description": "All of the caller’s playlists (max 100)."
+          }
+        },
+        "required": [
+          "likes",
+          "playlists"
+        ],
+        "additionalProperties": false
+      },
+      "MyRecitationPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecitationDetail"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cursor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when there are no more items."
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false,
+        "description": "The caller’s own uploads in every status, newest first."
+      },
+      "CreateMemorizationSessionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "accuracy": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "progress": {
+            "$ref": "#/components/schemas/MemorizationProgress"
+          }
+        },
+        "required": [
+          "id",
+          "accuracy",
+          "progress"
+        ],
+        "additionalProperties": false
+      },
+      "MemorizationProgress": {
+        "type": "object",
+        "properties": {
+          "surah": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 114,
+            "description": "Surah number, 1 to 114."
+          },
+          "lastAyah": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Highest ayahTo reached in any session."
+          },
+          "bestAccuracy": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Best wordsCorrect / wordsTotal over all sessions for this surah."
+          },
+          "lastPracticedAt": {
+            "$ref": "#/components/schemas/DateTime"
+          }
+        },
+        "required": [
+          "surah",
+          "lastAyah",
+          "bestAccuracy",
+          "lastPracticedAt"
+        ],
+        "additionalProperties": false
+      },
+      "MemorizationProgressResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "maxItems": 114,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemorizationProgress"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "ModerationQueueResponse": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "recitations"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/QueuedRecitation"
+                },
+                "description": "Pending uploads, oldest first."
+              },
+              "nextCursor": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/Cursor"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "counts": {
+                "$ref": "#/components/schemas/ModerationQueueCounts"
+              }
+            },
+            "required": [
+              "kind",
+              "items",
+              "nextCursor",
+              "counts"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "reports"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Report"
+                },
+                "description": "Open reports, oldest first."
+              },
+              "nextCursor": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/Cursor"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "counts": {
+                "$ref": "#/components/schemas/ModerationQueueCounts"
+              }
+            },
+            "required": [
+              "kind",
+              "items",
+              "nextCursor",
+              "counts"
+            ],
+            "additionalProperties": false
+          }
+        ],
+        "type": "object"
+      },
+      "QueuedRecitation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "surah": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 114,
+            "description": "Surah number, 1 to 114."
+          },
+          "ayahFrom": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Ayah number within the surah (1-based)."
+          },
+          "ayahTo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 286,
+            "description": "Ayah number within the surah (1-based)."
+          },
+          "title": {
+            "type": "string"
+          },
+          "riwayah": {
+            "$ref": "#/components/schemas/Riwayah"
+          },
+          "style": {
+            "$ref": "#/components/schemas/RecitationStyle"
+          },
+          "durationSec": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "status": {
+            "$ref": "#/components/schemas/RecitationStatus"
+          },
+          "playCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "likeCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/DateTime"
+          },
+          "reciter": {
+            "$ref": "#/components/schemas/ReciterSummary"
+          },
+          "stream": {
+            "$ref": "#/components/schemas/StreamInfo"
+          },
+          "viewer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ViewerState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sizeBytes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "moderationNote": {
+            "description": "Reason given on reject or remove.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "openReportCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "id",
+          "surah",
+          "ayahFrom",
+          "ayahTo",
+          "title",
+          "riwayah",
+          "style",
+          "durationSec",
+          "status",
+          "playCount",
+          "likeCount",
+          "createdAt",
+          "reciter",
+          "stream",
+          "viewer",
+          "sizeBytes",
+          "moderationNote",
+          "openReportCount"
+        ],
+        "additionalProperties": false
+      },
+      "ModerationQueueCounts": {
+        "type": "object",
+        "properties": {
+          "pendingRecitations": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "openReports": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "pendingRecitations",
+          "openReports"
+        ],
+        "additionalProperties": false
+      },
+      "Report": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/ReportReason"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReportStatus"
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/DateTime"
+          },
+          "reporter": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/components/schemas/ObjectId"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "recitation": {
+            "$ref": "#/components/schemas/Recitation"
+          },
+          "resolution": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "decidedAt": {
+                    "$ref": "#/components/schemas/DateTime"
+                  },
+                  "decidedBy": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "$ref": "#/components/schemas/ObjectId"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "note",
+                  "decidedAt",
+                  "decidedBy"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "reason",
+          "note",
+          "status",
+          "createdAt",
+          "reporter",
+          "recitation",
+          "resolution"
+        ],
+        "additionalProperties": false
+      },
+      "FindUsersResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "maxItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserAccount"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "tilawah.session_token",
+        "description": "Web only. HTTP-only, Secure, SameSite=Lax session cookie set by Better Auth."
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Mobile. Session token from Better Auth (bearer plugin / Expo client)."
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@tilawah/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Business logic: services, repositories, domain errors. No framework imports.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc7 --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "@tilawah/config": "workspace:*",
+    "@types/node": "26.6.6",
+    "eslint": "10.14.0",
+    "typescript": "6.0.3",
+    "vitest": "5.1.0"
+  }
+}

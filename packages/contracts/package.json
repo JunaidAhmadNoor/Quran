@@ -1,0 +1,30 @@
+{
+  "name": "@tilawah/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Zod schemas for every API request and response, the endpoint registry, and the generated OpenAPI spec.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./openapi.json": "./openapi.json"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc7 --noEmit",
+    "test": "vitest run",
+    "openapi": "tsx scripts/generate-openapi.ts",
+    "check:openapi": "tsx scripts/generate-openapi.ts --check"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@tilawah/config": "workspace:*",
+    "@types/node": "26.6.6",
+    "eslint": "10.14.0",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "vitest": "5.1.0",
+    "zod-openapi": "6.0.2"
+  }
+}

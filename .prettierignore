@@ -1,0 +1,5 @@
+pnpm-lock.yaml
+packages/contracts/openapi.json
+packages/quran-data/source/
+.next/
+coverage/

@@ -1,0 +1,26 @@
+{
+  "name": "tilawah",
+  "private": true,
+  "packageManager": "pnpm@12.8.1",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "openapi": "pnpm --filter @tilawah/contracts openapi",
+    "check:openapi": "pnpm --filter @tilawah/contracts check:openapi"
+  },
+  "prettier": "@tilawah/config/prettier",
+  "devDependencies": {
+    "@tilawah/config": "workspace:*",
+    "prettier": "3.9.10",
+    "turbo": "2.11.10",
+    "typescript": "6.0.3"
+  }
+}
