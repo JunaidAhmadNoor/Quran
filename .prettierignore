@@ -4,3 +4,8 @@ packages/quran-data/source/
 .next/
 coverage/
 packages/quran-data/generated/
+packages/ui-tokens/tokens.css
+.data/
+playwright-report/
+test-results/
+docs/screenshots/

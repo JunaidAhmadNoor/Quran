@@ -4,7 +4,7 @@ A Spotify-style platform only for Quran recitations: listen to community recitat
 114 surahs, upload your own (reviewed before publishing), and practise memorization with
 hidden-text word reveal.
 
-**Status: Phase 2 (backend + tests) complete, awaiting review.** The API is built and tested; pages come in Phase 3.
+**Status: Phase 3 (frontend) complete, awaiting review.** API and website are built and tested; memorization with speech recognition comes in Phase 4. Screenshots: [docs/screenshots](docs/screenshots).
 
 | Doc                                                                | What it covers                                                                 |
 | ------------------------------------------------------------------ | ------------------------------------------------------------------------------ |

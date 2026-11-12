@@ -5,17 +5,20 @@
   "type": "module",
   "description": "Design tokens (colors, spacing, typography) shared by web and mobile.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./tokens.css": "./tokens.css"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc7 --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run",
+    "build:css": "tsx scripts/build-css.ts"
   },
   "devDependencies": {
     "@tilawah/config": "workspace:*",
     "@types/node": "26.6.6",
     "eslint": "10.14.0",
+    "tsx": "4.23.15",
     "typescript": "6.0.3",
     "vitest": "5.1.0"
   }

@@ -29,6 +29,7 @@ beforeAll(async () => {
     auth,
     database: t.db.database,
     storage: t.storage,
+    googleEnabled: false,
     config: {
       allowedOrigins: [ORIGIN],
       ipHashSecret: env.IP_HASH_SECRET,

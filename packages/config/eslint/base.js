@@ -9,7 +9,18 @@ import tseslint from 'typescript-eslint';
  */
 export function baseConfig({ tsconfigRootDir }) {
   return tseslint.config(
-    { ignores: ['**/dist/**', '**/coverage/**', '**/.next/**', '**/.turbo/**'] },
+    {
+      ignores: [
+        '**/dist/**',
+        '**/coverage/**',
+        '**/.next/**',
+        '**/.turbo/**',
+        '**/.data/**',
+        '**/playwright-report/**',
+        '**/test-results/**',
+        '**/next-env.d.ts',
+      ],
+    },
     js.configs.recommended,
     ...tseslint.configs.strictTypeChecked,
     ...tseslint.configs.stylisticTypeChecked,
@@ -26,6 +37,11 @@ export function baseConfig({ tsconfigRootDir }) {
           { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
         ],
         '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+        // React handlers like onClick={() => setOpen(false)} return void by design.
+        '@typescript-eslint/no-confusing-void-expression': [
+          'error',
+          { ignoreArrowShorthand: true },
+        ],
         'no-console': ['error', { allow: ['warn', 'error'] }],
       },
     },

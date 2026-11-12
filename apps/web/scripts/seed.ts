@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 import type { RecitationStatus } from '@tilawah/contracts';
 import { Types } from '@tilawah/db';
 import { getContainer } from '../server/container';
+import type { LocalDiskStorage } from '../server/local-storage';
 
 const PASSWORD = process.env.SEED_PASSWORD ?? 'tilawah-demo-123';
 const reciterOn = { mode: 'reciter' as const, reciterSince: new Date() };
@@ -95,9 +96,14 @@ const RECITATIONS: {
   },
 ];
 
-async function main() {
-  if (process.env.NODE_ENV === 'production')
-    throw new Error('The seed script never runs in production.');
+export interface SeedOptions {
+  password?: string;
+  audio?: Uint8Array | null;
+  quiet?: boolean;
+}
+
+/** Idempotent: existing accounts and recitations are kept. Used by `pnpm seed` and the E2E server. */
+export async function seed({ password = PASSWORD, audio = null, quiet = false }: SeedOptions = {}) {
   const { core, auth, database, storage } = await getContainer();
   if (!auth || !database || !storage)
     throw new Error('Container is missing auth, database or storage');
@@ -106,7 +112,7 @@ async function main() {
   for (const account of ACCOUNTS) {
     const email = `${account.key}@tilawah.dev`;
     if (!(await core.users.findByEmail(email))) {
-      await auth.api.signUpEmail({ body: { name: account.name, email, password: PASSWORD } });
+      await auth.api.signUpEmail({ body: { name: account.name, email, password } });
     }
     const user = await core.users.findByEmail(email);
     if (!user) throw new Error(`Could not create ${email}`);
@@ -114,7 +120,6 @@ async function main() {
     ids.set(account.key, user._id);
   }
 
-  const audio = process.env.SEED_AUDIO_FILE ? await readFile(process.env.SEED_AUDIO_FILE) : null;
   const { Recitation } = database.models;
   let created = 0;
   for (const r of RECITATIONS) {
@@ -122,14 +127,21 @@ async function main() {
     if (!uploaderId || (await Recitation.exists({ uploaderId, title: r.title }))) continue;
     const _id = new Types.ObjectId();
     const audioKey = `audio/${_id.toHexString()}.mp3`;
-    if (audio) {
+    if (audio && 'writeObject' in storage) {
+      // Local disk (development / E2E): the app server may not be running yet, so write directly.
+      await (storage as LocalDiskStorage).writeObject(audioKey, audio, 'audio/mpeg');
+    } else if (audio) {
       const put = await storage.presignPut({
         key: audioKey,
         contentType: 'audio/mpeg',
         sizeBytes: audio.length,
         expiresInSec: 600,
       });
-      const response = await fetch(put.url, { method: 'PUT', headers: put.headers, body: audio });
+      const response = await fetch(put.url, {
+        method: 'PUT',
+        headers: put.headers,
+        body: new Uint8Array(audio),
+      });
       if (!response.ok) throw new Error(`Uploading sample audio failed (HTTP ${response.status})`);
     }
     await Recitation.create({
@@ -142,7 +154,7 @@ async function main() {
       style: 'murattal',
       audioKey,
       audioContentType: 'audio/mpeg',
-      durationSec: 60,
+      durationSec: audio ? 12 : 60,
       sizeBytes: audio?.length ?? 960_000,
       status: r.status,
       playCount: r.playCount,
@@ -152,12 +164,20 @@ async function main() {
     created += 1;
   }
 
+  if (quiet) return;
   console.warn(
     `Seed complete: ${ACCOUNTS.map((a) => `${a.key}@tilawah.dev`).join(', ')}\n` +
       `Password: ${process.env.SEED_PASSWORD ? '(from SEED_PASSWORD)' : PASSWORD}. New recitations: ${created}.` +
       (audio ? '' : '\nNo SEED_AUDIO_FILE given: recitations have no audio in storage.'),
   );
-  await database.close();
 }
 
-await main();
+// Run directly: pnpm --filter @tilawah/web seed
+if (import.meta.url === `file://${process.argv[1] ?? ''}`) {
+  if (process.env.NODE_ENV === 'production')
+    throw new Error('The seed script never runs in production.');
+  const audio = process.env.SEED_AUDIO_FILE ? await readFile(process.env.SEED_AUDIO_FILE) : null;
+  await seed({ audio });
+  const { database } = await getContainer();
+  await database?.close();
+}

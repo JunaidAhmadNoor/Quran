@@ -81,6 +81,72 @@ rejected, transactions available.
 Auth in the other integration tests is faked by the harness: `Authorization: Bearer
 test:<userId>` signs in as that user (`apps/web/test/harness.ts`).
 
+**Design tokens (6 tests).** Every allowed colour pair meets WCAG AA in light and dark; the one
+spec pair that fails (light success green on `surface-raised`, 4.22:1) is documented and kept out
+of the allowed pairs; no pure black or white; `tokens.css` is generated from the source.
+
+**API client (6 tests).** URLs from path params and query, cookie mode for web, Bearer mode for
+mobile, JSON bodies, 204, `ApiError` with the server code and details, non-JSON error pages.
+
+**Components (24 tests).** The player store (queue, next/previous, repeat modes, what happens at
+the end of a track) and the player bar (keyboard play/pause, speed menu, repeat, opening the
+full-screen view). The upload form: an impossible ayah range shows the designed error, a video
+file is refused before anything is sent, and the full path presign → direct XHR PUT to storage
+(with the CORS preflight R2 requires) → confirm → "waiting for review", plus the quota message.
+The word-reveal component: placeholders keep each word's width, words reveal in order. The UI
+messages: Arabic and Urdu have exactly the English keys, every message is valid ICU and the
+placeholders match. The recitation list: two lists with the same data source keep separate
+caches (regression test for the playlist page once showing liked recitations).
+
+**End-to-end (Playwright, 3 projects).** Against the production build and an isolated stack
+(`apps/web/e2e/server.ts`: in-memory MongoDB, local-disk storage in a temp folder, seeded demo
+accounts, a real 12-second MP3):
+
+- sign up → switch to reciter mode (no sign-out) → upload the MP3 → not public yet → moderator
+  approves → appears on the surah page → another user plays it and likes it;
+- the player keeps playing while navigating between pages (position keeps advancing);
+- switching to Arabic sets `dir="rtl"` and no element overflows a 375 px screen;
+- skip link and keyboard operation of the player;
+- switching language mid-playback does not interrupt the audio (regression test).
+
+**Accessibility (axe, 60 tests).** 15 pages (10 signed out, 5 signed in) × light/dark × LTR
+(English)/RTL (Arabic): no serious or critical WCAG 2.1 A/AA violations. One test per page, so a
+failure names the page. axe runs on Chromium: its results depend on the DOM, and it occasionally
+hung inside WebKit; WebKit and the phone project run every user flow.
+
+Memorization with a scripted fake speech engine is a Phase 4 test.
+
+## Screenshots
+
+`docs/screenshots/` holds every page in light and dark mode (desktop) plus Arabic at phone
+width, the player bar and the full-screen player. Regenerate:
+
+```sh
+pnpm --filter @tilawah/web build
+SCREENSHOTS=1 pnpm --filter @tilawah/web exec playwright test screenshots --project=chromium
+```
+
+## Lighthouse
+
+Measured with Lighthouse 13.6 (default mobile emulation, simulated throttling) against the
+production build:
+
+| Page                  | Performance | Accessibility | Best practices | SEO | LCP   |
+| --------------------- | ----------- | ------------- | -------------- | --- | ----- |
+| `/`                   | 99          | 100           | 100            | 100 | 0.8 s |
+| `/surahs/1`           | 99          | 100           | 100            | 100 | 0.9 s |
+| `/surahs/2`           | 99          | 100           | 100            | 100 | 0.9 s |
+| `/surahs`             | 99          | 100           | 100            | 100 | 0.9 s |
+| `/surahs/2?view=read` | 78          | 100           | 100            | 100 | 4.7 s |
+| `/recitations/{id}`   | 98          | 100           | 100            | 100 | 0.8 s |
+| `/reciters/{id}`      | 99          | 100           | 100            | 100 | 0.6 s |
+| `/memorize`           | 99          | 100           | 100            | 100 | 0.9 s |
+
+The spec's target (90+ on `/` and `/surahs/[n]`) is met in all four categories. The full reading
+view of the longest surah (`?view=read` on Al-Baqarah, 286 ayahs) is the one page below 90 on
+performance because the whole text is one document; it could be split into pages of ayahs if
+that matters. `/auth/*` pages are `noindex` on purpose.
+
 ## Coverage gates
 
 `packages/core` and `packages/recitation` fail their test run below 80% line coverage
@@ -90,8 +156,8 @@ test:<userId>` signs in as that user (`apps/web/test/harness.ts`).
 
 install → format check → lint → typecheck → `check:openapi` → API version bump (PRs) →
 breaking-change check with oasdiff (PRs, once `API_RELEASED=true`) → all tests with coverage →
-build → coverage artifact. Phase 3 adds Playwright and axe, uploading the Playwright report on
-failure.
+build → coverage artifact → Playwright (Chromium, WebKit, mobile) with axe → Playwright report
+uploaded as an artifact when a test fails.
 
 ## Check your environment file
 

@@ -26,6 +26,11 @@ const EnvSchema = z
     R2_SECRET_ACCESS_KEY: optional(z.string()),
     R2_BUCKET: optional(z.string()),
     R2_PUBLIC_BASE_URL: optional(z.url()),
+    /** r2 (default when R2_* are set) or local disk (development and E2E only). */
+    STORAGE_DRIVER: optional(z.enum(['r2', 'local'])),
+    LOCAL_STORAGE_DIR: optional(z.string()),
+    /** off only for end-to-end tests (one browser signs in many times); refused in real production. */
+    AUTH_RATE_LIMIT: z.enum(['on', 'off']).default('on'),
     UPLOAD_TICKET_SECRET: secret,
     IP_HASH_SECRET: secret,
     EMAIL_TRANSPORT: z.enum(['brevo', 'none']).default('none'),
@@ -34,11 +39,26 @@ const EnvSchema = z
   })
   .superRefine((env, ctx) => {
     const r2 = [env.R2_ACCOUNT_ID, env.R2_ACCESS_KEY_ID, env.R2_SECRET_ACCESS_KEY, env.R2_BUCKET];
-    if (env.NODE_ENV === 'production' && r2.some((v) => v === undefined)) {
+    if (
+      env.NODE_ENV === 'production' &&
+      env.STORAGE_DRIVER !== 'local' &&
+      r2.some((v) => v === undefined)
+    ) {
       ctx.addIssue({
         code: 'custom',
         message: 'All R2_* variables are required in production',
         path: ['R2_BUCKET'],
+      });
+    }
+    if (
+      env.NODE_ENV === 'production' &&
+      env.AUTH_RATE_LIMIT === 'off' &&
+      env.STORAGE_DRIVER !== 'local'
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'AUTH_RATE_LIMIT=off is only allowed for local test stacks',
+        path: ['AUTH_RATE_LIMIT'],
       });
     }
     if (env.EMAIL_TRANSPORT === 'brevo' && (!env.BREVO_API_KEY || !env.EMAIL_FROM)) {

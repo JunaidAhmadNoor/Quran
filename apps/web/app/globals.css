@@ -1,0 +1,128 @@
+@import 'tailwindcss';
+@import '@tilawah/ui-tokens/tokens.css';
+
+/* Only Mushaf tokens exist: Tailwind's default palette is removed so no component can use a
+   raw or off-system color (no purple, no pure black/white). */
+@theme {
+  --color-*: initial;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-primary-contrast: var(--primary-contrast);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-focus: var(--focus);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --radius-control: 6px;
+  --radius-card: 10px;
+  --font-sans: var(--font-plex), var(--font-plex-arabic), system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-quran: 'KFGQPC Uthmanic Script HAFS', var(--font-amiri-quran), serif;
+  --ease-mushaf: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--text);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  html[lang='ar'] body {
+    font-family: var(--font-plex-arabic), var(--font-plex), system-ui, sans-serif;
+  }
+  html[lang='ur'] body {
+    font-family: var(--font-nastaliq), var(--font-plex-arabic), serif;
+    line-height: 2;
+  }
+  /* Fraunces has no Arabic glyphs: headings use the locale's UI face instead. */
+  html[lang='ar'] .font-display {
+    font-family: var(--font-plex-arabic), var(--font-fraunces), serif;
+    font-weight: 600;
+  }
+  html[lang='ur'] .font-display {
+    font-family: var(--font-nastaliq), var(--font-plex-arabic), serif;
+    line-height: 1.9;
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 22%, transparent);
+  }
+}
+
+@layer components {
+  /* Quran text: never letter-spaced, never synthetic bold, at least 28px, line height 2.2. */
+  .quran {
+    font-family: var(--font-quran);
+    font-size: max(28px, 1.85rem);
+    line-height: 2.2;
+    letter-spacing: 0 !important;
+    font-weight: 400 !important;
+    font-synthesis: none;
+    word-spacing: 0.08em;
+  }
+  .skip-link {
+    position: absolute;
+    inset-inline-start: 1rem;
+    top: -4rem;
+    z-index: 100;
+    background: var(--surface);
+    color: var(--text);
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+  }
+  .skip-link:focus {
+    top: 1rem;
+  }
+}
+
+/* Entrance animations in CSS so server-rendered content is visible without waiting for
+   JavaScript. Interaction-driven motion (player, word reveal, dialogs) uses Motion. */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@layer utilities {
+  .animate-page {
+    animation: fade-in 150ms var(--ease-mushaf) both;
+  }
+  /* List items stagger by 30 ms; --i is set per item. */
+  .animate-stagger {
+    animation: fade-up 220ms var(--ease-mushaf) both;
+    animation-delay: calc(var(--i, 0) * 30ms);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Movement becomes a plain opacity change. */
+  .animate-stagger {
+    animation-name: fade-in;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}

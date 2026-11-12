@@ -29,6 +29,7 @@ export async function startApp(): Promise<TestCore> {
     auth: null,
     database: t.db.database,
     storage: t.storage,
+    googleEnabled: false,
     config: {
       allowedOrigins: [ORIGIN],
       ipHashSecret: 'test-ip-secret-test-ip-secret-1234',

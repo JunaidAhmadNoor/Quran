@@ -2,6 +2,9 @@ packages:
   - apps/*
   - packages/*
 
-# pnpm blocks dependency install scripts unless listed here.
+# pnpm blocks dependency install scripts unless listed here. Only esbuild needs one; the others
+# ship prebuilt platform binaries as optional dependencies.
 allowBuilds:
   esbuild: true
+  '@parcel/watcher': false
+  '@swc/core': false

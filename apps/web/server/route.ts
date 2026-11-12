@@ -9,6 +9,7 @@ import {
 } from '@tilawah/contracts';
 import { DomainError, isAdmin, isStaff, type Actor, type Core } from '@tilawah/core';
 import { ZodError, type z } from 'zod';
+import { resolveActor } from './actor';
 import { getContainer, type AppContainer } from './container';
 
 type Parsed<T> = T extends z.ZodType ? z.output<T> : undefined;
@@ -104,22 +105,6 @@ async function readBody(request: Request): Promise<unknown> {
       issues: [{ path: [], message: 'Malformed JSON' }],
     });
   }
-}
-
-async function resolveActor(c: AppContainer, headers: Headers): Promise<Actor | null> {
-  const session = await c.resolveSession(headers);
-  if (!session) return null;
-  // Read the user fresh on every request, so a mode or role change applies immediately.
-  const user = await c.core.users.findById(session.userId);
-  if (!user) return null;
-  return {
-    userId: session.userId,
-    role: user.role,
-    mode: user.mode,
-    reciterSince: user.reciterSince,
-    verifiedReciter: user.verifiedReciter,
-    sessionCreatedAt: session.sessionCreatedAt,
-  };
 }
 
 export function route<E extends EndpointDefinition>(endpoint: E, handler: Handler<E>) {

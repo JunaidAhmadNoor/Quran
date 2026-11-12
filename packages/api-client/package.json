@@ -10,7 +10,7 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc7 --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run"
   },
   "devDependencies": {
     "@tilawah/config": "workspace:*",
@@ -18,5 +18,8 @@
     "eslint": "10.14.0",
     "typescript": "6.0.3",
     "vitest": "5.1.0"
+  },
+  "dependencies": {
+    "@tilawah/contracts": "workspace:*"
   }
 }

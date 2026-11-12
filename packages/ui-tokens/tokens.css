@@ -1,0 +1,58 @@
+/* Generated from packages/ui-tokens/src/index.ts by scripts/build-css.ts. Do not edit. */
+
+:root {
+  --bg: #F6F1E7;
+  --surface: #FFFCF6;
+  --surface-raised: #EFE8DA;
+  --text: #1F2A27;
+  --text-muted: #5E6A65;
+  --primary: #1E4D45;
+  --primary-contrast: #FFFCF6;
+  --accent: #A67C2E;
+  --border: #E2D8C6;
+  --success: #3C7A4E;
+  --danger: #A3402F;
+  --focus: #1E4D45;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111714;
+    --surface: #18201C;
+    --surface-raised: #202A25;
+    --text: #ECE5D6;
+    --text-muted: #A3A99F;
+    --primary: #7FBFAE;
+    --primary-contrast: #10201B;
+    --accent: #D6B26A;
+    --border: #2B3631;
+    --success: #7CC08F;
+    --danger: #E08A74;
+    --focus: #D6B26A;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #111714;
+  --surface: #18201C;
+  --surface-raised: #202A25;
+  --text: #ECE5D6;
+  --text-muted: #A3A99F;
+  --primary: #7FBFAE;
+  --primary-contrast: #10201B;
+  --accent: #D6B26A;
+  --border: #2B3631;
+  --success: #7CC08F;
+  --danger: #E08A74;
+  --focus: #D6B26A;
+  color-scheme: dark;
+}
+
+:root {
+  --radius-control: 6px;
+  --radius-card: 10px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+

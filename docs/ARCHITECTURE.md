@@ -1,8 +1,9 @@
 # Tilawah — Architecture
 
-Status: **Phase 2 (backend + tests) complete, waiting for review.** Everything in §3–§13 is
-implemented except the web pages (Phase 3) and the speech engine (Phase 4). The decision log
-in [§18](#18-decision-log) records what was decided; §19 lists what Phase 2 settled or changed.
+Status: **Phase 3 (frontend) complete, waiting for review.** Everything is implemented except
+the speech engine and the memorization practice screen (Phase 4). The decision log in
+[§18](#18-decision-log) records what was decided; §19 and §20 list what Phases 2 and 3 settled
+or changed.
 
 Related: [DATA_MODEL.md](DATA_MODEL.md) · [API.md](API.md) ·
 [`packages/contracts/openapi.json`](../packages/contracts/openapi.json)
@@ -538,3 +539,43 @@ change before Phase 2.
   covers the same main story at the API level (`apps/web/test/flow.test.ts`).
 - **`recitations.audioDeletedAt`** was added so audio deletion can be retried and audited.
 - **MongoDB in tests is 8.0.12**, matching Atlas M0, not the memory server's 8.2 default.
+
+## 20. What Phase 3 settled or changed
+
+- **Quran font: Amiri Quran for now.** The official King Fahd Complex font page was unreachable
+  (404) and third-party sources disagree on whether KFGQPC Uthmanic Script HAFS may be
+  redistributed. Committing the file would redistribute it, so the site self-hosts Amiri Quran
+  (SIL Open Font License, designed for Uthmani text, recommended by Tanzil). The CSS stack
+  already lists `KFGQPC Uthmanic Script HAFS` first; adding the file later is a one-line
+  `next/font/local` change once the licence is confirmed.
+- **Entrance animations are CSS, interactions use Motion.** Server-rendered content must be
+  visible before JavaScript runs (no-JS users, LCP). The 150 ms page fade and the 30 ms list
+  stagger are CSS keyframes with the spec's easing; Motion drives the player's shared-element
+  transition, the play/pause morph, word reveal and dialogs. Reduced motion turns movement into
+  opacity changes in both.
+- **Surah page views are URLs:** `/surahs/[n]` (recitations) and `/surahs/[n]?view=read` (text).
+  The default page stays light (Al-Baqarah went from 82 to 99 in Lighthouse) and the reading view
+  is still fully server-rendered for search engines.
+- **Waveform on intent.** Decoding audio for the peaks cost up to 650 ms of main-thread time, so
+  the recitation page shows a placeholder waveform and decodes the real one when the pointer
+  reaches it, it is touched, or the recitation starts playing (85 → 98–100).
+- **Metadata is never streamed** (`htmlLimitedBots: /.*/`), so every crawler and link preview gets
+  complete `<head>` tags. Detail pages share one data lookup between metadata and page (`cache`).
+- **CSP with per-request nonces** (`proxy.ts`): scripts need the nonce (`strict-dynamic`), styles
+  allow `'unsafe-inline'` because React, Motion and Radix render style attributes, R2 is allowed
+  for media and uploads. Zod runs in `jitless` mode so its eval probe does not trip the CSP.
+- **Local-disk storage driver** for development and end-to-end tests when R2 is not configured:
+  HMAC-signed, expiring URLs served by `/api/dev-storage/*` with Range support. Production still
+  requires R2 unless `STORAGE_DRIVER=local` is set explicitly.
+- **`AUTH_RATE_LIMIT=off`** exists only for the E2E stack (one browser signs in many times); the
+  environment check refuses it in production unless local test storage is in use.
+- **Secure cookies follow the site's protocol** (`https://` in `BETTER_AUTH_URL`), and
+  `upgrade-insecure-requests` is only sent over HTTPS, so a production build works on
+  `http://localhost` for tests.
+- **Contrast:** all spec colour pairs pass WCAG AA except light-mode success green on
+  `surface-raised` (4.22:1); success text is only placed on `bg` or `surface`, enforced by a test.
+  Form controls use `text-muted` for their border (5:1) instead of the decorative `border` token.
+- **Reciter studio and settings pages** were added for the mode switch (dashboard, uploads with
+  review status and rejection reasons, storage) and for profile, appearance and account deletion.
+- **The memorization page** has the range picker and the hidden-word layout with manual reveal;
+  Phase 4 drives the same component from speech recognition.

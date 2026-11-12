@@ -1,7 +1,6 @@
 // Composition root: the only module in apps/web allowed to touch the database package.
 import contractsPackage from '@tilawah/contracts/package.json' with { type: 'json' };
 import {
-  MemoryStorage,
   R2Storage,
   createCore,
   createR2Client,
@@ -10,7 +9,9 @@ import {
   type StoragePort,
 } from '@tilawah/core';
 import { connectDatabase, ensureIndexes, type Database } from '@tilawah/db';
+import { resolve } from 'node:path';
 import { createAuth, type Auth } from './auth';
+import { LocalDiskStorage } from './local-storage';
 import { BrevoEmail, ConsoleEmail } from './email';
 import { loadEnv, type Env } from './env';
 
@@ -35,6 +36,8 @@ export interface AppContainer {
   /** For dev scripts (seed, maintenance) only; request handling never touches it. */
   database: Database | null;
   storage: StoragePort | null;
+  /** Whether "Continue with Google" should be offered. */
+  googleEnabled: boolean;
 }
 
 export const API_VERSION = contractsPackage.version;
@@ -42,7 +45,12 @@ export const API_VERSION = contractsPackage.version;
 let instance: Promise<AppContainer> | undefined;
 
 export function getContainer(): Promise<AppContainer> {
-  instance ??= build(loadEnv());
+  instance ??= Promise.resolve()
+    .then(() => build(loadEnv()))
+    .catch((error: unknown) => {
+      instance = undefined; // retry on the next request instead of caching the failure
+      throw error;
+    });
   return instance;
 }
 
@@ -52,6 +60,18 @@ export function setContainer(container: AppContainer | undefined): void {
 }
 
 function createStorage(env: Env): StoragePort {
+  const r2Configured = Boolean(
+    env.R2_ACCOUNT_ID && env.R2_ACCESS_KEY_ID && env.R2_SECRET_ACCESS_KEY && env.R2_BUCKET,
+  );
+  if (env.STORAGE_DRIVER === 'local' || !r2Configured) {
+    const dir = resolve(env.LOCAL_STORAGE_DIR ?? '.data/storage');
+    console.warn(`Storage: local disk at ${dir} (R2 not configured).`);
+    return new LocalDiskStorage(
+      dir,
+      env.BETTER_AUTH_URL.replace(/\/$/, ''),
+      `${env.UPLOAD_TICKET_SECRET}:local-storage`,
+    );
+  }
   if (env.R2_ACCOUNT_ID && env.R2_ACCESS_KEY_ID && env.R2_SECRET_ACCESS_KEY && env.R2_BUCKET) {
     const client = createR2Client({
       accountId: env.R2_ACCOUNT_ID,
@@ -61,8 +81,7 @@ function createStorage(env: Env): StoragePort {
     });
     return new R2Storage(client, env.R2_BUCKET);
   }
-  console.warn('R2 is not configured: using in-memory storage. Uploads will not persist.');
-  return new MemoryStorage();
+  throw new Error('R2 is not fully configured');
 }
 
 async function build(env: Env): Promise<AppContainer> {
@@ -89,6 +108,7 @@ async function build(env: Env): Promise<AppContainer> {
     auth,
     database,
     storage,
+    googleEnabled: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
     config: {
       allowedOrigins: env.API_ALLOWED_ORIGINS,
       ipHashSecret: env.IP_HASH_SECRET,

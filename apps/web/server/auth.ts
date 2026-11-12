@@ -68,7 +68,7 @@ export function createAuth({ database, env, email, core }: AuthDeps) {
       },
     },
     rateLimit: {
-      enabled: true,
+      enabled: env.AUTH_RATE_LIMIT === 'on',
       customStorage: {
         // Better Auth keys contain the client IP; store only a keyed hash of them.
         consume: async (key, rule) => {
@@ -86,7 +86,8 @@ export function createAuth({ database, env, email, core }: AuthDeps) {
     },
     advanced: {
       cookiePrefix: 'tilawah',
-      useSecureCookies: env.NODE_ENV === 'production',
+      // Secure cookies whenever the site is served over HTTPS (also a production build on http://localhost for E2E).
+      useSecureCookies: env.BETTER_AUTH_URL.startsWith('https://'),
       ipAddress: { ipAddressHeaders: ['x-real-ip', 'x-forwarded-for'] },
     },
     plugins: [bearer()],
