@@ -62,6 +62,12 @@ describe('normalizeArabic', () => {
     );
   });
 
+  it('can read the dagger alef as a full alef', () => {
+    expect(normalizeArabic('مَـٰلِكِ')).toBe('ملك');
+    expect(normalizeArabic('مَـٰلِكِ', { daggerAlef: 'alef' })).toBe('مالك');
+    expect(normalizeArabic('ٱلسَّمَـٰوَٰتِ', { daggerAlef: 'alef' })).toBe('السماوات');
+  });
+
   it('splits into words', () => {
     expect(normalizeWords('قُلْ هُوَ ٱللَّهُ أَحَدٌ')).toEqual(['قل', 'هو', 'الله', 'احد']);
     expect(normalizeWords('ۚ')).toEqual([]);

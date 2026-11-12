@@ -9,17 +9,24 @@ function r2Origins(): string {
     .join(' ');
 }
 
+/** Where the speech model is downloaded from when it is not served by this app (see MEMORIZATION.md). */
+function modelOrigin(): string {
+  const base = process.env.NEXT_PUBLIC_SPEECH_MODEL_BASE_URL;
+  return base ? new URL(base).origin : '';
+}
+
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const dev = process.env.NODE_ENV === 'development';
   const r2 = r2Origins();
   const csp = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ''}`,
+    // 'wasm-unsafe-eval': on-device speech recognition compiles WebAssembly (it cannot run JS).
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval'${dev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data: https://lh3.googleusercontent.com",
     `media-src 'self' blob: ${r2}`,
-    `connect-src 'self' ${r2}`,
+    `connect-src 'self' ${r2} ${modelOrigin()}`.trim(),
     "font-src 'self'",
     "worker-src 'self' blob:",
     "object-src 'none'",

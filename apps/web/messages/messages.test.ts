@@ -39,6 +39,13 @@ describe('UI messages', () => {
           used: '1',
           quota: '2',
           duration: '0:05',
+          size: 110,
+          done: 3,
+          total: 15,
+          correct: 12,
+          heard: 3,
+          expected: 1,
+          device: 'WASM',
         });
         expect(String(formatted), `${locale}:${key}`).not.toBe('');
       }

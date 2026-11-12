@@ -16,7 +16,7 @@ const mongo = await MongoMemoryReplSet.create({
 const storageDir = await mkdtemp(join(tmpdir(), 'tilawah-e2e-'));
 const env: NodeJS.ProcessEnv = {
   ...process.env,
-  NODE_ENV: 'production',
+  NODE_ENV: process.env.E2E_NEXT_DEV ? 'development' : 'production',
   NEXT_TELEMETRY_DISABLED: '1',
   NEXT_PUBLIC_APP_URL: BASE,
   API_ALLOWED_ORIGINS: BASE,
@@ -40,7 +40,9 @@ await seed({
 const { getContainer } = await import('../server/container');
 await (await getContainer()).database?.close();
 
-const next = spawn('pnpm', ['exec', 'next', 'start', '-p', PORT], { env, stdio: 'inherit' });
+// E2E_NEXT_DEV=1 runs the development server instead (no build needed; slower first loads).
+const command = process.env.E2E_NEXT_DEV ? 'dev' : 'start';
+const next = spawn('pnpm', ['exec', 'next', command, '-p', PORT], { env, stdio: 'inherit' });
 const stop = async () => {
   next.kill('SIGTERM');
   await mongo.stop();

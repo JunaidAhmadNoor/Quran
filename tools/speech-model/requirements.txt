@@ -1,0 +1,8 @@
+# Versions used to produce the published models (see MANIFEST.json in each model folder).
+optimum[onnxruntime]==2.1.0
+onnx==1.23.2
+onnxruntime==1.31.1
+torch==2.15.0
+transformers==4.57.6
+huggingface_hub==0.36.2
+onnx-ir==1.1.0

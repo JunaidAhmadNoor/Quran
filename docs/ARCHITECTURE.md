@@ -427,16 +427,18 @@ long-lived Node process, surah metadata and text are loaded into memory once at 
 - [x] Everything the site can do has an endpoint (profile, mode, own uploads, stats,
       moderation, roles).
 
-## 14. Memorization (Phase 4 preview)
+## 14. Memorization
+
+Detail, measurements and limits: [MEMORIZATION.md](MEMORIZATION.md).
 
 `packages/recitation` holds the `RecognitionEngine` interface, `FakeEngine`, Arabic
-normalization and the matcher (window of the next 3 words, normalized Levenshtein ≥ 0.8,
-skipped words marked `missed`, unmatched words ignored, hint after 6 s without progress). The
-web engine (transformers.js + `tarteel-ai/whisper-base-ar-quran` converted to ONNX, int8, in a
-Web Worker, WebGPU or WASM) lives in `apps/web`, with model files served from R2 and cached with
-the Cache API. Sessions are saved through `POST /me/memorization/sessions` when signed in and in
-`localStorage` otherwise. The model files (~80–150 MB for base + tiny, measured in Phase 4)
-count against the R2 10 GB budget.
+normalization, the pause-based `AudioChunker` and the matcher (window of the next 3 words,
+normalized Levenshtein ≥ 0.8, skipped words marked `missed`, unmatched words ignored, hints after
+6 s without progress, re-sync after dropped words). The web engine runs
+`tarteel-ai/whisper-base-ar-quran` with transformers.js in a Web Worker, fed by an AudioWorklet:
+on WebGPU an fp32 encoder + 4-bit decoder (142 MB), otherwise uint8 on multithreaded WebAssembly
+(110 MB); the tiny model on low-memory devices. Sessions are saved through `POST /me/memorization/sessions`
+when signed in and in `localStorage` otherwise.
 
 ## 15. Services and limits
 
@@ -587,3 +589,32 @@ change before Phase 2.
   index, so seeking in them can be less precise than in MP3 files.
 - **The memorization page** has the range picker and the hidden-word layout with manual reveal;
   Phase 4 drives the same component from speech recognition.
+
+## 21. What Phase 4 settled or changed
+
+- **Segments end at pauses, not every 2.5 s.** Fixed chunks cut long words ("ٱلصَّمَدُ") in half
+  and cost accuracy (80% → 100% on the same Al-Ikhlas recording). The chunker now ends a segment
+  at a 0.35 s pause and only cuts continuous speech at 5 s, with overlap.
+- **Hints wait for silence.** Recognition takes 0.7–1.6 s per segment, so a hint timer started at
+  the last revealed word fired while the user was still speaking. The matcher's clock is now
+  pushed forward while speech is buffered or being recognized (`touch`), so a hint means a real
+  pause.
+- **Cross-origin isolation site-wide** (`COOP: same-origin`, `COEP: credentialless`): WebAssembly
+  recognition went from about 4 s to about 1.6 s per segment with threads. `credentialless` keeps
+  cross-origin images and audio working without CORP headers. The headers apply to every page,
+  because client-side navigation would otherwise reach the practice page without them.
+- **`'wasm-unsafe-eval'` in the CSP**, and the model origin in `connect-src` when it is hosted
+  separately. ONNX Runtime binaries are self-hosted (`/ort/`), never loaded from a CDN.
+- **Model kept for 30 s after leaving** the practice screen, so "Practise these again" and range
+  changes do not reload it; then the worker is terminated to free its memory.
+- **Listen then repeat uses single-ayah recitations only** (no per-ayah timestamps exist); other
+  ayahs are recited from memory with a notice.
+- **Two model variants per device.** WebGPU gets an fp32 encoder + 4-bit decoder (0.67 s per
+  segment); WebAssembly gets uint8 (1.6 s). The uint8 files stalled on WebGPU in manual testing
+  (no integer kernels). A warm-up run after loading compiles kernels before the first phrase.
+- **Matcher re-sync**: two consecutive heard words matching within the next 10 words (same or next
+  ayah) move the pointer, so dropped words become missed instead of stalling the session; jumps
+  further away are reported as the wrong ayah.
+- **Dagger alef** is compared both dropped and as ا (recognizers write مالك for مَـٰلِكِ): 90.8% →
+  95.4% on the 10-recording evaluation.
+- **The manual reveal component was removed**; the practice screen replaces it.

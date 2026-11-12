@@ -30,6 +30,11 @@ export interface MatcherOptions {
   /** Consecutive unmatched words that must match elsewhere to report the wrong ayah. */
   wrongAyahMinWords?: number;
   /**
+   * How far past the window to look when recognition has dropped words: two consecutive heard
+   * words matching there move the pointer (the words in between become missed).
+   */
+  resyncLookahead?: number;
+  /**
    * Words searched when detecting the wrong ayah, for example the whole surah. Defaults to the
    * practised range itself.
    */
@@ -44,9 +49,15 @@ export interface MatcherSummary {
 
 interface Target extends ExpectedWord {
   normalized: string;
+  /** The same word with the dagger alef read as ا (مَـٰلِكِ → مالك). */
+  spoken: string;
 }
 
-const toTarget = (w: ExpectedWord): Target => ({ ...w, normalized: normalizeArabic(w.text) });
+const toTarget = (w: ExpectedWord): Target => ({
+  ...w,
+  normalized: normalizeArabic(w.text),
+  spoken: normalizeArabic(w.text, { daggerAlef: 'alef' }),
+});
 
 /**
  * Phrases people say before reciting. Their words resemble Quran words ("بالله" is one letter
@@ -65,10 +76,12 @@ export class RecitationMatcher {
   private readonly threshold: number;
   private readonly hintAfterMs: number;
   private readonly wrongAyahMinWords: number;
+  private readonly resyncLookahead: number;
   private pointer = 0;
   private hintLevel: 0 | 1 | 2 = 0;
   private lastProgressAt: number;
   private unmatched: string[] = [];
+  private lastUnmatched: string | null = null;
   private phrase: { words: string[]; next: number } | null = null;
 
   constructor(expected: ExpectedWord[], startedAt: number, options: MatcherOptions = {}) {
@@ -80,6 +93,7 @@ export class RecitationMatcher {
     this.threshold = options.threshold ?? 0.8;
     this.hintAfterMs = options.hintAfterMs ?? 6000;
     this.wrongAyahMinWords = options.wrongAyahMinWords ?? 3;
+    this.resyncLookahead = options.resyncLookahead ?? 10;
     this.lastProgressAt = startedAt;
   }
 
@@ -107,6 +121,20 @@ export class RecitationMatcher {
       }
       const offset = this.matchInWindow(word);
       if (offset === -1) {
+        const jump = this.findResync(word);
+        if (jump !== -1) {
+          // Recognition dropped words: resume after the two words just heard.
+          const missed: number[] = [];
+          for (let i = this.pointer; i < jump - 1; i++) missed.push(i);
+          for (const i of missed) this.states[i] = 'missed';
+          if (missed.length > 0) events.push({ type: 'missed', indices: missed });
+          for (const index of [jump - 1, jump]) {
+            this.states[index] = 'correct';
+            events.push({ type: 'revealed', index, state: 'correct' });
+          }
+          this.advanceTo(jump + 1, now, events);
+          continue;
+        }
         this.startOpeningPhrase(word);
         events.push({ type: 'ignored', heard: word });
         const wrong = this.detectWrongAyah(word);
@@ -122,13 +150,40 @@ export class RecitationMatcher {
       const state = this.hintLevel > 0 ? 'hinted' : 'correct';
       this.states[index] = state;
       events.push({ type: 'revealed', index, state });
-      this.pointer = index + 1;
-      this.hintLevel = 0;
-      this.lastProgressAt = now;
-      this.unmatched = [];
-      if (this.pointer >= this.words.length) events.push({ type: 'complete' });
+      this.advanceTo(index + 1, now, events);
     }
     return events;
+  }
+
+  private advanceTo(pointer: number, now: number, events: MatcherEvent[]): void {
+    this.pointer = pointer;
+    this.hintLevel = 0;
+    this.lastProgressAt = now;
+    this.unmatched = [];
+    this.lastUnmatched = null;
+    if (this.pointer >= this.words.length) events.push({ type: 'complete' });
+  }
+
+  /**
+   * Index j past the window where the previous unmatched word matches word j-1 and `word` matches
+   * word j, or -1. Two in a row are required so one misheard word never jumps ahead.
+   */
+  private findResync(word: string): number {
+    const previous = this.lastUnmatched;
+    this.lastUnmatched = word;
+    if (previous === null) return -1;
+    const start = this.pointer + this.windowSize;
+    const end = Math.min(this.pointer + this.windowSize + this.resyncLookahead, this.words.length);
+    const currentAyah = this.words[this.pointer]?.ayah ?? 0;
+    for (let j = Math.max(start, this.pointer + 1); j < end; j++) {
+      const before = this.words[j - 1];
+      const target = this.words[j];
+      // Dropped words stay within this ayah or run into the next; a further jump is the wrong
+      // ayah, which is reported instead.
+      if (!before || !target || before.ayah > currentAyah + 1) break;
+      if (this.matches(previous, before) && this.matches(word, target)) return j;
+    }
+    return -1;
   }
 
   /** Call periodically; emits a hint after a pause without progress. */
@@ -145,6 +200,14 @@ export class RecitationMatcher {
       return [{ type: 'hint', index: this.pointer, level: 2, text: target.text }];
     }
     return [];
+  }
+
+  /**
+   * The user is still speaking or the recognizer is still working: postpones hints, which are
+   * for a pause without progress, not for recognition latency.
+   */
+  touch(now: number): void {
+    this.lastProgressAt = Math.max(this.lastProgressAt, now);
   }
 
   summary(): MatcherSummary {
@@ -164,6 +227,10 @@ export class RecitationMatcher {
 
   private similar(a: string, b: string): boolean {
     return similarity(a, b) >= this.threshold;
+  }
+
+  private matches(word: string, target: Target): boolean {
+    return this.similar(word, target.normalized) || this.similar(word, target.spoken);
   }
 
   private continuesOpeningPhrase(word: string): boolean {
@@ -189,7 +256,7 @@ export class RecitationMatcher {
     const end = Math.min(this.pointer + this.windowSize, this.words.length);
     for (let i = this.pointer; i < end; i++) {
       const target = this.words[i];
-      if (target && this.similar(word, target.normalized)) return i - this.pointer;
+      if (target && this.matches(word, target)) return i - this.pointer;
     }
     return -1;
   }
@@ -204,7 +271,7 @@ export class RecitationMatcher {
 
     for (let start = 0; start + n <= this.context.length; start++) {
       const run = this.context.slice(start, start + n);
-      const matches = run.every((t, k) => this.similar(recent[k] ?? '', t.normalized));
+      const matches = run.every((t, k) => this.matches(recent[k] ?? '', t));
       const heardAyah = run[0]?.ayah;
       if (matches && heardAyah !== undefined && heardAyah !== expectedAyah) {
         this.unmatched = [];

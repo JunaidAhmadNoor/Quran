@@ -9,6 +9,11 @@ const securityHeaders = [
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'Permissions-Policy', value: 'camera=(), geolocation=(), microphone=(self)' },
+  // Cross-origin isolation lets on-device speech recognition use several CPU threads
+  // (SharedArrayBuffer). "credentialless" still allows cross-origin images and audio, which are
+  // loaded without cookies; browsers without it (Safari) ignore it and run single-threaded.
+  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+  { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
 ];
 
 const config: NextConfig = {

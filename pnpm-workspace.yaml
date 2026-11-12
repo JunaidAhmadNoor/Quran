@@ -8,3 +8,6 @@ allowBuilds:
   esbuild: true
   '@parcel/watcher': false
   '@swc/core': false
+  # Linux/CUDA binary download and a version notice; the CPU runtime ships in the package.
+  onnxruntime-node: false
+  protobufjs: false

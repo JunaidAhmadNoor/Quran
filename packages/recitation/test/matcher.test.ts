@@ -29,6 +29,49 @@ describe('RecitationMatcher', () => {
     expect(revealed(events)).toEqual([0, 1, 2, 3]);
   });
 
+  it('reads the dagger alef as a full alef in short words, as recognizers write them', () => {
+    // مَـٰلِكِ → "مالك" and صِرَٰطَ → "صراط": 0.75 similar without the alef, below the threshold.
+    const m = new RecitationMatcher(
+      fatiha.filter((w) => w.ayah >= 4),
+      0,
+    );
+    const events = m.hear(
+      ['مالك', 'يوم', 'الدين', 'اياك', 'نعبد', 'واياك', 'نستعين', 'اهدنا', 'الصراط'],
+      1,
+    );
+    expect(revealed(events)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+  });
+
+  it('still accepts the standard spelling without the alef (هَـٰذَا → هذا)', () => {
+    const m = new RecitationMatcher(
+      [
+        { ayah: 1, position: 1, text: 'هَـٰذَا' },
+        { ayah: 1, position: 2, text: 'ذَٰلِكَ' },
+      ],
+      0,
+    );
+    expect(revealed(m.hear(['هذا', 'ذلك'], 1))).toEqual([0, 1]);
+  });
+
+  it('catches up when recognition drops several words in a row (fast recitation)', () => {
+    const m = new RecitationMatcher(ikhlas, 0);
+    m.hear(['قل', 'هو'], 1);
+    // "الله احد الله" were not recognized; the reciter is already at "الصمد لم".
+    const events = m.hear(['الصمد', 'لم'], 2);
+    expect(events).toContainEqual({ type: 'missed', indices: [2, 3, 4] });
+    expect(revealed(events)).toEqual([5, 6]);
+    expect(m.nextIndex).toBe(7);
+    expect(revealed(m.hear(['يلد'], 3))).toEqual([7]);
+  });
+
+  it('does not jump ahead on a single misheard word', () => {
+    const m = new RecitationMatcher(ikhlas, 0);
+    m.hear(['قل', 'هو'], 1);
+    expect(revealed(m.hear(['يلد'], 2))).toEqual([]); // matches word 8, but alone
+    expect(m.nextIndex).toBe(2);
+    expect(revealed(m.hear(['الله'], 3))).toEqual([2]); // back on track
+  });
+
   it('rejects words that are too different', () => {
     const m = new RecitationMatcher(ikhlas, 0);
     expect(m.hear(['كتاب'], 1)).toEqual([{ type: 'ignored', heard: 'كتاب' }]);
@@ -94,6 +137,15 @@ describe('RecitationMatcher', () => {
     expect(m.tick(11_999)).toEqual([]);
     expect(m.tick(12_000)[0]).toMatchObject({ type: 'hint', level: 2, text: ikhlas[0]?.text });
     expect(m.tick(20_000)).toEqual([]);
+  });
+
+  it('gives no hint while the user is still speaking or the recognizer is still working', () => {
+    const m = new RecitationMatcher(ikhlas, 0);
+    m.touch(4000); // speech heard until 4 s
+    expect(m.tick(9999)).toEqual([]);
+    expect(m.tick(10_000)[0]).toMatchObject({ type: 'hint', level: 1 });
+    m.touch(3000); // an older activity never moves the clock back
+    expect(m.tick(16_000)[0]).toMatchObject({ type: 'hint', level: 2 });
   });
 
   it('records a hinted word as a mistake and resets the timer on progress', () => {

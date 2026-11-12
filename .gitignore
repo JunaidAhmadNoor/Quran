@@ -18,3 +18,7 @@ blob-report/
 .DS_Store
 *.log
 .data/
+
+# Speech runtime and models (copied/converted locally; production models are served from R2)
+apps/web/public/ort/
+apps/web/public/models/

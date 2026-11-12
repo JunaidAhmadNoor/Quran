@@ -7,16 +7,16 @@ in-memory database (cached afterwards, also in CI).
 
 ## Layers
 
-| Layer                            | Tool                           | Where                           | Run alone                                |
-| -------------------------------- | ------------------------------ | ------------------------------- | ---------------------------------------- |
-| Contract                         | Vitest + Zod                   | `packages/contracts/test`       | `pnpm --filter @tilawah/contracts test`  |
-| Quran data integrity             | Vitest                         | `packages/quran-data/test`      | `pnpm --filter @tilawah/quran-data test` |
-| Normalization + matcher (unit)   | Vitest                         | `packages/recitation/test`      | `pnpm --filter @tilawah/recitation test` |
-| Database indexes                 | Vitest + mongodb-memory-server | `packages/db/test`              | `pnpm --filter @tilawah/db test`         |
-| Services and rules               | Vitest + mongodb-memory-server | `packages/core/test`            | `pnpm --filter @tilawah/core test`       |
-| R2                               | aws-sdk-client-mock            | `packages/core/test/r2.test.ts` | (part of core)                           |
-| API route handlers (integration) | Vitest + mongodb-memory-server | `apps/web/test`                 | `pnpm --filter @tilawah/web test`        |
-| Components, E2E, accessibility   | RTL + MSW, Playwright, axe     | Phase 3                         | —                                        |
+| Layer                            | Tool                           | Where                                 | Run alone                                |
+| -------------------------------- | ------------------------------ | ------------------------------------- | ---------------------------------------- |
+| Contract                         | Vitest + Zod                   | `packages/contracts/test`             | `pnpm --filter @tilawah/contracts test`  |
+| Quran data integrity             | Vitest                         | `packages/quran-data/test`            | `pnpm --filter @tilawah/quran-data test` |
+| Normalization + matcher (unit)   | Vitest                         | `packages/recitation/test`            | `pnpm --filter @tilawah/recitation test` |
+| Database indexes                 | Vitest + mongodb-memory-server | `packages/db/test`                    | `pnpm --filter @tilawah/db test`         |
+| Services and rules               | Vitest + mongodb-memory-server | `packages/core/test`                  | `pnpm --filter @tilawah/core test`       |
+| R2                               | aws-sdk-client-mock            | `packages/core/test/r2.test.ts`       | (part of core)                           |
+| API route handlers (integration) | Vitest + mongodb-memory-server | `apps/web/test`                       | `pnpm --filter @tilawah/web test`        |
+| Components, E2E, accessibility   | RTL + MSW, Playwright, axe     | `apps/web/components`, `apps/web/e2e` | `pnpm --filter @tilawah/web e2e`         |
 
 Run one file: `pnpm --filter @tilawah/core exec vitest run test/uploads.test.ts`.
 Watch mode: `pnpm --filter @tilawah/core exec vitest`.
@@ -33,13 +33,16 @@ block is intact; 114 surahs and 6,236 ayahs; the generated files are up to date;
 generated words reproduces every source line byte-for-byte (so the derivation changes
 nothing); the bismillah split keeps each surah's own spelling (95 and 97 carry a shadda).
 
-**Recitation (63 tests, 98% lines).** 42 table-driven normalization cases (harakat, tatweel,
+**Recitation (87 tests).** 42 table-driven normalization cases (harakat, tatweel,
 alef forms, ة/ه, ى/ي, hamza carriers, Uthmani small waw/yeh, pause marks, Farsi letters,
 punctuation). The matcher against the real Tanzil text: exact match, small pronunciation
 differences, too-different words rejected, skipped word marked missed, window of 3, repeated
 words and isti'adha ignored, the bismillah said before a surah ignored, أعوذ still matched when
 it is the expected word, wrong ayah detected (inside the range and in the wider surah), hints at
-6 s and 12 s with a fake clock, hinted words recorded, completion and summary.
+6 s and 12 s with a fake clock, hints postponed while speech is still being heard, hinted words
+recorded, completion and summary, the dagger alef read both ways, re-sync after dropped words (and
+no jump on one misheard word or to another ayah). The pause-based `AudioChunker`, `FakeEngine`,
+`dropOverlap` and the echo filter (`freshWords`).
 
 **Database (4 tests).** Unique indexes the rules depend on, TTL indexes, duplicate likes
 rejected, transactions available.
@@ -93,7 +96,9 @@ the end of a track) and the player bar (keyboard play/pause, speed menu, repeat,
 full-screen view). The upload form: an impossible ayah range shows the designed error, a video
 file is refused before anything is sent, and the full path presign → direct XHR PUT to storage
 (with the CORS preflight R2 requires) → confirm → "waiting for review", plus the quota message.
-The word-reveal component: placeholders keep each word's width, words reveal in order. The UI
+The practice screen with `FakeEngine`: modes, live reveal and counter, check mode, finish early,
+summary and review list, "Practise these again", saving to the API (positions only) and to
+`localStorage`, listen mode without a recording, the player paused first. The UI
 messages: Arabic and Urdu have exactly the English keys, every message is valid ICU and the
 placeholders match. The recitation list: two lists with the same data source keep separate
 caches (regression test for the playlist page once showing liked recitations). The recorder,
@@ -119,7 +124,14 @@ accounts, a real 12-second MP3):
 failure names the page. axe runs on Chromium: its results depend on the DOM, and it occasionally
 hung inside WebKit; WebKit and the phone project run every user flow.
 
-Memorization with a scripted fake speech engine is a Phase 4 test.
+- memorization with a scripted fake speech engine: a signed-in session is saved and shows in
+  progress, "Practise these again" opens the right range; a signed-out session stays in the
+  browser.
+
+**Real speech model (opt-in).** `E2E_SPEECH_WAV=<wav> pnpm e2e --project=chromium speech-model`
+makes a WAV Chromium's microphone and requires ≥ 80% on Al-Ikhlas with no CSP errors.
+`scripts/evaluate-speech.mjs` measures 10 recordings on WebGPU or WebAssembly; results are in
+[MEMORIZATION.md](MEMORIZATION.md).
 
 ## Screenshots
 

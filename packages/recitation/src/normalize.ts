@@ -19,8 +19,17 @@ const ARABIC_LETTER = /[ء-غف-ي]/;
  * - unifies alef forms (أ إ آ ٱ → ا) and hamza carriers (ؤ → و, ئ → ي);
  * - treats ة as ه and ى as ي;
  * - turns punctuation, digits, pause signs and anything non-Arabic into word breaks.
+ *
+ * With `daggerAlef: 'alef'` the dagger alef becomes ا instead (مَـٰلِكِ → مالك, as recognizers
+ * write it); the matcher compares against both forms, because some words are written without the
+ * alef in standard spelling (هَـٰذَا → هذا).
  */
-export function normalizeArabic(input: string): string {
+export function normalizeArabic(
+  input: string,
+  options: { daggerAlef?: 'drop' | 'alef' } = {},
+): string {
+  // The dagger alef is a long ā: spoken (and often written in standard spelling) as a full alef.
+  if (options.daggerAlef === 'alef') input = input.replace(/\u0670/g, 'ا');
   // NFD splits أ إ آ ؤ ئ into base letter + combining hamza/madda, which the next step drops.
   const decomposed = input.normalize('NFD').replace(/\p{Mn}/gu, '');
   let out = '';

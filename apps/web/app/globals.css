@@ -105,6 +105,25 @@
     opacity: 0;
   }
 }
+/* Memorization: a revealed word rises into place; a heard-but-wrong word flashes an underline. */
+@keyframes word-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+    filter: blur(4px);
+  }
+}
+@keyframes miss-pulse {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
 @layer utilities {
   .animate-page {
     animation: fade-in 150ms var(--ease-mushaf) both;
