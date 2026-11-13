@@ -35,6 +35,11 @@ export function AuthForm({
   const params = useSearchParams();
   const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
+  /** Sign-up done, verification email sent to this address. */
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  /** Sign-in refused until this address is verified. */
+  const [unverified, setUnverified] = useState<string | null>(null);
+  const [resent, setResent] = useState(false);
   const isSignUp = mode === 'sign-up';
   const form = useForm<{ name?: string; email: string; password: string }>({
     resolver: zodResolver(isSignUp ? SignUp : SignIn),
@@ -44,13 +49,20 @@ export function AuthForm({
 
   const submit = form.handleSubmit(async (values) => {
     setError(null);
+    setUnverified(null);
+    setResent(false);
     const result = isSignUp
       ? await authClient.signUp.email({
           name: values.name ?? '',
           email: values.email,
           password: values.password,
+          callbackURL: next, // where the verification link lands, signed in
         })
       : await authClient.signIn.email({ email: values.email, password: values.password });
+    if (result.error?.code === 'EMAIL_NOT_VERIFIED') {
+      setUnverified(values.email);
+      return;
+    }
     if (result.error) {
       setError(
         result.error.status === 422 || result.error.code === 'USER_ALREADY_EXISTS'
@@ -61,10 +73,31 @@ export function AuthForm({
       );
       return;
     }
+    // Sign-up without a session: the account waits for its email to be verified.
+    if (isSignUp && !result.data.token) {
+      setSentTo(values.email);
+      return;
+    }
     qc.setQueryData(['me'], await api.getMe());
     router.push(next);
     router.refresh();
   });
+
+  const resend = async () => {
+    if (!unverified) return;
+    const result = await authClient.sendVerificationEmail({ email: unverified, callbackURL: next });
+    if (result.error) setError(t('generic'));
+    else setResent(true);
+  };
+
+  if (sentTo) {
+    return (
+      <div role="status" className="space-y-3 rounded-card border border-border bg-surface p-6">
+        <h2 className="font-display text-xl text-text">{t('verifyTitle')}</h2>
+        <p className="text-muted">{t('verifySent', { email: sentTo })}</p>
+      </div>
+    );
+  }
 
   const errors = form.formState.errors;
   return (
@@ -127,6 +160,21 @@ export function AuthForm({
           <p role="alert" className="text-sm text-danger">
             {error}
           </p>
+        ) : null}
+        {unverified ? (
+          <div
+            role="alert"
+            className="space-y-2 rounded-control border border-border bg-surface p-3 text-sm"
+          >
+            <p className="text-text">
+              {resent ? t('resent', { email: unverified }) : t('notVerified')}
+            </p>
+            {!resent ? (
+              <Button type="button" variant="link" onClick={() => void resend()}>
+                {t('resend')}
+              </Button>
+            ) : null}
+          </div>
         ) : null}
         <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
           {isSignUp ? t('signUpTitle') : t('signInTitle')}

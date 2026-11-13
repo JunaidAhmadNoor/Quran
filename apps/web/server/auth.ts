@@ -4,7 +4,9 @@ import type { Core } from '@tilawah/core';
 import type { Database } from '@tilawah/db';
 import { betterAuth } from 'better-auth';
 import { mongodbAdapter } from 'better-auth/adapters/mongodb';
+import { APIError } from 'better-auth/api';
 import { bearer } from 'better-auth/plugins';
+import { ObjectId } from 'mongodb';
 import { resetPasswordEmail, verificationEmail, type EmailPort } from './email';
 import type { Env } from './env';
 
@@ -20,6 +22,17 @@ export function createAuth({ database, env, email, core }: AuthDeps) {
     env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
       ? { google: { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET } }
       : {};
+
+  // Ordinary users must verify their email before signing in; staff are exempt. Only enforced when
+  // email can actually be sent (EMAIL_TRANSPORT=none is for tests and offline development).
+  const requireVerifiedEmail = env.EMAIL_TRANSPORT !== 'none';
+  const mayStartSession = async (userId: string): Promise<boolean> => {
+    if (!requireVerifiedEmail || !ObjectId.isValid(userId)) return true;
+    const user = await database.db
+      .collection<{ role?: string; emailVerified?: boolean }>('users')
+      .findOne({ _id: new ObjectId(userId) }, { projection: { role: 1, emailVerified: 1 } });
+    return user?.role !== 'user' || user.emailVerified === true;
+  };
 
   return betterAuth({
     appName: 'Tilawah',
@@ -47,12 +60,15 @@ export function createAuth({ database, env, email, core }: AuthDeps) {
       enabled: true,
       minPasswordLength: 8,
       revokeSessionsOnPasswordReset: true,
+      // With verification required, sign-up does not sign in: the verification link does.
+      autoSignIn: !requireVerifiedEmail,
       sendResetPassword: async ({ user, url }) => {
         await email.send({ to: user.email, ...resetPasswordEmail(url) });
       },
     },
     emailVerification: {
-      sendOnSignUp: env.EMAIL_TRANSPORT !== 'none',
+      sendOnSignUp: requireVerifiedEmail,
+      autoSignInAfterVerification: true,
       sendVerificationEmail: async ({ user, url }) => {
         await email.send({ to: user.email, ...verificationEmail(url) });
       },
@@ -62,8 +78,14 @@ export function createAuth({ database, env, email, core }: AuthDeps) {
       // Collect only what the data model lists: no IP address or user agent on sessions.
       session: {
         create: {
-          before: (session) =>
-            Promise.resolve({ data: { ...session, ipAddress: null, userAgent: null } }),
+          before: async (session) => {
+            if (!(await mayStartSession(session.userId)))
+              throw new APIError('FORBIDDEN', {
+                code: 'EMAIL_NOT_VERIFIED',
+                message: 'Verify your email address before signing in.',
+              });
+            return { data: { ...session, ipAddress: null, userAgent: null } };
+          },
         },
       },
     },

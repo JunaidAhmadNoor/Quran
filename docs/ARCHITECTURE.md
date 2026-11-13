@@ -618,3 +618,9 @@ change before Phase 2.
 - **Dagger alef** is compared both dropped and as ا (recognizers write مالك for مَـٰلِكِ): 90.8% →
   95.4% on the 10-recording evaluation.
 - **The manual reveal component was removed**; the practice screen replaces it.
+- **Email verification is required to sign in for ordinary users** (`role: user`) whenever email
+  is configured (`EMAIL_TRANSPORT=brevo`). Sign-up sends the link and does not sign in; the link
+  verifies and signs in. A blocked sign-in returns `403 EMAIL_NOT_VERIFIED` and the form offers to
+  resend the link. Moderators and admins are exempt. Google accounts arrive verified. With
+  `EMAIL_TRANSPORT=none` (tests, offline development) nothing can be verified, so it is not enforced.
+

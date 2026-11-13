@@ -329,7 +329,12 @@
     "resetDone": "Your password has been changed. Sign in with it now.",
     "invalid": "The email or password is not correct.",
     "exists": "An account with this email already exists.",
-    "generic": "Something went wrong. Please try again."
+    "generic": "Something went wrong. Please try again.",
+    "verifyTitle": "Check your email",
+    "verifySent": "We sent a verification link to {email}. Open it to activate your account and sign in.",
+    "notVerified": "Verify your email address before signing in. Check your inbox, or send the link again.",
+    "resend": "Send the link again",
+    "resent": "A new link is on its way to {email}."
   },
   "memorize": {
     "title": "Memorize",

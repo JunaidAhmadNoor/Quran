@@ -40,6 +40,7 @@ describe('UI messages', () => {
           quota: '2',
           duration: '0:05',
           size: 110,
+          email: 'a@b.c',
           last: 4,
           done: 3,
           total: 15,
