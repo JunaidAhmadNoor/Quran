@@ -113,6 +113,17 @@
     filter: blur(4px);
   }
 }
+/* Landing page: the practice-screen picture. */
+@keyframes demo-hide {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes demo-progress {
+  from {
+    transform: scaleX(0);
+  }
+}
 @keyframes miss-pulse {
   0% {
     opacity: 0;

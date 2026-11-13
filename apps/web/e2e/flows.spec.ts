@@ -187,3 +187,16 @@ test('a reciter records in the browser and uploads the recording', async ({
   expect(uploaded).toMatchObject({ status: 'pending', stream: { contentType: 'audio/webm' } });
   expect(uploaded?.durationSec).toBeGreaterThanOrEqual(4);
 });
+
+test('signing out stops playback and clears the queue and history', async ({ page }) => {
+  await signIn(page, accounts.listener);
+  await page.goto('/surahs/112');
+  await page.getByRole('button', { name: /^Play: Al-Ikhlas/ }).click();
+  const player = page.getByRole('region', { name: 'Audio player' });
+  await expect(player.getByRole('button', { name: 'Pause' })).toBeVisible();
+  await signOut(page);
+  await expect(player).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'Continue listening' })).toBeHidden();
+  const saved = await page.evaluate(() => localStorage.getItem('tilawah-player') ?? '');
+  expect(saved).not.toContain('Al-Ikhlas');
+});

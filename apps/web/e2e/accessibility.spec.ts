@@ -16,7 +16,7 @@ const PUBLIC = [
   'RECITATION',
   'RECITER',
 ];
-const SIGNED_IN = ['/library', '/studio', '/upload', '/settings', '/moderation'];
+const SIGNED_IN = ['/', '/library', '/studio', '/upload', '/settings', '/moderation'];
 
 async function seriousViolations(page: Page, path: string): Promise<string[]> {
   await page.goto(path);

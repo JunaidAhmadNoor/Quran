@@ -3,6 +3,7 @@
 // between pages (or switching language) never interrupts playback.
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef } from 'react';
+import { useMe } from '@/hooks/use-me';
 import { toast } from 'sonner';
 import { ApiError, api } from '@/lib/api';
 import { currentTrack, toTrack, usePlayer, type PlayerState, type Track } from '@/lib/player-store';
@@ -43,6 +44,13 @@ async function freshTrack(track: Track): Promise<Track> {
 
 export function AudioProvider() {
   const t = useTranslations('player');
+  // The queue belongs to the signed-in account (see PlayerState.bindTo).
+  const meId = useMe().data?.id ?? null;
+  const account = useRef({ id: meId, ready: false });
+  useEffect(() => {
+    account.current.id = meId;
+    if (account.current.ready) usePlayer.getState().bindTo(meId);
+  }, [meId]);
   // Kept in a ref: the effect below must run once, not again when the language changes.
   const errorMessage = useRef(t('error'));
   useEffect(() => {
@@ -191,6 +199,8 @@ export function AudioProvider() {
     };
     void (async () => {
       await usePlayer.persist.rehydrate();
+      usePlayer.getState().bindTo(account.current.id);
+      account.current.ready = true;
       await pruneMissing().catch(() => undefined);
       if (life.disposed) return;
       life.unsubscribe = usePlayer.subscribe(onChange);

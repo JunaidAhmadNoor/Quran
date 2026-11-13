@@ -61,6 +61,13 @@ export interface PlayerState {
   /** A seek the audio element has not applied yet. */
   pendingSeek: number | null;
   history: HistoryEntry[];
+  /** The account this queue and history belong to (null: signed out). */
+  owner: string | null;
+  /**
+   * Called with the signed-in account: another account (or signing out) stops playback and clears
+   * the queue and history, so nobody hears or sees what the previous account was playing.
+   */
+  bindTo: (owner: string | null) => void;
   playQueue: (tracks: Track[], startIndex?: number, startAt?: number) => void;
   toggle: () => void;
   setPlaying: (playing: boolean) => void;
@@ -101,6 +108,22 @@ export const usePlayer = create<PlayerState>()(
       expanded: false,
       pendingSeek: null,
       history: [],
+      owner: null,
+
+      bindTo: (owner) => {
+        if (get().owner === owner) return;
+        set({
+          owner,
+          queue: [],
+          index: 0,
+          history: [],
+          playing: false,
+          position: 0,
+          duration: 0,
+          expanded: false,
+          pendingSeek: null,
+        });
+      },
 
       playQueue: (tracks, startIndex = 0, startAt = 0) => {
         const track = tracks[startIndex];
@@ -206,6 +229,7 @@ export const usePlayer = create<PlayerState>()(
         rate: s.rate,
         repeat: s.repeat,
         history: s.history,
+        owner: s.owner,
       }),
     },
   ),

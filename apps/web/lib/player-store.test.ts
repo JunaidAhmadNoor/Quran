@@ -91,4 +91,23 @@ describe('player store', () => {
     });
     expect(usePlayer.getState().history.map((h) => h.track.id)).toEqual(['b']);
   });
+
+  it('clears the queue and history when another account signs in or the user signs out', () => {
+    const p = usePlayer.getState();
+    p.bindTo('user-a');
+    p.playQueue([track('1'), track('2')]);
+    expect(usePlayer.getState().history).toHaveLength(1);
+    usePlayer.getState().bindTo('user-a'); // same account: kept
+    expect(usePlayer.getState().queue).toHaveLength(2);
+    usePlayer.getState().bindTo(null); // signed out
+    expect(usePlayer.getState()).toMatchObject({ queue: [], history: [], playing: false });
+  });
+
+  it('forgets recitations that no longer exist', () => {
+    usePlayer.getState().playQueue([track('1'), track('2')], 1);
+    usePlayer.getState().forget(['2']);
+    expect(usePlayer.getState().queue.map((t) => t.id)).toEqual(['1']);
+    expect(usePlayer.getState().playing).toBe(false);
+    expect(usePlayer.getState().history.map((h) => h.track.id)).toEqual([]);
+  });
 });
