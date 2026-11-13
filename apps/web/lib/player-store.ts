@@ -49,7 +49,7 @@ interface HistoryEntry {
   at: number;
 }
 
-interface PlayerState {
+export interface PlayerState {
   queue: Track[];
   index: number;
   playing: boolean;
@@ -75,6 +75,8 @@ interface PlayerState {
   replaceTrack: (track: Track) => void;
   /** Stops playback and empties the queue. The history (continue listening) is kept. */
   close: () => void;
+  /** Removes recitations that no longer exist (deleted, removed, or a reset database). */
+  forget: (ids: readonly string[]) => void;
   onEnded: () => 'restart' | 'next' | 'stop';
 }
 
@@ -168,6 +170,19 @@ export const usePlayer = create<PlayerState>()(
           duration: 0,
           expanded: false,
           pendingSeek: null,
+        }),
+      forget: (ids) =>
+        set((s) => {
+          const gone = new Set(ids);
+          const current = currentTrack(s);
+          const queue = s.queue.filter((t) => !gone.has(t.id));
+          const kept = current && !gone.has(current.id) ? queue.indexOf(current) : -1;
+          return {
+            queue,
+            index: Math.max(0, kept),
+            ...(kept === -1 ? { playing: false, position: 0, duration: 0, pendingSeek: null } : {}),
+            history: s.history.filter((h) => !gone.has(h.track.id)),
+          };
         }),
       replaceTrack: (track) =>
         set((s) => ({ queue: s.queue.map((t) => (t.id === track.id ? track : t)) })),

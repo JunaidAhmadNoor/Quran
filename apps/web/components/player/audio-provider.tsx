@@ -4,8 +4,8 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { api } from '@/lib/api';
-import { currentTrack, toTrack, usePlayer, type Track } from '@/lib/player-store';
+import { ApiError, api } from '@/lib/api';
+import { currentTrack, toTrack, usePlayer, type PlayerState, type Track } from '@/lib/player-store';
 
 /** Seconds of listening after which a play is counted (or half the track when shorter). */
 const PLAY_THRESHOLD_SEC = 30;
@@ -13,6 +13,25 @@ const URL_SAFETY_MS = 60_000;
 
 const isExpired = (t: Track) =>
   t.streamExpiresAt !== null && Date.parse(t.streamExpiresAt) - Date.now() < URL_SAFETY_MS;
+
+/**
+ * The queue and history are restored from this browser; recitations deleted since (or a reset
+ * database) would show and fail to play. Checks them once and forgets the missing ones.
+ */
+async function pruneMissing(): Promise<void> {
+  const { queue, history } = usePlayer.getState();
+  const ids = [...new Set([...queue.map((t) => t.id), ...history.map((h) => h.track.id)])];
+  const results = await Promise.all(
+    ids.slice(0, 30).map((id) =>
+      api.getRecitation({ params: { id } }).then(
+        () => null,
+        (e: unknown) => (e instanceof ApiError && e.status === 404 ? id : null),
+      ),
+    ),
+  );
+  const gone = results.filter((id): id is string => id !== null);
+  if (gone.length > 0) usePlayer.getState().forget(gone);
+}
 
 /** Signed URLs expire; fetch a fresh one shortly before that. */
 async function freshTrack(track: Track): Promise<Track> {
@@ -132,7 +151,7 @@ export function AudioProvider() {
     }
 
     // React to store changes: track, play/pause, rate, seeks.
-    const unsubscribe = usePlayer.subscribe((state, prev) => {
+    const onChange = (state: PlayerState, prev: PlayerState) => {
       const track = currentTrack(state);
       if (!track) {
         // Player closed: stop, release the stream, clear the lock-screen controls.
@@ -161,14 +180,28 @@ export function AudioProvider() {
       if (!state.playing && !audio.paused) audio.pause();
       if ('mediaSession' in navigator)
         navigator.mediaSession.playbackState = state.playing ? 'playing' : 'paused';
-    });
+    };
 
-    // Restore the queue from localStorage; the subscriber loads the last track, paused, at its
-    // saved position (`playing` is never persisted).
-    void usePlayer.persist.rehydrate();
+    // Restore the queue from localStorage, forget recitations that no longer exist, then load the
+    // current track (paused, at its saved position: `playing` is never persisted) and follow
+    // changes. Anything chosen meanwhile is picked up by the same initial load.
+    const life: { unsubscribe: () => void; disposed: boolean } = {
+      unsubscribe: () => undefined,
+      disposed: false,
+    };
+    void (async () => {
+      await usePlayer.persist.rehydrate();
+      await pruneMissing().catch(() => undefined);
+      if (life.disposed) return;
+      life.unsubscribe = usePlayer.subscribe(onChange);
+      const state = usePlayer.getState();
+      const track = currentTrack(state);
+      if (track) load(track, state.pendingSeek ?? state.position);
+    })();
 
     return () => {
-      unsubscribe();
+      life.disposed = true;
+      life.unsubscribe();
       audio.pause();
       audio.removeEventListener('timeupdate', onTime);
       audio.removeEventListener('ended', onEnded);
