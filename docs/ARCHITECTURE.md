@@ -627,7 +627,13 @@ change before Phase 2.
   in the header, with no mode switch or upload button; listener pages (home, library, studio,
   upload, memorize) redirect them to `/moderation`. Public surah and recitation pages stay
   reachable for context.
-- **Admin Users page** (`/admin/users`): find an account by email, then turn "Verified reciter" on
-  or off and change the role (an admin cannot change their own role). Uses the existing
-  `GET /admin/users` and `PATCH /admin/users/{id}` endpoints.
+- **Admin Users page** (`/admin/users`): overview totals (`GET /admin/stats`: accounts, reciters,
+  staff, unverified emails, recitations by status, open reports, plays this week, stored audio)
+  and every account newest first (`GET /admin/users`: search in name or email, role filter,
+  recitation counts, cursor pages). "Manage" grants the verified badge or changes the role (an
+  admin cannot change their own role).
+- **Fewer database round trips per request.** Better Auth's session check is cached in a signed
+  cookie for 5 minutes (role and mode are still read fresh), and the user record is loaded once per
+  page instead of three times: a signed-in page went from 7 to 4 queries. With a remote database
+  every round trip counts: keep Railway and Atlas in the same region.
 

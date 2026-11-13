@@ -2,6 +2,7 @@ import type { RecitationStatus } from '@tilawah/contracts';
 import type { ReportDoc } from '@tilawah/db';
 import { requireAdmin, requireStaff, type Actor } from '../actor';
 import type { C, Out, ServiceDeps } from '../context';
+import { DAY_MS, utcDay } from '../clock';
 import { decodeCursor, filtersHash, page } from '../cursor';
 import { conflict, notFound } from '../errors';
 import type { Presenter } from '../presenter';
@@ -159,10 +160,54 @@ export class AdminService {
     private readonly presenter: Presenter,
   ) {}
 
-  async findUsers(actor: Actor | null, query: Out<typeof C.FindUsersQuery>) {
+  async listUsers(
+    actor: Actor | null,
+    query: Out<typeof C.ListUsersQuery>,
+  ): Promise<Out<typeof C.AdminUserPage>> {
     requireAdmin(actor);
-    const user = await this.deps.repos.users.findByEmail(query.email);
-    return { items: user ? [this.presenter.userAccount(user)] : [] };
+    const { users, recitations } = this.deps.repos;
+    const hash = filtersHash({ q: query.q, role: query.role });
+    const rows = await users.listForAdmin(
+      { q: query.q, role: query.role },
+      decodeCursor(query.cursor, hash),
+      query.limit,
+    );
+    const result = page(rows, query.limit, (last) => cursorOf('createdAt', hash, last));
+    const counts = await recitations.statusCountsByUploader(
+      result.rows.map((u) => u._id.toHexString()),
+    );
+    return {
+      items: result.rows.map((u) => ({
+        ...this.presenter.userAccount(u),
+        recitations: counts.get(u._id.toHexString()) ?? {
+          approved: 0,
+          pending: 0,
+          rejected: 0,
+          removed: 0,
+        },
+      })),
+      nextCursor: result.nextCursor,
+    };
+  }
+
+  async stats(actor: Actor | null): Promise<Out<typeof C.AdminStats>> {
+    requireAdmin(actor);
+    const { users, recitations, reports, plays } = this.deps.repos;
+    const now = this.deps.clock.now();
+    const since = new Date(now.getTime() - 7 * DAY_MS);
+    const [userCounts, site, openReports, playsLast7Days] = await Promise.all([
+      users.adminCounts(since),
+      recitations.siteTotals(),
+      reports.countOpen(),
+      plays.totalSince(utcDay(since)),
+    ]);
+    return {
+      users: userCounts,
+      recitations: site.counts,
+      openReports,
+      playsLast7Days,
+      storageBytes: site.storageBytes,
+    };
   }
 
   async updateUser(actor: Actor | null, id: string, body: Out<typeof C.UpdateUserBody>) {

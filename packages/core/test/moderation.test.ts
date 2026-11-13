@@ -137,8 +137,8 @@ describe('admin', () => {
   it('grants the verified badge, which also turns on the reciter profile', async () => {
     const { actor: admin } = await createUser(t, { role: 'admin' });
     const { user } = await createUser(t);
-    const found = await t.core.admin.findUsers(admin, { email: user.email.toUpperCase() });
-    expect(found.items).toHaveLength(1);
+    const found = await t.core.admin.listUsers(admin, { q: user.email.toUpperCase(), limit: 20 });
+    expect(found.items.map((u) => u.id)).toEqual([user._id.toHexString()]);
     const updated = await t.core.admin.updateUser(admin, user._id.toHexString(), {
       verifiedReciter: true,
     });
@@ -158,5 +158,48 @@ describe('admin', () => {
     expect((await t.core.admin.updateUser(admin, moderator.userId, { role: 'user' })).role).toBe(
       'user',
     );
+  });
+
+  it('lists every account newest first, with search, role filter, counts and pages', async () => {
+    const { actor: admin } = await createUser(t, { role: 'admin', name: 'Admin Zed' });
+    const { user: reciter } = await createUser(t, { reciter: true, name: 'Hafiz Qari' });
+    await insertRecitation(t, reciter, { status: 'approved' });
+    await insertRecitation(t, reciter, { status: 'pending' });
+    await createUser(t, { role: 'moderator', name: 'Mod Person' });
+
+    const all = await t.core.admin.listUsers(admin, { limit: 2 });
+    expect(all.items).toHaveLength(2);
+    expect(all.nextCursor).not.toBeNull();
+    const next = await t.core.admin.listUsers(admin, {
+      limit: 2,
+      cursor: all.nextCursor ?? undefined,
+    });
+    expect(next.items.map((u) => u.id)).not.toContain(all.items[0]?.id);
+
+    const found = await t.core.admin.listUsers(admin, { q: 'hafiz', limit: 20 });
+    expect(found.items).toHaveLength(1);
+    expect(found.items[0]?.recitations).toEqual({
+      approved: 1,
+      pending: 1,
+      rejected: 0,
+      removed: 0,
+    });
+    // Regex characters in the search are taken literally.
+    expect((await t.core.admin.listUsers(admin, { q: '.*', limit: 20 })).items).toHaveLength(0);
+
+    const mods = await t.core.admin.listUsers(admin, { role: 'moderator', limit: 50 });
+    expect(mods.items.every((u) => u.role === 'moderator')).toBe(true);
+    expect(mods.items.length).toBeGreaterThan(0);
+  });
+
+  it('gives admins site totals; nobody else', async () => {
+    const { actor: admin } = await createUser(t, { role: 'admin' });
+    const { actor: moderator } = await createUser(t, { role: 'moderator' });
+    const stats = await t.core.admin.stats(admin);
+    expect(stats.users.total).toBeGreaterThan(0);
+    expect(stats.users.admins).toBeGreaterThan(0);
+    expect(stats.recitations.approved).toBeGreaterThanOrEqual(0);
+    expect(await errorCode(t.core.admin.stats(moderator))).toBe('FORBIDDEN');
+    expect(await errorCode(t.core.admin.listUsers(moderator, { limit: 20 }))).toBe('FORBIDDEN');
   });
 });

@@ -212,19 +212,20 @@ test('staff see only their work; an admin verifies a reciter', async ({ page }) 
   await expect(page).toHaveURL(/\/moderation$/);
 
   await page.goto('/admin/users');
-  await page.getByLabel('Email address').fill(accounts.listener);
-  await page.getByRole('button', { name: 'Find' }).click();
-  const verified = page.getByRole('checkbox', { name: /Verified reciter/ });
-  await expect(verified).not.toBeChecked();
-  await verified.check();
-  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByText('Accounts', { exact: true })).toBeVisible(); // overview cards
+  await page.getByRole('searchbox', { name: 'Search name or email' }).fill(accounts.listener);
+  const row = page.getByRole('row').filter({ hasText: accounts.listener });
+  await expect(row).toHaveCount(1);
+  await row.getByRole('button', { name: 'Manage' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Manage account' });
+  await dialog.getByRole('checkbox', { name: /Verified reciter/ }).check();
+  await dialog.getByRole('button', { name: 'Save changes' }).click();
   await expect(page.getByText('Changes saved.')).toBeVisible();
+  await expect(row.getByLabel('Verified reciter')).toBeVisible();
 
-  const res = await page.request.get(`/api/v1/admin/users?email=${accounts.listener}`);
-  const { items } = (await res.json()) as { items: { verifiedReciter: boolean }[] };
-  expect(items[0]?.verifiedReciter).toBe(true);
   // Undo, so other tests see the seeded listener unchanged.
-  await verified.uncheck();
-  await page.getByRole('button', { name: 'Save changes' }).click();
-  await expect(page.getByText('Changes saved.').first()).toBeVisible();
+  await row.getByRole('button', { name: 'Manage' }).click();
+  await dialog.getByRole('checkbox', { name: /Verified reciter/ }).uncheck();
+  await dialog.getByRole('button', { name: 'Save changes' }).click();
+  await expect(row.getByLabel('Verified reciter')).toHaveCount(0);
 });

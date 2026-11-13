@@ -45,12 +45,10 @@ export default async function PracticePage({ params, searchParams }: Props) {
   const surah = core.surahs.list().items[n - 1];
   const t = await getTranslations('memorize');
   const tc = await getTranslations('common');
-  const ayahs = text.ayahs
-    .slice(from - 1, to)
-    .map((a) => ({
-      number: a.number,
-      words: a.words.map(({ position, text: w }) => ({ position, text: w })),
-    }));
+  const ayahs = text.ayahs.slice(from - 1, to).map((a) => ({
+    number: a.number,
+    words: a.words.map(({ position, text: w }) => ({ position, text: w })),
+  }));
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">

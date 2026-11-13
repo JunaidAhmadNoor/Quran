@@ -2,7 +2,7 @@
 // are all derived from this object, so they cannot disagree.
 import { IdParams } from './common';
 import { defineEndpoint } from './endpoint';
-import { FindUsersQuery, FindUsersResponse, UpdateUserBody } from './schemas/admin';
+import { ListUsersQuery, AdminStats, AdminUserPage, UpdateUserBody } from './schemas/admin';
 import { HealthResponse } from './schemas/health';
 import {
   LibraryQuery,
@@ -552,16 +552,28 @@ export const endpoints = {
   }),
 
   // Admin
-  findUsers: defineEndpoint({
-    operationId: 'findUsers',
+  adminStats: defineEndpoint({
+    operationId: 'adminStats',
+    method: 'GET',
+    path: '/admin/stats',
+    auth: 'admin',
+    tag: 'Admin',
+    summary: 'Totals for the admin overview',
+    successStatus: 200,
+    response: AdminStats,
+    errors: [],
+    cache: 'private',
+  }),
+  listUsers: defineEndpoint({
+    operationId: 'listUsers',
     method: 'GET',
     path: '/admin/users',
     auth: 'admin',
     tag: 'Admin',
-    summary: 'Look up an account by email',
-    query: FindUsersQuery,
+    summary: 'All accounts, newest first, with search and role filter',
+    query: ListUsersQuery,
     successStatus: 200,
-    response: FindUsersResponse,
+    response: AdminUserPage,
     errors: [],
     cache: 'private',
   }),

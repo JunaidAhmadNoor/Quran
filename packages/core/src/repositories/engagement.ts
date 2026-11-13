@@ -126,6 +126,15 @@ export class PlayRepository {
     );
   }
 
+  /** All plays counted since a UTC day (admin overview). */
+  async totalSince(sinceDay: string): Promise<number> {
+    const [row] = await this.models.PlayStatDaily.aggregate<{ total: number }>([
+      { $match: { day: { $gte: sinceDay } } },
+      { $group: { _id: null, total: { $sum: '$plays' } } },
+    ]);
+    return row?.total ?? 0;
+  }
+
   async playsSince(recitationIds: string[], sinceDay: string): Promise<number> {
     if (recitationIds.length === 0) return 0;
     const [row] = await this.models.PlayStatDaily.aggregate<{ total: number }>([

@@ -52,8 +52,10 @@ export function createAuth({ database, env, email, core }: AuthDeps) {
         country: { type: 'string', required: false, input: false },
       },
     },
-    // No cookie cache: mode and role changes must apply on the very next request.
-    session: { modelName: 'sessions', cookieCache: { enabled: false } },
+    // The session check is cached in a signed cookie for 5 minutes, saving two database round trips
+    // per request. Role and mode are still read from the database on every request (server/actor.ts),
+    // so changes apply at once; only a session revoked elsewhere stays usable for up to 5 minutes.
+    session: { modelName: 'sessions', cookieCache: { enabled: true, maxAge: 5 * 60 } },
     account: { modelName: 'accounts' },
     verification: { modelName: 'verifications' },
     emailAndPassword: {

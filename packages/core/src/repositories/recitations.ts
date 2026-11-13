@@ -4,7 +4,7 @@ import type {
   RecitationStyle,
   Riwayah,
 } from '@tilawah/contracts';
-import type { ClientSession, Models, RecitationDoc } from '@tilawah/db';
+import type { ClientSession, Models, RecitationDoc, Types } from '@tilawah/db';
 import type { CursorState } from '../cursor';
 import { afterCursor, oid } from './keyset';
 
@@ -129,6 +129,43 @@ export class RecitationRepository {
   }
 
   /** Bytes of audio a user currently keeps in storage. */
+  /** Recitation counts per status for several uploaders at once (admin user list). */
+  async statusCountsByUploader(uploaderIds: string[]) {
+    const empty = () => ({ approved: 0, pending: 0, rejected: 0, removed: 0 });
+    const result = new Map<string, ReturnType<typeof empty>>();
+    if (uploaderIds.length === 0) return result;
+    const rows = await this.models.Recitation.aggregate<{
+      _id: { uploader: Types.ObjectId; status: RecitationStatus };
+      count: number;
+    }>([
+      { $match: { uploaderId: { $in: uploaderIds.map(oid) } } },
+      { $group: { _id: { uploader: '$uploaderId', status: '$status' }, count: { $sum: 1 } } },
+    ]);
+    for (const r of rows) {
+      const id = r._id.uploader.toHexString();
+      const counts = result.get(id) ?? empty();
+      counts[r._id.status] = r.count;
+      result.set(id, counts);
+    }
+    return result;
+  }
+
+  /** Site-wide counts per status and stored audio (admin overview). */
+  async siteTotals() {
+    const [statuses, storage] = await Promise.all([
+      this.models.Recitation.aggregate<{ _id: RecitationStatus; count: number }>([
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+      ]),
+      this.models.Recitation.aggregate<{ total: number }>([
+        { $match: { audioDeletedAt: null, status: { $ne: 'removed' } } },
+        { $group: { _id: null, total: { $sum: '$sizeBytes' } } },
+      ]),
+    ]);
+    const counts = { approved: 0, pending: 0, rejected: 0, removed: 0 };
+    for (const r of statuses) counts[r._id] = r.count;
+    return { counts, storageBytes: storage[0]?.total ?? 0 };
+  }
+
   async storageUsed(uploaderId: string): Promise<number> {
     const [row] = await this.models.Recitation.aggregate<{ total: number }>([
       { $match: { uploaderId: oid(uploaderId), audioDeletedAt: null, status: { $ne: 'removed' } } },

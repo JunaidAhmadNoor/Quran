@@ -287,11 +287,15 @@ describe('staff endpoints', () => {
     const { actor: moderator } = await createUser(t, { role: 'moderator' });
     const { user } = await createUser(t);
     expect(
-      (await call('findUsers', { as: moderator.userId, query: { email: user.email } })).status,
+      (await call('listUsers', { as: moderator.userId, query: { q: user.email } })).status,
     ).toBe(403);
     expect(
-      (await call('findUsers', { as: admin.userId, query: { email: user.email } })).json.items,
+      (await call('listUsers', { as: admin.userId, query: { q: user.email } })).json.items,
     ).toHaveLength(1);
+    const stats = await call('adminStats', { as: admin.userId });
+    expect(stats.status).toBe(200);
+    expect(stats.json.users.total).toBeGreaterThan(0);
+    expect((await call('adminStats', { as: moderator.userId })).status).toBe(403);
     const updated = await call('updateUser', {
       as: admin.userId,
       params: { id: id(user) },

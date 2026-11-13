@@ -3,21 +3,28 @@ import 'server-only';
 import type { Actor } from '@tilawah/core';
 import { headers } from 'next/headers';
 import { cache } from 'react';
-import { resolveActor } from './actor';
+import { resolveActorWithUser } from './actor';
 import { getContainer } from './container';
 
 /** Per-request: container + signed-in actor (null when signed out). */
 export const getServerContext = cache(async () => {
   const c = await getContainer();
-  const actor: Actor | null = await resolveActor(c, await headers());
-  return { core: c.core, actor, config: c.config, googleEnabled: c.googleEnabled };
+  const resolved = await resolveActorWithUser(c, await headers());
+  const actor: Actor | null = resolved?.actor ?? null;
+  return {
+    core: c.core,
+    actor,
+    user: resolved?.user ?? null,
+    config: c.config,
+    googleEnabled: c.googleEnabled,
+  };
 });
 
 /** The signed-in account for the header, or null. Never throws (e.g. during a build). */
 export const getMeOrNull = cache(async () => {
   try {
-    const { core, actor } = await getServerContext();
-    return actor ? await core.account.me(actor) : null;
+    const { core, user } = await getServerContext();
+    return user ? core.account.present(user) : null;
   } catch {
     return null;
   }

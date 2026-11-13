@@ -6,6 +6,9 @@ A checklist for the first production deploy. Settings rationale: ARCHITECTURE.md
 
 **MongoDB Atlas**
 
+- **Region: put the Atlas cluster and the Railway service in the same region** (for example both in
+  Europe West). Every page makes a few database round trips; across continents each costs about
+  0.1–0.3 s, in the same region about 1–2 ms. This matters more than anything else for speed.
 - Network Access: allow `0.0.0.0/0` (Railway has no fixed outgoing IP on standard plans). The
   connection string's user should have access to the production database only.
 

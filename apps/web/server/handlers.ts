@@ -60,7 +60,8 @@ export const handlers: HandlerMap = {
   decideReport: ({ core, actor, params, body }) =>
     core.moderation.decideReport(actor, params.id, body),
 
-  findUsers: ({ core, actor, query }) => core.admin.findUsers(actor, query),
+  adminStats: ({ core, actor }) => core.admin.stats(actor),
+  listUsers: ({ core, actor, query }) => core.admin.listUsers(actor, query),
   updateUser: ({ core, actor, params, body }) => core.admin.updateUser(actor, params.id, body),
 };
 

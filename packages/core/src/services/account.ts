@@ -1,3 +1,4 @@
+import type { UserDoc } from '@tilawah/db';
 import { requireActor, requireReciterProfile, type Actor } from '../actor';
 import { DAY_MS, utcDay } from '../clock';
 import type { C, Out, ServiceDeps } from '../context';
@@ -19,6 +20,11 @@ export class AccountService {
     private readonly recitations: RecitationService,
     private readonly playlists: PlaylistService,
   ) {}
+
+  /** The account view of a user record already loaded for this request (saves a query). */
+  present(user: UserDoc) {
+    return this.presenter.userAccount(user);
+  }
 
   async me(actor: Actor | null) {
     const me = requireActor(actor);

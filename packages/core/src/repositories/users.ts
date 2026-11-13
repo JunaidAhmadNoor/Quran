@@ -25,6 +25,60 @@ export class UserRepository {
     ).lean<UserDoc>();
   }
 
+  /** Admin list: newest first, optional text search (name or email) and role. */
+  listForAdmin(
+    filters: { q?: string; role?: string },
+    cursor: CursorState | null,
+    limit: number,
+  ): Promise<UserDoc[]> {
+    const text = filters.q?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Text search and the cursor both use $or, so the conditions are combined with $and.
+    const and: Record<string, unknown>[] = [afterCursor('createdAt', -1, cursor)];
+    if (text)
+      and.push({
+        $or: [
+          { name: { $regex: text, $options: 'i' } },
+          { email: { $regex: text, $options: 'i' } },
+        ],
+      });
+    if (filters.role) and.push({ role: filters.role });
+    const filter: Record<string, unknown> = { $and: and };
+    return this.models.User.find(filter)
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(limit + 1)
+      .lean<UserDoc[]>();
+  }
+
+  /** Totals for the admin overview, in one aggregation. */
+  async adminCounts(since: Date) {
+    const [row] = await this.models.User.aggregate<Record<string, number>>([
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          reciters: {
+            $sum: { $cond: [{ $ne: [{ $ifNull: ['$reciterSince', null] }, null] }, 1, 0] },
+          },
+          verifiedReciters: { $sum: { $cond: ['$verifiedReciter', 1, 0] } },
+          moderators: { $sum: { $cond: [{ $eq: ['$role', 'moderator'] }, 1, 0] } },
+          admins: { $sum: { $cond: [{ $eq: ['$role', 'admin'] }, 1, 0] } },
+          emailNotVerified: { $sum: { $cond: ['$emailVerified', 0, 1] } },
+          newLast7Days: { $sum: { $cond: [{ $gte: ['$createdAt', since] }, 1, 0] } },
+        },
+      },
+    ]);
+    const n = (k: string) => row?.[k] ?? 0;
+    return {
+      total: n('total'),
+      reciters: n('reciters'),
+      verifiedReciters: n('verifiedReciters'),
+      moderators: n('moderators'),
+      admins: n('admins'),
+      emailNotVerified: n('emailNotVerified'),
+      newLast7Days: n('newLast7Days'),
+    };
+  }
+
   countAdmins(): Promise<number> {
     return this.models.User.countDocuments({ role: 'admin' });
   }
