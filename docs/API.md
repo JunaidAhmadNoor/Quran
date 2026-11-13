@@ -145,11 +145,11 @@ place (minor version bump of `info.version`). Removing, renaming or retyping any
 
 ### Surahs
 
-| Method | Path               | Auth   | Query                               | Response                                                                               |
-| ------ | ------------------ | ------ | ----------------------------------- | -------------------------------------------------------------------------------------- |
-| GET    | `/surahs`          | public | —                                   | `{ items: SurahSummary[114] }`                                                         |
-| GET    | `/surahs/{n}`      | public | `sort` (default `popular`), `limit` | `{ surah, recitations: RecitationPage }`                                               |
-| GET    | `/surahs/{n}/text` | public | —                                   | `{ surah, bismillah, ayahs: [{ number, text, words: [{ position, text }] }], source }` |
+| Method | Path               | Auth | Query                               | Response                                                                               |
+| ------ | ------------------ | ---- | ----------------------------------- | -------------------------------------------------------------------------------------- |
+| GET    | `/surahs`          | user | —                                   | `{ items: SurahSummary[114] }`                                                         |
+| GET    | `/surahs/{n}`      | user | `sort` (default `popular`), `limit` | `{ surah, recitations: RecitationPage }`                                               |
+| GET    | `/surahs/{n}/text` | user | —                                   | `{ surah, bismillah, ayahs: [{ number, text, words: [{ position, text }] }], source }` |
 
 `SurahSummary` = `number, nameArabic, nameTransliterated, nameEnglish, ayahCount,
 revelationPlace (meccan|medinan), revelationOrder, juz[]`. `source` carries the Tanzil
@@ -159,9 +159,9 @@ attribution and the text checksum; clients must display the attribution.
 
 | Method | Path                       | Auth             | Body                   | Success | Response                    |
 | ------ | -------------------------- | ---------------- | ---------------------- | ------- | --------------------------- |
-| GET    | `/recitations`             | public           | —                      | 200     | `RecitationPage`            |
-| GET    | `/recitations/{id}`        | public           | —                      | 200     | `RecitationDetail`          |
-| POST   | `/recitations/{id}/play`   | public           | —                      | 200     | `{ counted, playCount }`    |
+| GET    | `/recitations`             | user             | —                      | 200     | `RecitationPage`            |
+| GET    | `/recitations/{id}`        | user             | —                      | 200     | `RecitationDetail`          |
+| POST   | `/recitations/{id}/play`   | user             | —                      | 200     | `{ counted, playCount }`    |
 | POST   | `/recitations`             | user             | `CreateRecitationBody` | 201     | `RecitationDetail`          |
 | PATCH  | `/recitations/{id}`        | owner, moderator | `UpdateRecitationBody` | 200     | `RecitationDetail`          |
 | DELETE | `/recitations/{id}`        | owner, moderator | —                      | 204     | —                           |
@@ -218,23 +218,23 @@ Error mapping for each failure is in [ARCHITECTURE.md §6](ARCHITECTURE.md#6-aud
 
 ### Reciters
 
-| Method | Path             | Auth   | Query                     | Response                                   |
-| ------ | ---------------- | ------ | ------------------------- | ------------------------------------------ |
-| GET    | `/reciters` †    | public | `cursor`, `limit`         | `ReciterPage` (verified reciters)          |
-| GET    | `/reciters/{id}` | public | `sort`, `cursor`, `limit` | `{ reciter: ReciterProfile, recitations }` |
+| Method | Path             | Auth | Query                     | Response                                   |
+| ------ | ---------------- | ---- | ------------------------- | ------------------------------------------ |
+| GET    | `/reciters` †    | user | `cursor`, `limit`         | `ReciterPage` (verified reciters)          |
+| GET    | `/reciters/{id}` | user | `sort`, `cursor`, `limit` | `{ reciter: ReciterProfile, recitations }` |
 
 A profile is visible once the user has turned on reciter mode (`reciterSince` set); anyone
 else is 404, so listener-only accounts are never exposed.
 
 ### Playlists
 
-| Method | Path                | Auth   | Body                                   | Success | Response                          |
-| ------ | ------------------- | ------ | -------------------------------------- | ------- | --------------------------------- |
-| GET    | `/playlists`        | user   | —                                      | 200     | `PlaylistPage` (own)              |
-| POST   | `/playlists`        | user   | `{ name, isPublic?, recitationIds? }`  | 201     | `Playlist`                        |
-| GET    | `/playlists/{id}` † | public | —                                      | 200     | `PlaylistDetail` (public, or own) |
-| PATCH  | `/playlists/{id}` † | owner  | `{ name?, isPublic?, recitationIds? }` | 200     | `Playlist`                        |
-| DELETE | `/playlists/{id}` † | owner  | —                                      | 204     | —                                 |
+| Method | Path                | Auth  | Body                                   | Success | Response                          |
+| ------ | ------------------- | ----- | -------------------------------------- | ------- | --------------------------------- |
+| GET    | `/playlists`        | user  | —                                      | 200     | `PlaylistPage` (own)              |
+| POST   | `/playlists`        | user  | `{ name, isPublic?, recitationIds? }`  | 201     | `Playlist`                        |
+| GET    | `/playlists/{id}` † | user  | —                                      | 200     | `PlaylistDetail` (public, or own) |
+| PATCH  | `/playlists/{id}` † | owner | `{ name?, isPublic?, recitationIds? }` | 200     | `Playlist`                        |
+| DELETE | `/playlists/{id}` † | owner | —                                      | 204     | —                                 |
 
 `recitationIds` is ordered, unique, max 200, and replaces the whole list on PATCH. Max 100
 playlists per user (`QUOTA_EXCEEDED`). Recitations that are no longer approved are left out
