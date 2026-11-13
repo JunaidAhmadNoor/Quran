@@ -1,6 +1,6 @@
 // The complete /api/v1 surface. Route handlers, the OpenAPI document and @tilawah/api-client
 // are all derived from this object, so they cannot disagree.
-import { IdParams } from './common';
+import { IdParams, PageQuery } from './common';
 import { defineEndpoint } from './endpoint';
 import { ListUsersQuery, AdminStats, AdminUserPage, UpdateUserBody } from './schemas/admin';
 import { HealthResponse } from './schemas/health';
@@ -19,6 +19,17 @@ import {
   CreateMemorizationSessionResponse,
   MemorizationProgressResponse,
 } from './schemas/memorization';
+import {
+  Hadith,
+  HadithBook,
+  HadithBookParams,
+  HadithBooksResponse,
+  HadithParams,
+  HadithSearchPage,
+  HadithSearchQuery,
+  HadithSectionPage,
+  HadithSectionParams,
+} from './schemas/hadith';
 import {
   ModerationQueueQuery,
   ModerationQueueResponse,
@@ -115,6 +126,75 @@ export const endpoints = {
     successStatus: 200,
     response: SurahTextResponse,
     errors: ['NOT_FOUND'],
+    cache: 'private',
+  }),
+
+  // Hadith
+  listHadithBooks: defineEndpoint({
+    operationId: 'listHadithBooks',
+    method: 'GET',
+    path: '/hadith/books',
+    auth: 'user',
+    tag: 'Hadith',
+    summary: 'Sahih al-Bukhari and Sahih Muslim',
+    successStatus: 200,
+    response: HadithBooksResponse,
+    errors: [],
+    cache: 'private',
+  }),
+  getHadithBook: defineEndpoint({
+    operationId: 'getHadithBook',
+    method: 'GET',
+    path: '/hadith/books/{book}',
+    auth: 'user',
+    tag: 'Hadith',
+    summary: 'A collection with its books (chapters) and credits',
+    params: HadithBookParams,
+    successStatus: 200,
+    response: HadithBook,
+    errors: ['NOT_FOUND'],
+    cache: 'private',
+  }),
+  getHadithSection: defineEndpoint({
+    operationId: 'getHadithSection',
+    method: 'GET',
+    path: '/hadith/books/{book}/sections/{section}',
+    auth: 'user',
+    tag: 'Hadith',
+    summary: 'The hadith of one book (chapter), in Arabic, English and Urdu',
+    params: HadithSectionParams,
+    query: PageQuery,
+    successStatus: 200,
+    response: HadithSectionPage,
+    errors: ['NOT_FOUND'],
+    cache: 'private',
+  }),
+  getHadith: defineEndpoint({
+    operationId: 'getHadith',
+    method: 'GET',
+    path: '/hadith/books/{book}/hadiths/{number}',
+    auth: 'user',
+    tag: 'Hadith',
+    summary: 'One hadith by its number',
+    params: HadithParams,
+    successStatus: 200,
+    response: Hadith,
+    errors: ['NOT_FOUND'],
+    cache: 'private',
+  }),
+  searchHadith: defineEndpoint({
+    operationId: 'searchHadith',
+    method: 'GET',
+    path: '/hadith/books/{book}/search',
+    auth: 'user',
+    tag: 'Hadith',
+    summary: 'Search a collection by words or hadith number',
+    params: HadithBookParams,
+    query: HadithSearchQuery,
+    successStatus: 200,
+    response: HadithSearchPage,
+    errors: [],
+    rateLimit: 'search',
     cache: 'private',
   }),
 

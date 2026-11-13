@@ -643,3 +643,25 @@ change before Phase 2.
   The landing page shows no recitations. Consequence: surah and recitation pages are no longer
   indexed by search engines, and shared links ask the visitor to sign in first.
 
+## 22. Hadith
+
+Sahih al-Bukhari (7,577 hadith, 97 books) and Sahih Muslim (7,474, introduction + 56 books) in
+Arabic, English and Urdu, from [hadith-api](https://github.com/fawazahmed0/hadith-api) pinned to
+commit `df57907b` (`packages/hadith-data`). The six source files are SHA-256-verified and not
+committed (41 MB); `pnpm --filter @tilawah/hadith-data generate` downloads and verifies them and
+writes one file per book with the three languages joined by hadith number, texts verbatim.
+Upstream chapter ranges overlap in three Sahih Muslim books (16, 36, 43); a chapter that starts
+before the previous one ends starts right after it. `generated/HASHES.json` lets the tests detect
+any hand edit.
+
+- **Licensing (the user's decision):** the Arabic is classical text. The English translations
+  (Muhammad Muhsin Khan, Abdul Hamid Siddiqui) are formally under publisher copyright, and the
+  Urdu translator is not named in the source. They are used with credit on every page and a
+  "Report a rights issue" link (`NEXT_PUBLIC_CONTACT_EMAIL`).
+- **API** (`/hadith/books`, `/{book}`, `/{book}/sections/{n}`, `/{book}/hadiths/{number}`,
+  `/{book}/search`): sign-in required. Search ignores diacritics and Arabic/Urdu letter variants,
+  matches every word across the three languages, and treats a number as a hadith number.
+- **Pages** (`/hadith`, `/hadith/{book}`, `/hadith/{book}/{n}`, `/hadith/{book}/n/{number}`):
+  Arabic always, English and Urdu switchable (remembered); search results replace the book list
+  and show excerpts with the matched words marked. Chapter titles are English in every language
+  (the source has no Arabic or Urdu titles).

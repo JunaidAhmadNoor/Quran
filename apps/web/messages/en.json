@@ -48,7 +48,8 @@
     "menu": "Menu",
     "account": "Account",
     "primary": "Main",
-    "users": "Users"
+    "users": "Users",
+    "hadith": "Hadith"
   },
   "mode": {
     "label": "Mode",
@@ -384,7 +385,11 @@
     "deviceNote": "Speech recognition runs on: {device}",
     "loadingModel": "Loading the recitation model…",
     "saveFailed": "Could not save to your account, so it was saved in this browser.",
-    "reviewAyah": "Ayah {n}"
+    "reviewAyah": "Ayah {n}",
+    "textLabel": "Text",
+    "textFaint": "Faint",
+    "textHidden": "Hidden",
+    "textHint": "Faint: words darken as you recite them. Hidden: test yourself without seeing the text."
   },
   "errors": {
     "notFoundTitle": "This page could not be found",
@@ -476,5 +481,40 @@
     "manageTitle": "Manage account",
     "empty": "No accounts match.",
     "loadMore": "Load more"
+  },
+  "hadith": {
+    "title": "Hadith",
+    "intro": "Sahih al-Bukhari and Sahih Muslim in Arabic, with English and Urdu translations.",
+    "hadithCount": "{count, plural, one {# hadith} other {# hadith}}",
+    "bookCount": "{count, plural, one {# book} other {# books}}",
+    "books": "Books",
+    "sahih": "Sahih",
+    "searchLabel": "Search this collection",
+    "searchPlaceholder": "Words in Arabic, English or Urdu, or a hadith number",
+    "search": "Search",
+    "noResults": "No hadith found. Try fewer or different words.",
+    "hadithN": "Hadith {n}",
+    "reference": "Book {book}, hadith {hadith}",
+    "show": "Show",
+    "langArabic": "Arabic",
+    "langEnglish": "English",
+    "langUrdu": "Urdu",
+    "noEnglish": "No English translation for this hadith in the source.",
+    "noUrdu": "No Urdu translation for this hadith in the source.",
+    "noArabic": "No Arabic text for this hadith in the source.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "previousBook": "Previous book",
+    "nextBook": "Next book",
+    "loadMore": "Load more",
+    "openChapter": "Open the book",
+    "creditsTitle": "Sources",
+    "creditsData": "Arabic text and translations from <link>{dataset}</link>.",
+    "creditsEnglish": "English translation: {name}.",
+    "creditsUrdu": "Urdu translation: the translator is not named in the source.",
+    "creditsReport": "Report a rights issue",
+    "resultsCount": "{count, plural, one {# result} other {# results}} for “{q}”",
+    "clear": "Clear search",
+    "read": "Read"
   }
 }

@@ -11,7 +11,7 @@ export type WorkerResponse =
   | { type: 'progress'; pct: number }
   | { type: 'ready'; device: 'webgpu' | 'wasm'; isolated: boolean }
   | { type: 'result'; id: number; text: string }
-  | { type: 'error'; message: string; during: 'load' | 'transcribe' };
+  | { type: 'error'; message: string; during: 'load' | 'transcribe'; id?: number };
 
 const post = (message: WorkerResponse) => self.postMessage(message);
 let asr: AutomaticSpeechRecognitionPipeline | null = null;
@@ -93,6 +93,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       type: 'error',
       message: error instanceof Error ? error.message : String(error),
       during: 'transcribe',
+      id: message.id,
     });
   }
 };

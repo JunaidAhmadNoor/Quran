@@ -48,7 +48,8 @@
     "menu": "مینو",
     "account": "اکاؤنٹ",
     "primary": "مرکزی",
-    "users": "صارفین"
+    "users": "صارفین",
+    "hadith": "حدیث"
   },
   "mode": {
     "label": "موڈ",
@@ -384,7 +385,11 @@
     "deviceNote": "آواز کی پہچان یہاں چل رہی ہے: {device}",
     "loadingModel": "تلاوت کا ماڈل لوڈ ہو رہا ہے…",
     "saveFailed": "آپ کے اکاؤنٹ میں محفوظ نہیں ہو سکا، اس لیے اس براؤزر میں محفوظ کر دیا گیا۔",
-    "reviewAyah": "آیت {n}"
+    "reviewAyah": "آیت {n}",
+    "textLabel": "متن",
+    "textFaint": "ہلکا",
+    "textHidden": "چھپا ہوا",
+    "textHint": "ہلکا: تلاوت کرتے ہی الفاظ گہرے ہو جاتے ہیں۔ چھپا ہوا: متن دیکھے بغیر خود کو آزمائیں۔"
   },
   "errors": {
     "notFoundTitle": "یہ صفحہ نہیں ملا",
@@ -476,5 +481,40 @@
     "manageTitle": "اکاؤنٹ کا انتظام",
     "empty": "کوئی اکاؤنٹ نہیں ملا۔",
     "loadMore": "مزید دکھائیں"
+  },
+  "hadith": {
+    "title": "حدیث",
+    "intro": "صحیح بخاری اور صحیح مسلم عربی میں، انگریزی اور اردو ترجمے کے ساتھ۔",
+    "hadithCount": "{count, plural, one {# حدیث} other {# احادیث}}",
+    "bookCount": "{count, plural, one {# کتاب} other {# کتابیں}}",
+    "books": "کتابیں",
+    "sahih": "صحیح",
+    "searchLabel": "اس مجموعے میں تلاش کریں",
+    "searchPlaceholder": "عربی، انگریزی یا اردو الفاظ، یا حدیث نمبر",
+    "search": "تلاش کریں",
+    "noResults": "کوئی حدیث نہیں ملی۔ کم یا مختلف الفاظ آزمائیں۔",
+    "hadithN": "حدیث {n}",
+    "reference": "کتاب {book}، حدیث {hadith}",
+    "show": "دکھائیں",
+    "langArabic": "عربی",
+    "langEnglish": "انگریزی",
+    "langUrdu": "اردو",
+    "noEnglish": "ماخذ میں اس حدیث کا انگریزی ترجمہ موجود نہیں۔",
+    "noUrdu": "ماخذ میں اس حدیث کا اردو ترجمہ موجود نہیں۔",
+    "noArabic": "ماخذ میں اس حدیث کا عربی متن موجود نہیں۔",
+    "copy": "کاپی کریں",
+    "copied": "کاپی ہو گیا",
+    "previousBook": "پچھلی کتاب",
+    "nextBook": "اگلی کتاب",
+    "loadMore": "مزید دکھائیں",
+    "openChapter": "کتاب کھولیں",
+    "creditsTitle": "ماخذ",
+    "creditsData": "عربی متن اور تراجم <link>{dataset}</link> سے۔",
+    "creditsEnglish": "انگریزی ترجمہ: {name}۔",
+    "creditsUrdu": "اردو ترجمہ: ماخذ میں مترجم کا نام درج نہیں۔",
+    "creditsReport": "حقوق سے متعلق مسئلہ رپورٹ کریں",
+    "resultsCount": "“{q}” کے {count, plural, one {# نتیجہ} other {# نتائج}}",
+    "clear": "تلاش صاف کریں",
+    "read": "پڑھیں"
   }
 }

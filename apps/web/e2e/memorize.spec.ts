@@ -18,7 +18,7 @@ test('signed in: recite a range, see the summary, and the progress is saved', as
   await fakeRecognizer(page, WITH_SKIP);
   await page.goto('/memorize/112?from=1&to=4');
 
-  await expect(page.getByRole('img', { name: 'Hidden word' })).toHaveCount(15);
+  await expect(page.getByText('Hidden word')).toHaveCount(15); // faint text by default
   await page.getByRole('button', { name: 'Start reciting' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Listening…' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Session complete' })).toBeVisible();
@@ -27,7 +27,7 @@ test('signed in: recite a range, see the summary, and the progress is saved', as
   await expect(page.getByText('Saved to your progress.')).toBeVisible();
   const review = page.getByRole('region', { name: 'Words to review' });
   await expect(review.getByText('Ayah 4')).toBeVisible();
-  await expect(page.getByRole('img', { name: 'Hidden word' })).toHaveCount(0);
+  await expect(page.getByText('Hidden word')).toHaveCount(0);
 
   const res = await page.request.get('/api/v1/me/memorization/progress');
   const { items } = (await res.json()) as { items: { surah: number; lastAyah: number }[] };
@@ -36,7 +36,7 @@ test('signed in: recite a range, see the summary, and the progress is saved', as
   // "Practise these again" opens just the ayah with the mistake, in the same mode.
   await page.getByRole('link', { name: 'Practise these again' }).click();
   await expect(page).toHaveURL(/\/memorize\/112\?from=4&to=4&mode=reveal$/);
-  await expect(page.getByRole('img', { name: 'Hidden word' })).toHaveCount(5);
+  await expect(page.getByText('Hidden word')).toHaveCount(5);
 });
 
 test('check mode: the session is saved to progress', async ({ page }) => {

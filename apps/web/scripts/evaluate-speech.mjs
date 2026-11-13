@@ -20,6 +20,30 @@ const WEBGPU = process.env.EVAL_WEBGPU === '1';
 // Fast recitation: EVAL_GAP=0.15 (seconds between ayahs) and EVAL_RATE=1.25 (playback speed).
 const GAP = Number(process.env.EVAL_GAP ?? 0.8);
 const RATE = Number(process.env.EVAL_RATE ?? 1);
+// EVAL_SQUEEZE=1: remove pauses inside each recitation (silences longer than 0.1 s), so the
+// reciter never stops: the hardest case for segmenting at pauses.
+const SQUEEZE = process.env.EVAL_SQUEEZE === '1';
+
+function squeeze(samples) {
+  const frame = SR / 20; // 50 ms
+  const out = [];
+  let silent = 0;
+  for (let i = 0; i < samples.length; i += frame) {
+    const part = samples.subarray(i, i + frame);
+    let sum = 0;
+    for (const x of part) sum += x * x;
+    const quiet = Math.sqrt(sum / part.length) < 0.01;
+    silent = quiet ? silent + 1 : 0;
+    if (silent <= 2) out.push(part);
+  }
+  const result = new Float32Array(out.reduce((n, p) => n + p.length, 0));
+  let o = 0;
+  for (const p of out) {
+    result.set(p, o);
+    o += p.length;
+  }
+  return result;
+}
 
 const BUILT_IN = [
   ['Alafasy_128kbps', 1, 1, 7],
@@ -75,7 +99,7 @@ async function buildWav(page, files, out) {
       },
       { b64, sr: SR, rate: RATE },
     );
-    parts.push(Float32Array.from(samples));
+    parts.push(SQUEEZE ? squeeze(Float32Array.from(samples)) : Float32Array.from(samples));
   }
   const silence = (s) => new Float32Array(Math.round(s * SR));
   const seq = [silence(1.5)];
@@ -116,6 +140,12 @@ async function run(c, wav, speechEnd, profile) {
     permissions: ['microphone'],
   });
   const page = await context.newPage();
+  // Member pages need an account (the E2E stack's seeded reciter).
+  await page.goto(BASE);
+  await page.request.post(`${BASE}/api/auth/sign-in/email`, {
+    data: { email: 'reciter@tilawah.dev', password: 'tilawah-demo-123' },
+    headers: { origin: BASE },
+  });
   await page.addInitScript(() => {
     window.__TILAWAH_SPEECH_DEBUG__ = true;
   });
@@ -142,6 +172,12 @@ async function run(c, wav, speechEnd, profile) {
       .map((e) => ({ ms: Math.round(e.duration), text: e.detail })),
   );
   const recognize = entries.map((e) => e.ms);
+  const emitted = await page.evaluate(() =>
+    performance
+      .getEntriesByType('mark')
+      .filter((e) => e.name === 'tilawah:words')
+      .map((e) => e.detail),
+  );
   await context.close();
   return {
     name: c.name,
@@ -153,6 +189,7 @@ async function run(c, wav, speechEnd, profile) {
     recognize,
     device: device.replace(/.*: /, ''),
     transcript: entries.map((e) => e.text).join(' | '),
+    emitted: emitted.join(' | '),
     review: review.replace(/\s+/g, ' ').replace('Words to review ', ''),
   };
 }
@@ -188,6 +225,9 @@ console.warn(
     `recognition median ${summary.recognizeMedianMs} ms, p90 ${summary.recognizeP90Ms} ms`,
 );
 writeFileSync(
-  join(audioDir, `results-${WEBGPU ? 'webgpu' : 'wasm'}-gap${GAP}-rate${RATE}.json`),
+  join(
+    audioDir,
+    `results-${WEBGPU ? 'webgpu' : 'wasm'}-gap${GAP}-rate${RATE}${SQUEEZE ? '-squeezed' : ''}.json`,
+  ),
   JSON.stringify({ summary, results }, null, 2),
 );

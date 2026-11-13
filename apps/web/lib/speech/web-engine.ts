@@ -1,7 +1,12 @@
 'use client';
-// RecognitionEngine for the browser: microphone → AudioWorklet (16 kHz) → chunker with voice
-// activity detection → Whisper in a Web Worker → words. Nothing is uploaded or stored.
-import { AudioChunker, freshWords, type RecognitionEngine } from '@tilawah/recitation';
+// RecognitionEngine for the browser: microphone → AudioWorklet (16 kHz) → streaming transcriber
+// (one growing buffer per phrase, words confirmed when two passes agree) → Whisper in a Web
+// Worker → words. Nothing is uploaded or stored.
+import {
+  StreamingTranscriber,
+  type RecognitionEngine,
+  type TranscriptionJob,
+} from '@tilawah/recitation';
 import {
   BASE_MODEL,
   TINY_MODEL,
@@ -20,12 +25,7 @@ export class WebSpeechEngine implements RecognitionEngine {
   private error: (e: Error) => void = () => undefined;
   private stream: MediaStream | null = null;
   private context: AudioContext | null = null;
-  private chunker: AudioChunker | null = null;
-  private lastWords: string[] = [];
-  private nextId = 0;
-  private working = false;
-  private queue: { chunk: Float32Array; overlapped: boolean; durationSec: number }[] = [];
-  private current = { overlapped: false, durationSec: 0 };
+  private transcriber: StreamingTranscriber | null = null;
   private sentAt = 0;
   private failures = 0;
   model: SpeechModel = pickModel();
@@ -110,15 +110,22 @@ export class WebSpeechEngine implements RecognitionEngine {
     await context.audioWorklet.addModule('/worklets/capture-processor.js');
     const source = context.createMediaStreamSource(this.stream);
     const capture = new AudioWorkletNode(context, 'capture-processor');
-    this.lastWords = [];
-    this.chunker = new AudioChunker((chunk, info) => this.enqueue(chunk, info.overlapped));
-    capture.port.onmessage = (event: MessageEvent<Float32Array>) => this.chunker?.push(event.data);
+    this.transcriber = new StreamingTranscriber(
+      (job) => this.transcribe(job),
+      (words) => {
+        if (window.__TILAWAH_SPEECH_DEBUG__)
+          performance.mark('tilawah:words', { detail: words.join(' ') });
+        this.partial(words);
+      },
+    );
+    capture.port.onmessage = (event: MessageEvent<Float32Array>) =>
+      this.transcriber?.push(event.data);
     source.connect(capture);
   }
 
   async stop(): Promise<void> {
-    this.chunker?.flush();
-    this.chunker = null;
+    // The last phrase is transcribed once more; its words still arrive after stopping.
+    this.transcriber?.flush();
     this.stream?.getTracks().forEach((t) => t.stop());
     this.stream = null;
     await this.context?.close().catch(() => undefined);
@@ -141,57 +148,38 @@ export class WebSpeechEngine implements RecognitionEngine {
     this.loading = null;
   }
 
-  /** True while the user is speaking or a segment is still being recognised. */
+  /** True while the user is speaking or a phrase is still being recognised. */
   isBusy(): boolean {
-    return this.working || this.queue.length > 0 || (this.chunker?.speaking ?? false);
+    return this.transcriber?.busy ?? false;
   }
 
-  private enqueue(chunk: Float32Array, overlapped: boolean): void {
-    // If recognition falls behind, keep only the newest segments so the screen stays responsive.
-    this.queue.push({ chunk, overlapped, durationSec: chunk.length / 16_000 });
-    if (this.queue.length > 3) this.queue.shift();
-    this.pump();
-  }
-
-  private pump(): void {
-    if (this.working || !this.worker) return;
-    const next = this.queue.shift();
-    if (!next) return;
-    const { chunk } = next;
-    this.current = next;
-    this.working = true;
+  private transcribe(job: TranscriptionJob): void {
+    if (!this.worker) return;
     this.sentAt = performance.now();
     this.worker.postMessage(
-      { type: 'transcribe', id: this.nextId++, audio: chunk } satisfies WorkerRequest,
-      [chunk.buffer],
+      { type: 'transcribe', id: job.id, audio: job.audio } satisfies WorkerRequest,
+      [job.audio.buffer],
     );
   }
 
   private onWorkerMessage(message: WorkerResponse): void {
     if (message.type === 'result') {
-      this.working = false;
       this.failures = 0;
       // Visible in the browser's performance panel and to the measurement script (MEMORIZATION.md).
       performance.measure('tilawah:recognize', {
         start: this.sentAt,
         end: performance.now(),
         // The evaluation script opts in to see transcripts; they stay in this page either way.
-        detail: window.__TILAWAH_SPEECH_DEBUG__ ? message.text : undefined,
+        detail: window.__TILAWAH_SPEECH_DEBUG__
+          ? `${String(message.id)}: ${message.text}`
+          : undefined,
       });
-      const words = message.text.trim().split(/\s+/).filter(Boolean);
-      const fresh = freshWords(this.lastWords, words, {
-        overlapped: this.current.overlapped,
-        durationSec: this.current.durationSec,
-      });
-      this.lastWords = words;
-      if (fresh.length > 0) this.partial(fresh);
-      this.pump();
+      this.transcriber?.result(message.id, message.text);
     } else if (message.type === 'error') {
-      this.working = false;
       this.failures += 1;
-      // One bad segment is skipped; repeated failures mean recognition is not working at all.
+      // One bad pass is skipped; repeated failures mean recognition is not working at all.
       if (this.failures >= 3) this.error(new Error(message.message));
-      this.pump();
+      if (message.id !== undefined) this.transcriber?.failed(message.id);
     }
   }
 }

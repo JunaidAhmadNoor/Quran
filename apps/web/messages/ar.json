@@ -48,7 +48,8 @@
     "menu": "القائمة",
     "account": "الحساب",
     "primary": "الرئيسية",
-    "users": "المستخدمون"
+    "users": "المستخدمون",
+    "hadith": "الحديث"
   },
   "mode": {
     "label": "الوضع",
@@ -384,7 +385,11 @@
     "deviceNote": "يعمل التعرّف على الصوت على: {device}",
     "loadingModel": "جارٍ تحميل نموذج التلاوة…",
     "saveFailed": "تعذّر الحفظ في حسابك، فحُفظ في هذا المتصفح.",
-    "reviewAyah": "الآية {n}"
+    "reviewAyah": "الآية {n}",
+    "textLabel": "النص",
+    "textFaint": "باهت",
+    "textHidden": "مخفي",
+    "textHint": "باهت: تغمق الكلمات حين تتلوها. مخفي: اختبر نفسك دون رؤية النص."
   },
   "errors": {
     "notFoundTitle": "تعذّر العثور على هذه الصفحة",
@@ -476,5 +481,40 @@
     "manageTitle": "إدارة الحساب",
     "empty": "لا توجد حسابات مطابقة.",
     "loadMore": "عرض المزيد"
+  },
+  "hadith": {
+    "title": "الحديث",
+    "intro": "صحيح البخاري وصحيح مسلم بالعربية، مع الترجمة الإنجليزية والأردية.",
+    "hadithCount": "{count, plural, zero {لا أحاديث} one {حديث واحد} two {حديثان} few {# أحاديث} many {# حديثًا} other {# حديث}}",
+    "bookCount": "{count, plural, zero {لا كتب} one {كتاب واحد} two {كتابان} few {# كتب} many {# كتابًا} other {# كتاب}}",
+    "books": "الكتب",
+    "sahih": "صحيح",
+    "searchLabel": "ابحث في هذا الكتاب",
+    "searchPlaceholder": "كلمات بالعربية أو الإنجليزية أو الأردية، أو رقم الحديث",
+    "search": "بحث",
+    "noResults": "لم يُعثر على أحاديث. جرّب كلمات أقل أو مختلفة.",
+    "hadithN": "الحديث {n}",
+    "reference": "الكتاب {book}، الحديث {hadith}",
+    "show": "عرض",
+    "langArabic": "العربية",
+    "langEnglish": "الإنجليزية",
+    "langUrdu": "الأردية",
+    "noEnglish": "لا توجد ترجمة إنجليزية لهذا الحديث في المصدر.",
+    "noUrdu": "لا توجد ترجمة أردية لهذا الحديث في المصدر.",
+    "noArabic": "لا يوجد نص عربي لهذا الحديث في المصدر.",
+    "copy": "نسخ",
+    "copied": "نُسخ",
+    "previousBook": "الكتاب السابق",
+    "nextBook": "الكتاب التالي",
+    "loadMore": "عرض المزيد",
+    "openChapter": "افتح الكتاب",
+    "creditsTitle": "المصادر",
+    "creditsData": "النص العربي والترجمات من <link>{dataset}</link>.",
+    "creditsEnglish": "الترجمة الإنجليزية: {name}.",
+    "creditsUrdu": "الترجمة الأردية: لم يُذكر اسم المترجم في المصدر.",
+    "creditsReport": "الإبلاغ عن مشكلة حقوق",
+    "resultsCount": "{count, plural, zero {لا نتائج} one {نتيجة واحدة} two {نتيجتان} few {# نتائج} many {# نتيجة} other {# نتيجة}} لـ«{q}»",
+    "clear": "مسح البحث",
+    "read": "اقرأ"
   }
 }

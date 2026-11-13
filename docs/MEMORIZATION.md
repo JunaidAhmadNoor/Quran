@@ -7,9 +7,9 @@ never leave the browser, and only word positions of mistakes are saved.
 ## Pipeline
 
 ```
-microphone ──► AudioWorklet ──► AudioChunker ──► Web Worker ──────────────► RecitationMatcher ──► screen
- (getUserMedia)  capture-processor   segments at    transformers.js + ONNX     window of 3 words,     word states,
-                 mono, 16 kHz        pauses, VAD    Runtime Web: Whisper       similarity ≥ 0.8,      hints, summary
+microphone ──► AudioWorklet ──► Streaming   ──► Web Worker ──────────────► RecitationMatcher ──► screen
+ (getUserMedia)  capture-processor   transcriber    transformers.js + ONNX     window of 3 words,     word states,
+                 mono, 16 kHz        (LocalAgree-   Runtime Web: Whisper       similarity ≥ 0.8,      hints, summary
                                                     (WebGPU or WebAssembly)    hints, wrong ayah
 ```
 
@@ -98,7 +98,18 @@ CDN. Two builds are served: `asyncify` (WebGPU and WebAssembly, the default) and
   pointing to the site settings. Echo cancellation and noise suppression are on for recognition
   (unlike the upload recorder, which keeps the natural voice).
 
-## Measured accuracy and latency
+## Continuous recitation (streaming)
+
+Reciting without pausing used to be cut into 5-second pieces, splitting words. The streaming
+transcriber replaced that. Measured on the 10 recordings (WebAssembly, `EVAL_SQUEEZE=1` removes
+every pause longer than 0.1 s inside the recitation):
+
+| Recitation            | Fixed segments (before) | Streaming (now) |
+| --------------------- | ----------------------- | --------------- |
+| Continuous, no pauses | 92.9%                   | **97.5%**       |
+| Normal pace           | 95.4%                   | **98.3%**       |
+
+## Measured accuracy and latency (fixed segments, before streaming)
 
 Measured with `scripts/evaluate-speech.mjs` on 10 recordings (10 reciters from everyayah.com,
 239 words: Al-Fatiha twice, Al-Ikhlas, Al-Falaq, An-Nas, Al-Kawthar, Al-Asr, Ayat al-Kursi, An-Nasr,

@@ -8,6 +8,7 @@ export * from './schemas/admin';
 export * from './schemas/health';
 export * from './schemas/me';
 export * from './schemas/memorization';
+export * from './schemas/hadith';
 export * from './schemas/moderation';
 export * from './schemas/playlists';
 export * from './schemas/recitations';

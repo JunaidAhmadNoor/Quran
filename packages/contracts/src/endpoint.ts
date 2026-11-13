@@ -13,6 +13,7 @@ export type AuthRequirement = 'public' | 'user' | 'moderator' | 'admin';
 export type Tag =
   | 'Health'
   | 'Surahs'
+  | 'Hadith'
   | 'Recitations'
   | 'Uploads'
   | 'Reciters'

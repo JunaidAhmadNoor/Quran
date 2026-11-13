@@ -47,6 +47,7 @@ function useNav() {
     { href: '/', label: t('home') },
     { href: '/surahs', label: t('surahs') },
     { href: '/memorize', label: t('memorize') },
+    { href: '/hadith', label: t('hadith') },
     { href: '/library', label: t('library') },
   ];
   if (me.mode === 'reciter') items.splice(1, 0, { href: '/studio', label: t('studio') });

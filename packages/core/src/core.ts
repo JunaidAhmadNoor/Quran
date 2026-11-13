@@ -5,6 +5,7 @@ import { Presenter } from './presenter';
 import { hashIp } from './repositories/rate-limiter';
 import { AccountService } from './services/account';
 import { ReciterService, SurahService } from './services/catalog';
+import { HadithService } from './services/hadith';
 import { MaintenanceService, HealthService } from './services/maintenance';
 import { MemorizationService } from './services/memorization';
 import { AdminService, ModerationService } from './services/moderation';
@@ -34,6 +35,7 @@ export function createCore({ database, storage, clock, config }: CoreOptions) {
     hashIp,
     users: repos.users,
     surahs: new SurahService(recitations),
+    hadith: new HadithService(),
     recitations,
     uploads: new UploadService(deps, presenter),
     reciters: new ReciterService(deps, presenter, recitations),

@@ -10,5 +10,12 @@ export {
   type WordState,
 } from './matcher';
 export { FakeEngine, type FakeEngineOptions, type RecognitionEngine } from './engine';
-export { AudioChunker, rms, type ChunkInfo, type ChunkerOptions } from './chunker';
-export { ECHO_MAX_SEC, dropOverlap, freshWords } from './stitch';
+export {
+  StreamingTranscriber,
+  rms,
+  agreedPrefix,
+  alignAfter,
+  repeatedLead,
+  type StreamingOptions,
+  type TranscriptionJob,
+} from './streaming';

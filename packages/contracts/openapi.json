@@ -18,6 +18,9 @@
       "name": "Surahs"
     },
     {
+      "name": "Hadith"
+    },
+    {
       "name": "Recitations"
     },
     {
@@ -319,6 +322,456 @@
           },
           "404": {
             "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hadith/books": {
+      "get": {
+        "operationId": "listHadithBooks",
+        "summary": "Sahih al-Bukhari and Sahih Muslim",
+        "tags": [
+          "Hadith"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "private",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HadithBooksResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hadith/books/{book}": {
+      "get": {
+        "operationId": "getHadithBook",
+        "summary": "A collection with its books (chapters) and credits",
+        "tags": [
+          "Hadith"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "private",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "book",
+            "schema": {
+              "$ref": "#/components/schemas/HadithBookId"
+            },
+            "required": true,
+            "description": "Sahih al-Bukhari or Sahih Muslim."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HadithBook"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hadith/books/{book}/sections/{section}": {
+      "get": {
+        "operationId": "getHadithSection",
+        "summary": "The hadith of one book (chapter), in Arabic, English and Urdu",
+        "tags": [
+          "Hadith"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "private",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "book",
+            "schema": {
+              "$ref": "#/components/schemas/HadithBookId"
+            },
+            "required": true,
+            "description": "Sahih al-Bukhari or Sahih Muslim."
+          },
+          {
+            "in": "path",
+            "name": "section",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 200
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "$ref": "#/components/schemas/Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HadithSectionPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hadith/books/{book}/hadiths/{number}": {
+      "get": {
+        "operationId": "getHadith",
+        "summary": "One hadith by its number",
+        "tags": [
+          "Hadith"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "private",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "book",
+            "schema": {
+              "$ref": "#/components/schemas/HadithBookId"
+            },
+            "required": true,
+            "description": "Sahih al-Bukhari or Sahih Muslim."
+          },
+          {
+            "in": "path",
+            "name": "number",
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100000
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Hadith"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hadith/books/{book}/search": {
+      "get": {
+        "operationId": "searchHadith",
+        "summary": "Search a collection by words or hadith number",
+        "tags": [
+          "Hadith"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "user",
+        "x-cache": "private",
+        "x-rate-limit": {
+          "name": "search",
+          "limit": 120,
+          "windowSec": 3600
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "book",
+            "schema": {
+              "$ref": "#/components/schemas/HadithBookId"
+            },
+            "required": true,
+            "description": "Sahih al-Bukhari or Sahih Muslim."
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "$ref": "#/components/schemas/Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 100,
+              "description": "Words in Arabic (diacritics ignored), English or Urdu, or a hadith number."
+            },
+            "required": true,
+            "description": "Words in Arabic (diacritics ignored), English or Urdu, or a hadith number."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HadithSearchPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3442,6 +3895,14 @@
         ],
         "description": "popular = all-time plays; trending = plays in the last 7 days."
       },
+      "HadithBookId": {
+        "type": "string",
+        "enum": [
+          "bukhari",
+          "muslim"
+        ],
+        "description": "Sahih al-Bukhari or Sahih Muslim."
+      },
       "Cursor": {
         "type": "string",
         "minLength": 1,
@@ -4514,6 +4975,343 @@
         ],
         "additionalProperties": false,
         "description": "Attribution required by the Tanzil license. Clients must display it."
+      },
+      "HadithBooksResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HadithBookSummary"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "HadithBookSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/HadithBookId"
+          },
+          "name": {
+            "type": "object",
+            "properties": {
+              "en": {
+                "type": "string"
+              },
+              "ar": {
+                "type": "string"
+              },
+              "ur": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "en",
+              "ar",
+              "ur"
+            ],
+            "additionalProperties": false
+          },
+          "hadithCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "sectionCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "hadithCount",
+          "sectionCount"
+        ],
+        "additionalProperties": false
+      },
+      "HadithBook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/HadithBookId"
+          },
+          "name": {
+            "type": "object",
+            "properties": {
+              "en": {
+                "type": "string"
+              },
+              "ar": {
+                "type": "string"
+              },
+              "ur": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "en",
+              "ar",
+              "ur"
+            ],
+            "additionalProperties": false
+          },
+          "hadithCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "sectionCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HadithSection"
+            }
+          },
+          "source": {
+            "$ref": "#/components/schemas/HadithSource"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "hadithCount",
+          "sectionCount",
+          "sections",
+          "source"
+        ],
+        "additionalProperties": false
+      },
+      "HadithSection": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Book (kitab) number; 0 is Sahih Muslim’s introduction."
+          },
+          "title": {
+            "type": "string",
+            "description": "English title from the source."
+          },
+          "first": {
+            "type": "number",
+            "description": "First hadith number in this book."
+          },
+          "last": {
+            "type": "number"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "n",
+          "title",
+          "first",
+          "last",
+          "count"
+        ],
+        "additionalProperties": false
+      },
+      "HadithSource": {
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "commit": {
+            "type": "string"
+          },
+          "translators": {
+            "type": "object",
+            "properties": {
+              "en": {
+                "type": "string"
+              },
+              "ur": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "en",
+              "ur"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "dataset",
+          "url",
+          "commit",
+          "translators"
+        ],
+        "additionalProperties": false,
+        "description": "Credits shown with the texts."
+      },
+      "HadithSectionPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Hadith"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cursor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when there are no more items."
+          },
+          "book": {
+            "$ref": "#/components/schemas/HadithBookSummary"
+          },
+          "section": {
+            "$ref": "#/components/schemas/HadithSection"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "book",
+          "section"
+        ],
+        "additionalProperties": false
+      },
+      "Hadith": {
+        "type": "object",
+        "properties": {
+          "book": {
+            "$ref": "#/components/schemas/HadithBookId"
+          },
+          "number": {
+            "type": "number",
+            "description": "Hadith number (a few have a sub-number, e.g. 402.2)."
+          },
+          "section": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "reference": {
+            "type": "object",
+            "properties": {
+              "book": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "hadith": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "book",
+              "hadith"
+            ],
+            "additionalProperties": false
+          },
+          "text": {
+            "type": "object",
+            "properties": {
+              "ar": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "en": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "ur": {
+                "description": "null where the source has no Urdu text.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "ar",
+              "en",
+              "ur"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "book",
+          "number",
+          "section",
+          "reference",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "HadithSearchPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Hadith"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cursor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when there are no more items."
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "All matches, across pages."
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "total"
+        ],
+        "additionalProperties": false
       },
       "RecitationDetail": {
         "type": "object",

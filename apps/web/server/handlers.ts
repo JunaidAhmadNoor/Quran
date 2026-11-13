@@ -60,6 +60,12 @@ export const handlers: HandlerMap = {
   decideReport: ({ core, actor, params, body }) =>
     core.moderation.decideReport(actor, params.id, body),
 
+  listHadithBooks: ({ core }) => core.hadith.listBooks(),
+  getHadithBook: ({ core, params }) => core.hadith.getBook(params.book),
+  getHadithSection: ({ core, params, query }) =>
+    core.hadith.getSection(params.book, params.section, query),
+  getHadith: ({ core, params }) => core.hadith.getHadith(params.book, params.number),
+  searchHadith: ({ core, params, query }) => core.hadith.search(params.book, query),
   adminStats: ({ core, actor }) => core.admin.stats(actor),
   listUsers: ({ core, actor, query }) => core.admin.listUsers(actor, query),
   updateUser: ({ core, actor, params, body }) => core.admin.updateUser(actor, params.id, body),

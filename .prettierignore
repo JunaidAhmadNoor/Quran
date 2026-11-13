@@ -9,3 +9,5 @@ packages/ui-tokens/tokens.css
 playwright-report/
 test-results/
 docs/screenshots/
+packages/hadith-data/generated/
+packages/hadith-data/.cache/

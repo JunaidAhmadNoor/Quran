@@ -34,7 +34,12 @@ function fakeHears(script: string[]) {
   window.__TILAWAH_FAKE_ENGINE__ = { script, intervalMs: 15 };
 }
 
-const hidden = () => screen.queryAllByRole('img', { name: 'Hidden word' });
+// Words not yet recited: faint text (screen readers hear "Hidden word") or, in Hidden mode, a
+// placeholder image with the same name.
+const hidden = () => [
+  ...screen.queryAllByText('Hidden word'),
+  ...screen.queryAllByRole('img', { name: 'Hidden word' }),
+];
 
 function renderPractice(props: Partial<Parameters<typeof Practice>[0]> = {}) {
   return renderWithProviders(
@@ -180,5 +185,19 @@ describe('Practice (memorization by recitation)', () => {
     renderPractice();
     await user.click(screen.getByRole('button', { name: 'Start reciting' }));
     await waitFor(() => expect(usePlayer.getState().playing).toBe(false));
+  });
+
+  it('shows the text faintly by default; Hidden replaces it with placeholders, remembered', async () => {
+    fakeHears([]);
+    const user = userEvent.setup();
+    renderPractice();
+    expect(screen.getByRole('button', { name: 'Faint' })).toHaveAttribute('aria-pressed', 'true');
+    // Faint: the word is laid out lightly for the eye only.
+    expect(screen.getByText('قُلْ')).toHaveClass('opacity-30');
+    expect(screen.getByText('قُلْ')).toHaveAttribute('aria-hidden', 'true');
+    await user.click(screen.getByRole('button', { name: 'Hidden' }));
+    expect(screen.getAllByRole('img', { name: 'Hidden word' })).toHaveLength(6);
+    expect(screen.getByText('قُلْ')).toHaveClass('invisible');
+    expect(localStorage.getItem('tilawah.memorize.text')).toBe('hidden');
   });
 });

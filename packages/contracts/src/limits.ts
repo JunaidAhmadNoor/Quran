@@ -37,6 +37,8 @@ export const rateLimits = {
   report: { limit: 20, windowSec: 24 * 60 * 60 },
   play: { limit: 600, windowSec: 60 * 60 },
   session: { limit: 120, windowSec: 60 * 60 },
+  /** Hadith search scans a whole collection. */
+  search: { limit: 120, windowSec: 60 * 60 },
 } as const satisfies Record<string, RateLimitPolicy>;
 
 export type RateLimitName = keyof typeof rateLimits;

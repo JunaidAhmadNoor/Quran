@@ -104,6 +104,37 @@ describe('content endpoints (sign-in required)', () => {
   });
 });
 
+describe('hadith endpoints', () => {
+  it('lists collections, books, a page of hadith, one hadith and search (sign-in required)', async () => {
+    const { actor } = await createUser(t);
+    const as = actor.userId;
+    expect((await call('listHadithBooks')).status).toBe(401);
+    const list = await call('listHadithBooks', { as });
+    expect(list.json.items.map((b) => b.id)).toEqual(['bukhari', 'muslim']);
+    const book = await call('getHadithBook', { as, params: { book: 'muslim' } });
+    expect(book.json.sections[0]?.title).toBe('Introduction');
+    const section = await call('getHadithSection', {
+      as,
+      params: { book: 'bukhari', section: 1 },
+      query: { limit: 3 },
+    });
+    expect(section.json.items).toHaveLength(3);
+    expect(section.json.nextCursor).not.toBeNull();
+    const one = await call('getHadith', { as, params: { book: 'bukhari', number: 1 } });
+    expect(one.json.text.en).toContain('intentions');
+    expect(
+      (await call('getHadith', { as, params: { book: 'bukhari', number: 99999 } })).status,
+    ).toBe(404);
+    const found = await call('searchHadith', {
+      as,
+      params: { book: 'bukhari' },
+      query: { q: 'intentions', limit: 3 },
+    });
+    expect(found.json.items.length).toBe(3);
+    expect((await call('getHadithBook', { as, params: { book: 'tirmidhi' } })).status).toBe(400);
+  });
+});
+
 describe('signed-in endpoints', () => {
   it('rejects anonymous calls with 401 and the error envelope', async () => {
     const res = await call('getMe');

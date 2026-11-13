@@ -105,6 +105,7 @@ export function buildOpenApiDocument({ version }: BuildOptions) {
     tags: [
       { name: 'Health' },
       { name: 'Surahs' },
+      { name: 'Hadith' },
       { name: 'Recitations' },
       { name: 'Uploads' },
       { name: 'Reciters' },

@@ -12,7 +12,7 @@ import {
 import { Ear, Lightbulb, Mic, RotateCcw, Square, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/misc';
 import { AyahMarker } from '@/components/ui/ornaments';
@@ -52,6 +52,35 @@ const MODES: { value: MemorizationMode; label: string; hint: string }[] = [
 ];
 
 const LOCAL_KEY = 'tilawah.memorization.sessions';
+const TEXT_KEY = 'tilawah.memorize.text';
+type TextMode = 'faint' | 'hidden';
+
+/** The Faint/Hidden choice, remembered in this browser (server render: faint). */
+const textModeStore = {
+  subscribe: (cb: () => void) => {
+    window.addEventListener('storage', cb);
+    window.addEventListener(TEXT_KEY, cb);
+    return () => {
+      window.removeEventListener('storage', cb);
+      window.removeEventListener(TEXT_KEY, cb);
+    };
+  },
+  get: (): TextMode => {
+    try {
+      return localStorage.getItem(TEXT_KEY) === 'hidden' ? 'hidden' : 'faint';
+    } catch {
+      return 'faint';
+    }
+  },
+  set: (mode: TextMode) => {
+    try {
+      localStorage.setItem(TEXT_KEY, mode);
+    } catch {
+      // Storage unavailable: the choice lasts for this page only.
+    }
+    window.dispatchEvent(new Event(TEXT_KEY));
+  },
+};
 const LOCAL_LIMIT = 100;
 
 interface Result {
@@ -79,6 +108,8 @@ export function Practice({ surah, ayahs, listenUrls, signedIn, initialMode = 're
   const ayahTo = ayahs.at(-1)?.number ?? ayahFrom;
 
   const [mode, setMode] = useState<MemorizationMode>(initialMode);
+  const textMode = useSyncExternalStore(textModeStore.subscribe, textModeStore.get, () => 'faint');
+  const faint = textMode === 'faint';
   const [phase, setPhase] = useState<Phase>('setup');
   const [states, setStates] = useState<WordState[]>(() => expected.map(() => 'hidden'));
   const [progress, setProgress] = useState(0);
@@ -352,38 +383,67 @@ export function Practice({ surah, ayahs, listenUrls, signedIn, initialMode = 're
 
   let index = 0;
   const text = (
-    <div
-      lang="ar"
-      dir="rtl"
-      className="rounded-card border border-border bg-surface px-5 py-8 sm:px-10"
-    >
-      <p className="quran text-text">
-        {ayahs.map((a) => (
-          <span key={a.number}>
-            {a.words.map((w) => {
-              const i = index++;
-              const state = states[i] ?? 'hidden';
-              const visible =
-                state !== 'hidden' &&
-                (mode !== 'check_ayah' || phase === 'summary' || ayahClosed(a.number));
-              return (
-                <Word
-                  key={w.position}
-                  text={w.text}
-                  state={visible ? state : 'hidden'}
-                  isNext={i === nextIndex && reciting}
-                  hint={hint?.index === i ? hint : null}
-                  pulse={i === nextIndex ? pulse : 0}
-                  hiddenLabel={t('hiddenWord')}
-                  missedLabel={t('mistakeMissed')}
-                  hintedLabel={t('mistakeHinted')}
-                />
-              );
-            })}
-            <AyahMarker n={a.number} label={ts('ayahMarker', { n: a.number })} />{' '}
-          </span>
-        ))}
-      </p>
+    <div>
+      <div className="mb-2 flex flex-wrap items-center justify-end gap-2 text-sm">
+        <span id="text-mode" className="text-muted">
+          {t('textLabel')}
+        </span>
+        <div
+          role="group"
+          aria-labelledby="text-mode"
+          className="inline-flex rounded-control border border-border bg-surface p-0.5"
+        >
+          {(['faint', 'hidden'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              aria-pressed={textMode === m}
+              title={t('textHint')}
+              onClick={() => textModeStore.set(m)}
+              className={cn(
+                'rounded-[4px] px-3 py-1 transition-colors',
+                textMode === m ? 'bg-primary text-primary-contrast' : 'text-muted hover:text-text',
+              )}
+            >
+              {t(m === 'faint' ? 'textFaint' : 'textHidden')}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div
+        lang="ar"
+        dir="rtl"
+        className="rounded-card border border-border bg-surface px-5 py-8 sm:px-10"
+      >
+        <p className="quran text-text">
+          {ayahs.map((a) => (
+            <span key={a.number}>
+              {a.words.map((w) => {
+                const i = index++;
+                const state = states[i] ?? 'hidden';
+                const visible =
+                  state !== 'hidden' &&
+                  (mode !== 'check_ayah' || phase === 'summary' || ayahClosed(a.number));
+                return (
+                  <Word
+                    key={w.position}
+                    faint={faint}
+                    text={w.text}
+                    state={visible ? state : 'hidden'}
+                    isNext={i === nextIndex && reciting}
+                    hint={hint?.index === i ? hint : null}
+                    pulse={i === nextIndex ? pulse : 0}
+                    hiddenLabel={t('hiddenWord')}
+                    missedLabel={t('mistakeMissed')}
+                    hintedLabel={t('mistakeHinted')}
+                  />
+                );
+              })}
+              <AyahMarker n={a.number} label={ts('ayahMarker', { n: a.number })} />{' '}
+            </span>
+          ))}
+        </p>
+      </div>
     </div>
   );
 
@@ -556,6 +616,7 @@ export function Practice({ surah, ayahs, listenUrls, signedIn, initialMode = 're
 }
 
 function Word({
+  faint,
   text,
   state,
   isNext,
@@ -565,6 +626,7 @@ function Word({
   missedLabel,
   hintedLabel,
 }: {
+  faint: boolean;
   text: string;
   state: WordState;
   isNext: boolean;
@@ -574,6 +636,30 @@ function Word({
   missedLabel: string;
   hintedLabel: string;
 }) {
+  if (state === 'hidden' && faint) {
+    // Faint: the word is shown lightly and darkens once recited (decorative until then).
+    return (
+      <span className="relative me-[0.25em] inline-block">
+        <span aria-hidden data-decorative-text className="opacity-30">
+          {text}
+        </span>
+        <span className="sr-only">{hiddenLabel}</span>
+        {isNext ? (
+          <span
+            aria-hidden
+            className="absolute inset-x-1 -bottom-1 h-[2px] rounded-full bg-primary/60"
+          />
+        ) : null}
+        {pulse > 0 ? (
+          <span
+            key={pulse}
+            aria-hidden
+            className="absolute inset-x-1 -bottom-1 h-[3px] rounded-full bg-danger animate-[miss-pulse_700ms_ease-out_both]"
+          />
+        ) : null}
+      </span>
+    );
+  }
   if (state === 'hidden') {
     return (
       <span className="relative me-[0.25em] inline-block">
@@ -609,7 +695,10 @@ function Word({
   return (
     <span
       className={cn(
-        'me-[0.25em] inline-block animate-[word-in_220ms_var(--ease-mushaf)_both] motion-reduce:animate-[fade-in_150ms_both]',
+        'me-[0.25em] inline-block',
+        faint
+          ? 'animate-[ink-in_260ms_var(--ease-mushaf)_both]'
+          : 'animate-[word-in_220ms_var(--ease-mushaf)_both] motion-reduce:animate-[fade-in_150ms_both]',
         state === 'missed' && 'text-danger',
         state === 'hinted' &&
           'text-muted underline decoration-accent decoration-dotted underline-offset-8',

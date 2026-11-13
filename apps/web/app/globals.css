@@ -124,6 +124,12 @@
     transform: scaleX(0);
   }
 }
+/* Faint text mode: a recited word darkens like ink. */
+@keyframes ink-in {
+  from {
+    opacity: 0.3;
+  }
+}
 @keyframes miss-pulse {
   0% {
     opacity: 0;
