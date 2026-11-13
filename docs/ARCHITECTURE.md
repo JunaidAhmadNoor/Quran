@@ -623,4 +623,11 @@ change before Phase 2.
   verifies and signs in. A blocked sign-in returns `403 EMAIL_NOT_VERIFIED` and the form offers to
   resend the link. Moderators and admins are exempt. Google accounts arrive verified. With
   `EMAIL_TRANSPORT=none` (tests, offline development) nothing can be verified, so it is not enforced.
+- **Staff have their own area.** Moderators and admins see only Moderation (and Users for admins)
+  in the header, with no mode switch or upload button; listener pages (home, library, studio,
+  upload, memorize) redirect them to `/moderation`. Public surah and recitation pages stay
+  reachable for context.
+- **Admin Users page** (`/admin/users`): find an account by email, then turn "Verified reciter" on
+  or off and change the role (an admin cannot change their own role). Uses the existing
+  `GET /admin/users` and `PATCH /admin/users/{id}` endpoints.
 

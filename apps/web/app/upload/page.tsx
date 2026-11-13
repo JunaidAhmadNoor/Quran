@@ -5,7 +5,7 @@ import { ModeSwitch } from '@/components/layout/mode-switch';
 import { UploadForm } from '@/components/upload/upload-form';
 import { Card } from '@/components/ui/misc';
 import { StarMark } from '@/components/ui/ornaments';
-import { getServerContext } from '@/server/session';
+import { getServerContext, sendStaffToWork } from '@/server/session';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('upload'))('title'), robots: { index: false } };
@@ -16,6 +16,7 @@ export default async function UploadPage({
 }: {
   searchParams: Promise<{ surah?: string }>;
 }) {
+  await sendStaffToWork();
   const { actor } = await getServerContext();
   if (!actor) redirect('/auth/sign-in?next=/upload');
   const t = await getTranslations('upload');

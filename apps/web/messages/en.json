@@ -47,7 +47,8 @@
     "themeSystem": "System",
     "menu": "Menu",
     "account": "Account",
-    "primary": "Main"
+    "primary": "Main",
+    "users": "Users"
   },
   "mode": {
     "label": "Mode",
@@ -430,5 +431,28 @@
     "rawh": "Rawh ʿan Yaʿqub",
     "ishaq": "Ishaq ʿan Khalaf",
     "idris": "Idris ʿan Khalaf"
+  },
+  "admin": {
+    "usersTitle": "Users",
+    "usersIntro": "Find an account by its email address to verify a reciter or change a role.",
+    "searchLabel": "Email address",
+    "search": "Find",
+    "notFound": "No account uses this email address.",
+    "role": "Role",
+    "roleUser": "User",
+    "roleModerator": "Moderator",
+    "roleAdmin": "Admin",
+    "verified": "Verified reciter",
+    "verifiedHint": "Their uploads are published without review and their name shows a verified badge. This also turns on their reciter profile.",
+    "emailVerified": "Email verified",
+    "emailNotVerified": "Email not verified",
+    "modeListener": "Listener",
+    "modeReciter": "Reciter",
+    "joined": "Joined {date}",
+    "save": "Save changes",
+    "saved": "Changes saved.",
+    "error": "Something went wrong. Please try again.",
+    "selfRole": "You cannot change your own role.",
+    "forbidden": "Only admins can manage users."
   }
 }

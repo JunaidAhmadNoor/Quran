@@ -16,7 +16,9 @@ const PUBLIC = [
   'RECITATION',
   'RECITER',
 ];
-const SIGNED_IN = ['/', '/library', '/studio', '/upload', '/settings', '/moderation'];
+// Listener pages as a reciter; staff pages as an admin (staff are sent to their own area).
+const SIGNED_IN = ['/', '/library', '/studio', '/upload', '/settings'];
+const STAFF = ['/moderation', '/admin/users'];
 
 async function seriousViolations(page: Page, path: string): Promise<string[]> {
   await page.goto(path);
@@ -58,6 +60,13 @@ for (const scheme of ['light', 'dark'] as const) {
 
       for (const path of SIGNED_IN) {
         test(`${path} (signed in) has no serious violations`, async ({ page }) => {
+          await signInViaApi(page, accounts.reciter);
+          expect(await seriousViolations(page, path)).toEqual([]);
+        });
+      }
+
+      for (const path of STAFF) {
+        test(`${path} (admin) has no serious violations`, async ({ page }) => {
           await signInViaApi(page, accounts.admin);
           expect(await seriousViolations(page, path)).toEqual([]);
         });

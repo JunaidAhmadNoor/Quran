@@ -1,5 +1,6 @@
 import { ShieldCheck } from 'lucide-react';
 import type { Metadata } from 'next';
+import { sendStaffToWork } from '@/server/session';
 import { getTranslations } from 'next-intl/server';
 import { RangePicker } from '@/components/memorize/range-picker';
 import { Card } from '@/components/ui/misc';
@@ -10,6 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function MemorizePage() {
+  await sendStaffToWork();
   const t = await getTranslations('memorize');
   return (
     <div className="mx-auto max-w-xl px-4 py-10">

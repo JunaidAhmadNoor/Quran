@@ -38,3 +38,15 @@ export async function orNotFound<T>(promise: Promise<T>): Promise<T> {
     throw error;
   }
 }
+
+/**
+ * Moderators and admins work in the moderation area: listener pages (home, library, studio,
+ * upload, memorize) send them there. Public surah and recitation pages stay reachable from it.
+ */
+export async function sendStaffToWork(): Promise<void> {
+  const { actor } = await getServerContext();
+  if (actor && (actor.role === 'moderator' || actor.role === 'admin')) {
+    const { redirect } = await import('next/navigation');
+    redirect('/moderation');
+  }
+}

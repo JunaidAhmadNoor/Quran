@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { Dashboard } from '@/components/home/dashboard';
 import { Landing } from '@/components/home/landing';
-import { getMeOrNull, getServerContext } from '@/server/session';
+import { getMeOrNull, getServerContext, sendStaffToWork } from '@/server/session';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('home');
@@ -11,6 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** Visitors get the landing page; signed-in users get their own home (progress first). */
 export default async function HomePage() {
+  await sendStaffToWork();
   const { core, actor } = await getServerContext();
   const me = await getMeOrNull();
   const surahs = core.surahs.list().items;

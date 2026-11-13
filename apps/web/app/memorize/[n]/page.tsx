@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Practice } from '@/components/memorize/practice';
-import { getServerContext } from '@/server/session';
+import { getServerContext, sendStaffToWork } from '@/server/session';
 
 interface Props {
   params: Promise<{ n: string }>;
@@ -32,6 +32,7 @@ async function singleAyahUrls(surah: number, from: number, to: number) {
 }
 
 export default async function PracticePage({ params, searchParams }: Props) {
+  await sendStaffToWork();
   const n = Number((await params).n);
   if (!Number.isInteger(n) || n < 1 || n > 114) notFound();
   const { core, actor } = await getServerContext();

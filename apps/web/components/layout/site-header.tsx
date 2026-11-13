@@ -1,5 +1,15 @@
 'use client';
-import { BookOpen, Library, LogOut, Menu, Mic, Settings, Shield, Upload } from 'lucide-react';
+import {
+  BookOpen,
+  Library,
+  LogOut,
+  Menu,
+  Mic,
+  Settings,
+  Shield,
+  Upload,
+  Users,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -25,6 +35,12 @@ import { LanguageMenu, ThemeMenu } from './preferences';
 function useNav() {
   const t = useTranslations('nav');
   const { data: me } = useMe();
+  // Moderators and admins see their work only; listener pages are not for staff accounts.
+  if (isStaffRole(me)) {
+    const staff = [{ href: '/moderation', label: t('moderation') }];
+    if (me?.role === 'admin') staff.push({ href: '/admin/users', label: t('users') });
+    return staff;
+  }
   const items = [
     { href: '/', label: t('home') },
     { href: '/surahs', label: t('surahs') },
@@ -43,6 +59,7 @@ export function SiteHeader() {
   const qc = useQueryClient();
   const { data: me } = useMe();
   const nav = useNav();
+  const staff = isStaffRole(me);
   // The menu remembers the page it was opened on, so navigating closes it without an effect.
   const [menuOpenAt, setMenuOpenAt] = useState<string | null>(null);
   const menuOpen = menuOpenAt === pathname;
@@ -59,7 +76,11 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-bg">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
-        <Link href="/" className="flex items-center gap-2 text-text" aria-label={tc('appName')}>
+        <Link
+          href={staff ? '/moderation' : '/'}
+          className="flex items-center gap-2 text-text"
+          aria-label={tc('appName')}
+        >
           <StarMark className="size-7 text-accent" />
           <span className="font-display text-xl">{tc('appName')}</span>
         </Link>
@@ -82,8 +103,8 @@ export function SiteHeader() {
           </ul>
         </nav>
         <div className="ms-auto flex items-center gap-1">
-          <ModeSwitch className="hidden sm:inline-flex" />
-          {me?.mode === 'reciter' ? (
+          {!staff ? <ModeSwitch className="hidden sm:inline-flex" /> : null}
+          {!staff && me?.mode === 'reciter' ? (
             <Button asChild size="sm" className="ms-1 hidden sm:inline-flex">
               <Link href="/upload">
                 <Upload />
@@ -107,13 +128,15 @@ export function SiteHeader() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{me.name}</DropdownMenuLabel>
-                <DropdownMenuItem asChild>
-                  <Link href="/library">
-                    <Library />
-                    {t('library')}
-                  </Link>
-                </DropdownMenuItem>
-                {me.reciterSince ? (
+                {!staff ? (
+                  <DropdownMenuItem asChild>
+                    <Link href="/library">
+                      <Library />
+                      {t('library')}
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
+                {!staff && me.reciterSince ? (
                   <DropdownMenuItem asChild>
                     <Link href="/studio">
                       <Mic />
@@ -121,11 +144,19 @@ export function SiteHeader() {
                     </Link>
                   </DropdownMenuItem>
                 ) : null}
-                {isStaffRole(me) ? (
+                {staff ? (
                   <DropdownMenuItem asChild>
                     <Link href="/moderation">
                       <Shield />
                       {t('moderation')}
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
+                {me.role === 'admin' ? (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/users">
+                      <Users />
+                      {t('users')}
                     </Link>
                   </DropdownMenuItem>
                 ) : null}
@@ -177,7 +208,7 @@ export function SiteHeader() {
               ))}
             </ul>
           </nav>
-          {me ? <ModeSwitch className="mt-4 w-full [&>button]:flex-1" /> : null}
+          {me && !staff ? <ModeSwitch className="mt-4 w-full [&>button]:flex-1" /> : null}
         </DialogContent>
       </Dialog>
     </header>

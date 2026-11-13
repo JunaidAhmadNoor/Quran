@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, SectionHeading, StatusBadge } from '@/components/ui/misc';
 import { EmptyState } from '@/components/ui/states';
 import { formatBytes } from '@/lib/utils';
-import { getServerContext } from '@/server/session';
+import { getServerContext, sendStaffToWork } from '@/server/session';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('studio'))('title'), robots: { index: false } };
@@ -16,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** Reciter-mode dashboard: numbers, storage, and every upload with its review status. */
 export default async function StudioPage() {
+  await sendStaffToWork();
   const { core, actor } = await getServerContext();
   if (!actor) redirect('/auth/sign-in?next=/studio');
   const t = await getTranslations('studio');

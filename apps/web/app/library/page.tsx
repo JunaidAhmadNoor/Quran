@@ -6,13 +6,14 @@ import { RecitationList } from '@/components/recitations/recitation-list';
 import { Button } from '@/components/ui/button';
 import { SectionHeading } from '@/components/ui/misc';
 import { EmptyState } from '@/components/ui/states';
-import { getServerContext } from '@/server/session';
+import { getServerContext, sendStaffToWork } from '@/server/session';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations('library'))('title'), robots: { index: false } };
 }
 
 export default async function LibraryPage() {
+  await sendStaffToWork();
   const t = await getTranslations('library');
   const tn = await getTranslations('nav');
   const { core, actor } = await getServerContext();

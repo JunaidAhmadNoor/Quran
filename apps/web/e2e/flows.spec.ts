@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { accounts, signIn, signOut, unique } from './helpers';
+import { accounts, openNav, signIn, signOut, unique } from './helpers';
 
 const FIXTURE = new URL('./fixtures/sample-recitation.mp3', import.meta.url).pathname;
 
@@ -199,4 +199,32 @@ test('signing out stops playback and clears the queue and history', async ({ pag
   await expect(page.getByRole('heading', { name: 'Continue listening' })).toBeHidden();
   const saved = await page.evaluate(() => localStorage.getItem('tilawah-player') ?? '');
   expect(saved).not.toContain('Al-Ikhlas');
+});
+
+test('staff see only their work; an admin verifies a reciter', async ({ page }) => {
+  await signIn(page, accounts.admin);
+  await expect(page).toHaveURL(/\/moderation$/); // listener home is not for staff
+  await openNav(page);
+  const nav = page.getByRole('navigation', { name: 'Main' }).last();
+  await expect(nav.getByRole('link', { name: 'Moderation' })).toBeVisible();
+  await expect(nav.getByRole('link', { name: 'Memorize' })).toHaveCount(0);
+  await page.goto('/library');
+  await expect(page).toHaveURL(/\/moderation$/);
+
+  await page.goto('/admin/users');
+  await page.getByLabel('Email address').fill(accounts.listener);
+  await page.getByRole('button', { name: 'Find' }).click();
+  const verified = page.getByRole('checkbox', { name: /Verified reciter/ });
+  await expect(verified).not.toBeChecked();
+  await verified.check();
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByText('Changes saved.')).toBeVisible();
+
+  const res = await page.request.get(`/api/v1/admin/users?email=${accounts.listener}`);
+  const { items } = (await res.json()) as { items: { verifiedReciter: boolean }[] };
+  expect(items[0]?.verifiedReciter).toBe(true);
+  // Undo, so other tests see the seeded listener unchanged.
+  await verified.uncheck();
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByText('Changes saved.').first()).toBeVisible();
 });
