@@ -35,10 +35,12 @@ import { LanguageMenu, ThemeMenu } from './preferences';
 function useNav() {
   const t = useTranslations('nav');
   const { data: me } = useMe();
+  // Visitors only see the landing page and sign-in; everything else needs an account.
+  if (!me) return [];
   // Moderators and admins see their work only; listener pages are not for staff accounts.
   if (isStaffRole(me)) {
     const staff = [{ href: '/moderation', label: t('moderation') }];
-    if (me?.role === 'admin') staff.push({ href: '/admin/users', label: t('users') });
+    if (me.role === 'admin') staff.push({ href: '/admin/users', label: t('users') });
     return staff;
   }
   const items = [
@@ -47,7 +49,7 @@ function useNav() {
     { href: '/memorize', label: t('memorize') },
     { href: '/library', label: t('library') },
   ];
-  if (me?.mode === 'reciter') items.splice(1, 0, { href: '/studio', label: t('studio') });
+  if (me.mode === 'reciter') items.splice(1, 0, { href: '/studio', label: t('studio') });
   return items;
 }
 
@@ -174,19 +176,26 @@ export function SiteHeader() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild size="sm" variant="secondary" className="ms-1">
-              <Link href="/auth/sign-in">{t('signIn')}</Link>
-            </Button>
+            <>
+              <Button asChild size="sm" variant="ghost" className="ms-1">
+                <Link href="/auth/sign-in">{t('signIn')}</Link>
+              </Button>
+              <Button asChild size="sm" className="hidden sm:inline-flex">
+                <Link href="/auth/sign-up">{t('signUp')}</Link>
+              </Button>
+            </>
           )}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="md:hidden"
-            aria-label={t('menu')}
-            onClick={() => setMenuOpen(true)}
-          >
-            <Menu />
-          </Button>
+          {nav.length > 0 ? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="md:hidden"
+              aria-label={t('menu')}
+              onClick={() => setMenuOpen(true)}
+            >
+              <Menu />
+            </Button>
+          ) : null}
         </div>
       </div>
       <Dialog open={menuOpen} onOpenChange={setMenuOpen}>

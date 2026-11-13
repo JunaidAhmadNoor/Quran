@@ -25,61 +25,81 @@ describe('route files', () => {
   });
 });
 
-describe('public endpoints', () => {
-  it('GET /health', async () => {
+describe('content endpoints (sign-in required)', () => {
+  it('GET /health stays public', async () => {
     const res = await call('getHealth');
     expect(res.status).toBe(200);
     expect(res.json).toMatchObject({ status: 'ok', apiVersion: '1.0.0' });
   });
 
-  it('GET /surahs is cacheable for a day', async () => {
-    const res = await call('listSurahs');
+  it('rejects anonymous calls to every content endpoint with 401', async () => {
+    const { user } = await createUser(t, { reciter: true });
+    const rec = await insertRecitation(t, user);
+    const anonymous = [
+      await call('listSurahs'),
+      await call('getSurah', { params: { n: 112 } }),
+      await call('getSurahText', { params: { n: 112 } }),
+      await call('listRecitations', { query: {} }),
+      await call('getRecitation', { params: { id: id(rec) } }),
+      await call('recordPlay', { params: { id: id(rec) } }),
+      await call('listReciters'),
+      await call('getReciter', { params: { id: id(user) } }),
+    ];
+    expect(anonymous.map((r) => r.status)).toEqual(anonymous.map(() => 401));
+  });
+
+  it('GET /surahs, never in shared caches', async () => {
+    const { actor } = await createUser(t);
+    const res = await call('listSurahs', { as: actor.userId });
     expect(res.status).toBe(200);
     expect(res.json.items).toHaveLength(114);
-    expect(res.headers.get('cache-control')).toContain('max-age=86400');
+    expect(res.headers.get('cache-control')).toContain('private');
   });
 
   it('GET /surahs/{n} and /surahs/{n}/text', async () => {
     const { user } = await createUser(t, { reciter: true });
+    const { actor } = await createUser(t);
+    const as = actor.userId;
     await insertRecitation(t, user);
-    const surah = await call('getSurah', { params: { n: 112 } });
+    const surah = await call('getSurah', { as, params: { n: 112 } });
     expect(surah.status).toBe(200);
     expect(surah.json.recitations.items).toHaveLength(1);
-    const text = await call('getSurahText', { params: { n: 112 } });
+    const text = await call('getSurahText', { as, params: { n: 112 } });
     expect(text.json.ayahs).toHaveLength(4);
-    expect((await call('getSurah', { params: { n: 115 } })).status).toBe(400);
+    expect((await call('getSurah', { as, params: { n: 115 } })).status).toBe(400);
   });
 
   it('GET /recitations and /recitations/{id}', async () => {
     const { user } = await createUser(t, { reciter: true });
+    const { actor } = await createUser(t);
+    const as = actor.userId;
     const rec = await insertRecitation(t, user);
-    const list = await call('listRecitations', { query: { surah: 112, sort: 'popular' } });
+    const list = await call('listRecitations', { as, query: { surah: 112, sort: 'popular' } });
     expect(list.json.items).toHaveLength(1);
-    expect(list.headers.get('cache-control')).toContain('s-maxage=60');
-    const one = await call('getRecitation', { params: { id: id(rec) } });
+    expect(list.headers.get('cache-control')).toContain('private');
+    const one = await call('getRecitation', { as, params: { id: id(rec) } });
     expect(one.json.stream.url).toContain(rec.audioKey);
   });
 
-  it('POST /recitations/{id}/play counts anonymous listeners by hashed IP', async () => {
+  it('POST /recitations/{id}/play counts a listener once', async () => {
     const { user } = await createUser(t, { reciter: true });
+    const { actor } = await createUser(t);
     const rec = await insertRecitation(t, user);
-    const headers = { 'x-forwarded-for': '203.0.113.9' };
-    expect((await call('recordPlay', { params: { id: id(rec) }, headers })).json).toEqual({
+    const as = actor.userId;
+    expect((await call('recordPlay', { as, params: { id: id(rec) } })).json).toEqual({
       counted: true,
       playCount: 1,
     });
-    expect((await call('recordPlay', { params: { id: id(rec) }, headers })).json.counted).toBe(
-      false,
-    );
-    const stored = await t.db.database.models.RateLimit.find().lean();
-    expect(JSON.stringify(stored)).not.toContain('203.0.113.9');
+    expect((await call('recordPlay', { as, params: { id: id(rec) } })).json.counted).toBe(false);
   });
 
   it('GET /reciters and /reciters/{id}', async () => {
     const { user } = await createUser(t, { verifiedReciter: true });
-    expect((await call('listReciters')).json.items).toHaveLength(1);
+    const { actor } = await createUser(t);
+    const as = actor.userId;
+    expect((await call('listReciters', { as })).json.items).toHaveLength(1);
     expect(
-      (await call('getReciter', { params: { id: id(user) } })).json.reciter.verifiedReciter,
+      (await call('getReciter', { as, params: { id: id(user) } })).json.reciter.verifiedReciter,
     ).toBe(true);
   });
 });
@@ -307,7 +327,8 @@ describe('staff endpoints', () => {
 
 describe('cross-cutting behaviour', () => {
   it('returns 400 with issues for invalid input', async () => {
-    const res = await call('listRecitations', { query: { limit: 500 } });
+    const { actor } = await createUser(t);
+    const res = await call('listRecitations', { as: actor.userId, query: { limit: 500 } });
     expect(res.status).toBe(400);
     expect(res.error?.code).toBe('VALIDATION_ERROR');
     expect(res.error?.details.issues).toEqual([expect.objectContaining({ path: ['limit'] })]);
@@ -315,6 +336,7 @@ describe('cross-cutting behaviour', () => {
 
   it('blocks cookie-authenticated writes from other origins (CSRF)', async () => {
     const { user } = await createUser(t, { reciter: true });
+    const { actor } = await createUser(t);
     const rec = await insertRecitation(t, user);
     const res = await call('recordPlay', {
       params: { id: id(rec) },
@@ -322,6 +344,7 @@ describe('cross-cutting behaviour', () => {
     });
     expect(res.status).toBe(403);
     const ok = await call('recordPlay', {
+      as: actor.userId,
       params: { id: id(rec) },
       headers: { cookie: 'tilawah.session_token=x', origin: 'http://localhost:3000' },
     });

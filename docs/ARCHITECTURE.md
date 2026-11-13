@@ -636,4 +636,10 @@ change before Phase 2.
   cookie for 5 minutes (role and mode are still read fresh), and the user record is loaded once per
   page instead of three times: a signed-in page went from 7 to 4 queries. With a remote database
   every round trip counts: keep Railway and Atlas in the same region.
+- **An account is required for everything except the landing page and sign-in** (the user's
+  decision, replacing public listening). Pages: `proxy.ts` redirects requests without a session
+  cookie to `/auth/sign-in?next=…`, and the `app/(member)` layout verifies the session on the server.
+  API: every content endpoint is `auth: 'user'` with private caching; only `/health` stays public.
+  The landing page shows no recitations. Consequence: surah and recitation pages are no longer
+  indexed by search engines, and shared links ask the visitor to sign in first.
 

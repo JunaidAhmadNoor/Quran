@@ -15,7 +15,29 @@ function modelOrigin(): string {
   return base ? new URL(base).origin : '';
 }
 
+/** Pages anyone may open; everything else needs an account. */
+const PUBLIC_PAGES = [/^\/$/, /^\/auth(\/|$)/];
+/** Static files served from public/ (worklets, ONNX Runtime, models, icons). */
+const ASSET = /\.[a-z0-9]+$/i;
+const SESSION_COOKIES = ['tilawah.session_token', '__Secure-tilawah.session_token'];
+
+/**
+ * A quick gate: without a session cookie, member pages redirect to sign-in and come back after.
+ * The member layout verifies the session itself, and every content API requires sign-in.
+ */
+function signInRedirect(request: NextRequest): NextResponse | null {
+  const { pathname, search } = request.nextUrl;
+  if (PUBLIC_PAGES.some((p) => p.test(pathname)) || ASSET.test(pathname)) return null;
+  if (SESSION_COOKIES.some((name) => request.cookies.has(name))) return null;
+  const url = request.nextUrl.clone();
+  url.pathname = '/auth/sign-in';
+  url.search = `?next=${encodeURIComponent(pathname + search)}`;
+  return NextResponse.redirect(url);
+}
+
 export function proxy(request: NextRequest) {
+  const gate = signInRedirect(request);
+  if (gate) return gate;
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const dev = process.env.NODE_ENV === 'development';
   const r2 = r2Origins();
@@ -38,6 +60,8 @@ export function proxy(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
+  // For the member layout's sign-in redirect (layouts do not receive the path).
+  requestHeaders.set('x-pathname', request.nextUrl.pathname + request.nextUrl.search);
   requestHeaders.set('Content-Security-Policy', csp);
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set('Content-Security-Policy', csp);

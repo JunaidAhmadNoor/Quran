@@ -1,23 +1,18 @@
 // The home page for visitors: what Tilawah is, a picture of memorization, and a way in.
-import type { RecitationPage } from '@tilawah/contracts';
-import type { z } from 'zod';
 import { BookOpenCheck, Headphones, Mic, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { MemorizeDemo } from '@/components/home/memorize-demo';
-import { RecitationList } from '@/components/recitations/recitation-list';
 import { Button } from '@/components/ui/button';
-import { SectionHeading } from '@/components/ui/misc';
 import { GirihPattern, StarMark } from '@/components/ui/ornaments';
 
 interface Props {
   stats: { surahs: number; ayahs: number };
   demo: { title: string; ayahs: { number: number; words: string[] }[] };
   verse: string;
-  listen: { page: z.output<typeof RecitationPage>; sort: 'trending' | 'newest' } | null;
 }
 
-export async function Landing({ stats, demo, verse, listen }: Props) {
+export async function Landing({ stats, demo, verse }: Props) {
   const t = await getTranslations('home');
   const nf = new Intl.NumberFormat(await getLocale());
   const features = [
@@ -180,32 +175,6 @@ export async function Landing({ stats, demo, verse, listen }: Props) {
             ))}
           </ol>
         </section>
-
-        {/* Listen now */}
-        {listen ? (
-          <section aria-labelledby="listen">
-            <SectionHeading
-              id="listen"
-              action={
-                <Link
-                  href="/surahs"
-                  className="text-sm text-primary underline-offset-4 hover:underline"
-                >
-                  {t('browse')}
-                </Link>
-              }
-            >
-              {t('listenNow')}
-            </SectionHeading>
-            <RecitationList
-              scope={`landing-${listen.sort}`}
-              initial={listen.page}
-              source={{ kind: 'recitations', sort: listen.sort }}
-              showSurah
-              label={t('listenNow')}
-            />
-          </section>
-        ) : null}
       </div>
 
       {/* Verse and final call */}

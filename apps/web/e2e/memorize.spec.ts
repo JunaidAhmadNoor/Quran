@@ -39,15 +39,12 @@ test('signed in: recite a range, see the summary, and the progress is saved', as
   await expect(page.getByRole('img', { name: 'Hidden word' })).toHaveCount(5);
 });
 
-test('signed out: the session is kept in this browser', async ({ page }) => {
+test('check mode: the session is saved to progress', async ({ page }) => {
+  await signInViaApi(page, accounts.reciter);
   await fakeRecognizer(page, IKHLAS);
   await page.goto('/memorize/112?from=1&to=3');
   await page.getByRole('radio', { name: /Check after each ayah/ }).check();
   await page.getByRole('button', { name: 'Start reciting' }).click();
   await expect(page.getByText('100% accuracy')).toBeVisible();
-  await expect(page.getByText(/Saved in this browser/)).toBeVisible();
-  const saved = await page.evaluate(() => localStorage.getItem('tilawah.memorization.sessions'));
-  expect(JSON.parse(saved ?? '[]')).toEqual([
-    expect.objectContaining({ surah: 112, ayahFrom: 1, ayahTo: 3, mode: 'check_ayah' }),
-  ]);
+  await expect(page.getByText('Saved to your progress.')).toBeVisible();
 });

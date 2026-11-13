@@ -18,6 +18,7 @@ for (const scheme of ['light', 'dark'] as const) {
   test(`public pages (${scheme})`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: scheme });
     await page.setViewportSize({ width: 1280, height: 900 });
+    await signInViaApi(page, accounts.listener); // the API needs an account
     const first = (
       (await (await page.request.get('/api/v1/recitations?limit=1&sort=popular')).json()) as {
         items: { id: string; reciter: { id: string } }[];
@@ -37,7 +38,18 @@ for (const scheme of ['light', 'dark'] as const) {
       ['reset-password', '/auth/reset-password'],
       ['not-found', '/surahs/999'],
     ];
-    for (const [name, path] of pages) {
+    await page.context().clearCookies();
+    // The landing and sign-in pages as a visitor; the rest needs an account.
+    for (const [name, path] of pages.filter(([n]) =>
+      ['home', 'sign-in', 'sign-up', 'reset-password'].includes(n),
+    )) {
+      await page.goto(path);
+      await shot(page, name === 'home' ? 'landing' : name, scheme);
+    }
+    await signInViaApi(page, accounts.listener);
+    for (const [name, path] of pages.filter(
+      ([n]) => !['sign-in', 'sign-up', 'reset-password'].includes(n),
+    )) {
       await page.goto(path);
       await shot(page, name, scheme);
     }

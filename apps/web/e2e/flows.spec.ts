@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { accounts, openNav, signIn, signOut, unique } from './helpers';
+import { accounts, openNav, signIn, signInViaApi, signOut, unique } from './helpers';
 
 const FIXTURE = new URL('./fixtures/sample-recitation.mp3', import.meta.url).pathname;
 
@@ -66,6 +66,7 @@ test('sign up → switch to reciter → upload → moderator approves → appear
 });
 
 test('the player keeps playing while navigating between pages', async ({ page, isMobile }) => {
+  await signInViaApi(page, accounts.listener); // listening needs an account
   test.skip(isMobile, 'Seek slider is hidden on phones; covered on desktop projects');
   await page.goto('/surahs/113');
   await page.getByRole('button', { name: /^Play: Al-Falaq/ }).click();
@@ -90,6 +91,7 @@ test('the player keeps playing while navigating between pages', async ({ page, i
 test('switching to Arabic lays the site out right-to-left without horizontal scrolling', async ({
   page,
 }) => {
+  await signInViaApi(page, accounts.listener); // listening needs an account
   await page.goto('/');
   await page.getByRole('button', { name: 'Language' }).click();
   await page.getByRole('menuitemradio', { name: 'العربية' }).click();
@@ -113,6 +115,7 @@ test('is usable with the keyboard: skip link and focusable controls', async ({
   page,
   browserName,
 }) => {
+  await signInViaApi(page, accounts.listener); // listening needs an account
   test.skip(
     browserName === 'webkit',
     'WebKit only tabs to links with the "Press Tab to highlight each item" setting',
@@ -132,6 +135,7 @@ test('is usable with the keyboard: skip link and focusable controls', async ({
 });
 
 test('switching language does not interrupt playback', async ({ page }) => {
+  await signInViaApi(page, accounts.listener); // listening needs an account
   await page.goto('/surahs/114');
   await page.getByRole('button', { name: /^Play: An-Nas/ }).click();
   const player = page.getByRole('region', { name: 'Audio player' });
@@ -228,4 +232,17 @@ test('staff see only their work; an admin verifies a reciter', async ({ page }) 
   await dialog.getByRole('checkbox', { name: /Verified reciter/ }).uncheck();
   await dialog.getByRole('button', { name: 'Save changes' }).click();
   await expect(row.getByLabel('Verified reciter')).toHaveCount(0);
+});
+
+test('visitors are sent to sign-in and land on the page they wanted', async ({ page }) => {
+  for (const path of ['/surahs/112', '/memorize/112', '/library']) {
+    await page.goto(path);
+    await expect(page).toHaveURL(new RegExp(`/auth/sign-in\\?next=${encodeURIComponent(path)}`));
+  }
+  expect((await page.request.get('/api/v1/recitations')).status()).toBe(401);
+  await page.goto('/surahs/112');
+  await page.getByLabel('Email').fill(accounts.listener);
+  await page.getByLabel('Password').fill('tilawah-demo-123');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page).toHaveURL(/\/surahs\/112$/);
 });

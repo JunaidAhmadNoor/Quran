@@ -41,7 +41,7 @@ it('takes a recitation from upload to likes', async () => {
   const id = created.json.id;
 
   // Not public yet.
-  expect((await call('getSurah', { params: { n: 1 } })).json.recitations.items).toHaveLength(0);
+  expect((await call('getSurah', { params: { n: 1 }, as: listener.userId })).json.recitations.items).toHaveLength(0);
   expect((await call('getRecitation', { params: { id }, as: listener.userId })).status).toBe(404);
 
   // Moderator approves it.
@@ -54,7 +54,7 @@ it('takes a recitation from upload to likes', async () => {
   });
 
   // Now on the surah page; another user plays and likes it.
-  const surah = await call('getSurah', { params: { n: 1 } });
+  const surah = await call('getSurah', { params: { n: 1 }, as: listener.userId });
   expect(surah.json.recitations.items[0]).toMatchObject({
     id,
     title: 'Al-Fatihah',

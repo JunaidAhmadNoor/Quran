@@ -103,7 +103,6 @@
           "Surahs"
         ],
         "security": [
-          {},
           {
             "cookieAuth": []
           },
@@ -111,8 +110,8 @@
             "bearerAuth": []
           }
         ],
-        "x-auth": "public",
-        "x-cache": "static",
+        "x-auth": "user",
+        "x-cache": "private",
         "responses": {
           "200": {
             "description": "Success",
@@ -120,6 +119,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ListSurahsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -145,7 +154,6 @@
           "Surahs"
         ],
         "security": [
-          {},
           {
             "cookieAuth": []
           },
@@ -153,8 +161,8 @@
             "bearerAuth": []
           }
         ],
-        "x-auth": "public",
-        "x-cache": "shared",
+        "x-auth": "user",
+        "x-cache": "private",
         "parameters": [
           {
             "in": "path",
@@ -211,6 +219,16 @@
               }
             }
           },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "404": {
             "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
             "content": {
@@ -242,7 +260,6 @@
           "Surahs"
         ],
         "security": [
-          {},
           {
             "cookieAuth": []
           },
@@ -250,8 +267,8 @@
             "bearerAuth": []
           }
         ],
-        "x-auth": "public",
-        "x-cache": "static",
+        "x-auth": "user",
+        "x-cache": "private",
         "parameters": [
           {
             "in": "path",
@@ -282,6 +299,16 @@
           },
           "400": {
             "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
             "content": {
               "application/json": {
                 "schema": {
@@ -321,7 +348,6 @@
           "Recitations"
         ],
         "security": [
-          {},
           {
             "cookieAuth": []
           },
@@ -329,8 +355,8 @@
             "bearerAuth": []
           }
         ],
-        "x-auth": "public",
-        "x-cache": "shared",
+        "x-auth": "user",
+        "x-cache": "private",
         "parameters": [
           {
             "in": "query",
@@ -405,6 +431,16 @@
           },
           "400": {
             "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
             "content": {
               "application/json": {
                 "schema": {
@@ -559,7 +595,6 @@
           "Recitations"
         ],
         "security": [
-          {},
           {
             "cookieAuth": []
           },
@@ -567,7 +602,7 @@
             "bearerAuth": []
           }
         ],
-        "x-auth": "public",
+        "x-auth": "user",
         "x-cache": "private",
         "description": "Approved recitations are visible to everyone. Pending, rejected and removed ones are visible only to the uploader and moderators; everyone else gets 404.",
         "parameters": [
@@ -594,6 +629,16 @@
           },
           "400": {
             "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
             "content": {
               "application/json": {
                 "schema": {
@@ -867,7 +912,6 @@
           "Recitations"
         ],
         "security": [
-          {},
           {
             "cookieAuth": []
           },
@@ -875,7 +919,7 @@
             "bearerAuth": []
           }
         ],
-        "x-auth": "public",
+        "x-auth": "user",
         "x-cache": "none",
         "description": "Clients call this once playback passes 30 seconds, or half the duration for shorter audio. Repeat calls from the same listener within 6 hours return counted: false.",
         "x-rate-limit": {
@@ -907,6 +951,16 @@
           },
           "400": {
             "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1391,7 +1445,6 @@
           "Reciters"
         ],
         "security": [
-          {},
           {
             "cookieAuth": []
           },
@@ -1399,8 +1452,8 @@
             "bearerAuth": []
           }
         ],
-        "x-auth": "public",
-        "x-cache": "shared",
+        "x-auth": "user",
+        "x-cache": "private",
         "parameters": [
           {
             "in": "query",
@@ -1441,6 +1494,16 @@
               }
             }
           },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "500": {
             "description": "INTERNAL_ERROR: Unexpected server error.",
             "content": {
@@ -1462,7 +1525,6 @@
           "Reciters"
         ],
         "security": [
-          {},
           {
             "cookieAuth": []
           },
@@ -1470,8 +1532,8 @@
             "bearerAuth": []
           }
         ],
-        "x-auth": "public",
-        "x-cache": "shared",
+        "x-auth": "user",
+        "x-cache": "private",
         "parameters": [
           {
             "in": "path",
@@ -1521,6 +1583,16 @@
           },
           "400": {
             "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1744,7 +1816,6 @@
           "Playlists"
         ],
         "security": [
-          {},
           {
             "cookieAuth": []
           },
@@ -1752,7 +1823,7 @@
             "bearerAuth": []
           }
         ],
-        "x-auth": "public",
+        "x-auth": "user",
         "x-cache": "private",
         "parameters": [
           {
@@ -1778,6 +1849,16 @@
           },
           "400": {
             "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
             "content": {
               "application/json": {
                 "schema": {

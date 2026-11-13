@@ -17,27 +17,16 @@ export default async function HomePage() {
   const surahs = core.surahs.list().items;
 
   if (!me) {
-    const [fatiha, muzzammil, trending, newest] = await Promise.all([
-      core.surahs.text(1),
-      core.surahs.text(73),
-      core.recitations.list(null, { sort: 'trending', limit: 6 }),
-      core.recitations.list(null, { sort: 'newest', limit: 6 }),
-    ]);
+    // Visitors get no recitations (listening needs an account), only the Quran text for the demo.
+    const [fatiha, muzzammil] = await Promise.all([core.surahs.text(1), core.surahs.text(73)]);
     const demoAyahs = fatiha.ayahs
       .slice(1, 4)
       .map((a) => ({ number: a.number, words: a.words.map((w) => w.text) }));
-    const listen =
-      trending.items.length > 0
-        ? { page: trending, sort: 'trending' as const }
-        : newest.items.length > 0
-          ? { page: newest, sort: 'newest' as const }
-          : null;
     return (
       <Landing
         stats={{ surahs: surahs.length, ayahs: surahs.reduce((n, s) => n + s.ayahCount, 0) }}
         demo={{ title: `${surahs[0]?.nameTransliterated ?? ''} · 1:2–4`, ayahs: demoAyahs }}
         verse={muzzammil.ayahs[3]?.text ?? ''}
-        listen={listen}
       />
     );
   }

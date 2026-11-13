@@ -4,20 +4,23 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { accounts, signInViaApi } from './helpers';
 
-const PUBLIC = [
+// Visitors can open only the landing page and the sign-in pages.
+const PUBLIC = ['/', '/auth/sign-in', '/auth/sign-up'];
+// Listener pages as a reciter; staff pages as an admin (staff are sent to their own area).
+const SIGNED_IN = [
   '/',
   '/surahs',
   '/surahs/1',
   '/surahs/1?view=read',
   '/memorize',
   '/memorize/112',
-  '/auth/sign-in',
-  '/auth/sign-up',
   'RECITATION',
   'RECITER',
+  '/library',
+  '/studio',
+  '/upload',
+  '/settings',
 ];
-// Listener pages as a reciter; staff pages as an admin (staff are sent to their own area).
-const SIGNED_IN = ['/', '/library', '/studio', '/upload', '/settings'];
 const STAFF = ['/moderation', '/admin/users'];
 
 async function seriousViolations(page: Page, path: string): Promise<string[]> {
@@ -54,14 +57,14 @@ for (const scheme of ['light', 'dark'] as const) {
 
       for (const path of PUBLIC) {
         test(`${path} has no serious violations`, async ({ page }) => {
-          expect(await seriousViolations(page, await resolve(page, path))).toEqual([]);
+          expect(await seriousViolations(page, path)).toEqual([]);
         });
       }
 
       for (const path of SIGNED_IN) {
         test(`${path} (signed in) has no serious violations`, async ({ page }) => {
           await signInViaApi(page, accounts.reciter);
-          expect(await seriousViolations(page, path)).toEqual([]);
+          expect(await seriousViolations(page, await resolve(page, path))).toEqual([]);
         });
       }
 
