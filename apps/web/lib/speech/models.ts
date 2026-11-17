@@ -35,8 +35,17 @@ export function pickModel(): SpeechModel {
   return memory !== undefined && memory <= 4 ? TINY_MODEL : BASE_MODEL;
 }
 
-/** WebGPU when the browser exposes a real adapter; otherwise WebAssembly. */
+/** Set when recognition stalled on this browser's GPU: WebAssembly is used from then on. */
+export const GPU_STALLED_KEY = 'tilawah.speech.gpuStalled';
+
+/** WebGPU when the browser exposes a real adapter (that has not stalled before); otherwise
+ * WebAssembly. */
 export async function detectDevice(): Promise<SpeechDevice> {
+  try {
+    if (localStorage.getItem(GPU_STALLED_KEY)) return 'wasm';
+  } catch {
+    // storage unavailable
+  }
   const gpu = (navigator as { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
   if (!gpu) return 'wasm';
   try {

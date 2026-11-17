@@ -170,4 +170,63 @@ describe('StreamingTranscriber (LocalAgreement)', () => {
     s.result(last().id, 'قل هو الله');
     expect(heard.flat()).toEqual(['قل', 'هو', 'الله']);
   });
+
+  it('hears a quiet microphone (the silence threshold follows the room)', () => {
+    const { s, jobs } = setup();
+    s.push(tone(1, 0.0003)); // quiet room
+    s.push(tone(1, 0.006)); // quiet voice, under a fixed 0.01 threshold
+    expect(jobs.length).toBeGreaterThan(0);
+  });
+
+  it('still finds pauses in a noisy room', () => {
+    const { s, jobs, last } = setup();
+    s.push(tone(2, 0.02)); // background noise
+    expect(jobs).toHaveLength(0);
+    s.push(tone(0.7, 0.3));
+    s.result(last().id, 'قل');
+    s.push(tone(0.6, 0.02));
+    expect(last().final).toBe(true);
+  });
+
+  it('cuts the buffer when Whisper keeps returning only its first part', () => {
+    const { s, heard, last } = setup();
+    s.push(tone(2));
+    s.result(last().id, 'اهدنا الصراط');
+    s.push(tone(0.6));
+    s.result(last().id, 'اهدنا الصراط المستقيم');
+    s.push(tone(0.6));
+    s.result(last().id, 'اهدنا الصراط المستقيم');
+    expect(heard.flat()).toEqual(['اهدنا', 'الصراط', 'المستقيم']);
+    // The next ayah is being recited, but the text no longer changes.
+    for (let i = 0; i < 6; i++) {
+      s.push(tone(0.6));
+      s.result(last().id, 'اهدنا الصراط المستقيم');
+    }
+    s.push(tone(0.6));
+    expect(last().audio.length).toBeLessThan(5.5 * SR); // cut, not all 7.4 s
+    s.result(last().id, 'المستقيم صراط الذين');
+    s.push(tone(0.6));
+    s.result(last().id, 'المستقيم صراط الذين انعمت');
+    expect(heard.flat()).toEqual(['اهدنا', 'الصراط', 'المستقيم', 'صراط', 'الذين']);
+  });
+
+  it('an echo or breath after a phrase still counts as a pause', () => {
+    const { s, last } = setup();
+    s.push(silence(1));
+    s.push(tone(0.7, 0.3));
+    s.result(last().id, 'قل');
+    s.push(tone(0.6, 0.006)); // reverb tail, far quieter than the voice
+    expect(last().final).toBe(true);
+  });
+
+  it('long continuous speech is not mistaken for silence', () => {
+    const { s, jobs } = setup({ maxBufferSec: 60 });
+    s.push(silence(0.5));
+    // 10 s of speech with short dips between words, never a real pause.
+    for (let i = 0; i < 20; i++) {
+      s.push(tone(0.45, 0.3));
+      s.push(tone(0.05, 0.15));
+    }
+    expect(jobs.some((j) => j.final)).toBe(false);
+  });
 });

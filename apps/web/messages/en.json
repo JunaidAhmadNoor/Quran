@@ -389,7 +389,8 @@
     "textLabel": "Text",
     "textFaint": "Faint",
     "textHidden": "Hidden",
-    "textHint": "Faint: words darken as you recite them. Hidden: test yourself without seeing the text."
+    "textHint": "Faint: words darken as you recite them. Hidden: test yourself without seeing the text.",
+    "quietMic": "We can't hear you. Check that the right microphone is selected in your browser and that it isn't muted."
   },
   "errors": {
     "notFoundTitle": "This page could not be found",

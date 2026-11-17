@@ -9,8 +9,12 @@ import { similarity } from './similarity';
 
 export interface StreamingOptions {
   sampleRate?: number;
-  /** Frame RMS below this is treated as silence. */
+  /** Upper bound of the silence threshold. The threshold itself follows the last 5 s of audio:
+   * 3× the quietest frame (the room's noise) and 5% of the loudest (so echoes and breaths after a
+   * phrase are still a pause). Quiet microphones and noisy rooms both work. */
   silenceRms?: number;
+  /** Lower bound of the silence threshold. */
+  minSilenceRms?: number;
   /** Silence after speech that ends the phrase: the buffer is transcribed once more and reset. */
   pauseSec?: number;
   /** New audio needed before the next interim transcription. */
@@ -21,6 +25,9 @@ export interface StreamingOptions {
   keepSec?: number;
   /** Silence kept before speech starts, so the first sound is not clipped. */
   preRollSec?: number;
+  /** New audio after which an unchanged, fully revealed transcription means Whisper is ignoring
+   * the rest of the buffer: it is cut where the text stopped changing. */
+  stallSec?: number;
 }
 
 export interface TranscriptionJob {
@@ -91,11 +98,18 @@ export class StreamingTranscriber {
   private readonly sr: number;
   private readonly frameSize: number;
   private readonly silenceRms: number;
+  private readonly minSilenceRms: number;
+  /** Levels of the last 5 s of frames; their minimum is the background noise. */
+  private readonly levels = new Float32Array(100);
+  private levelCount = 0;
   private readonly pauseFrames: number;
   private readonly stepSize: number;
   private readonly maxSize: number;
   private readonly keepSize: number;
   private readonly preRollSize: number;
+  private readonly stallSize: number;
+  /** Buffer length of the first pass that returned the current text. */
+  private stableFrom = 0;
   private buffer: Float32Array;
   private filled = 0;
   private readonly frame: Float32Array;
@@ -120,12 +134,14 @@ export class StreamingTranscriber {
   ) {
     this.sr = options.sampleRate ?? 16_000;
     this.frameSize = Math.round(FRAME_SEC * this.sr);
-    this.silenceRms = options.silenceRms ?? 0.01;
+    this.silenceRms = options.silenceRms ?? 0.03;
+    this.minSilenceRms = options.minSilenceRms ?? 0.002;
     this.pauseFrames = Math.max(1, Math.round((options.pauseSec ?? 0.5) / FRAME_SEC));
     this.stepSize = Math.round((options.stepSec ?? 0.6) * this.sr);
     this.maxSize = Math.round((options.maxBufferSec ?? 24) * this.sr);
     this.keepSize = Math.round((options.keepSec ?? 3) * this.sr);
     this.preRollSize = Math.round((options.preRollSec ?? 0.25) * this.sr);
+    this.stallSize = Math.round((options.stallSec ?? 3) * this.sr);
     this.buffer = new Float32Array(this.maxSize + this.sr * 8); // room while a pass is running
     this.frame = new Float32Array(this.frameSize);
   }
@@ -164,8 +180,26 @@ export class StreamingTranscriber {
       this.restart(job.length, job.forced);
     } else {
       const agreed = agreedPrefix(this.previous, words);
+      const unchanged = agreed === words.length && agreed === this.previous.length;
+      if (!unchanged) this.stableFrom = job.length;
       if (agreed > start) this.commit(words.slice(start, agreed));
       this.previous = words;
+      // Seen with two ayahs in one buffer (no pause detected, e.g. a noisy room or echo): Whisper
+      // returns only the first, every time. Cut where the text stopped changing, with a second of
+      // overlap (repeated words are dropped), so the rest gets transcribed.
+      if (
+        unchanged &&
+        words.length > 0 &&
+        start >= words.length &&
+        job.length - this.stableFrom >= this.stallSize
+      ) {
+        this.drop(Math.max(0, this.stableFrom - this.sr));
+        this.carried = true;
+        this.previous = [];
+        this.committedWords = [];
+        this.sentAt = 0;
+        this.stableFrom = 0;
+      }
     }
     this.schedule();
   }
@@ -186,8 +220,24 @@ export class StreamingTranscriber {
     this.schedule();
   }
 
+  /** Current silence threshold (frame RMS below it is silence). */
+  get threshold(): number {
+    const n = Math.min(this.levelCount, this.levels.length);
+    if (n === 0) return this.minSilenceRms * 3;
+    let floor = Infinity;
+    let peak = 0;
+    for (let i = 0; i < n; i++) {
+      const level = this.levels[i] ?? 0;
+      floor = Math.min(floor, level);
+      peak = Math.max(peak, level);
+    }
+    return Math.min(this.silenceRms, Math.max(this.minSilenceRms, floor * 3, peak * 0.05));
+  }
+
   private onFrame(frame: Float32Array): void {
-    const voiced = rms(frame) >= this.silenceRms;
+    const level = rms(frame);
+    this.levels[this.levelCount++ % this.levels.length] = level;
+    const voiced = level >= this.threshold;
     this.append(frame);
     if (voiced) {
       this.speech = true;
@@ -230,10 +280,11 @@ export class StreamingTranscriber {
     this.previous = [];
     this.committedWords = [];
     this.sentAt = 0;
+    this.stableFrom = 0;
     // Is there speech in what remains (the user carried on during the final pass)?
     let voiced = false;
     for (let i = 0; i + this.frameSize <= this.filled; i += this.frameSize) {
-      if (rms(this.buffer.subarray(i, i + this.frameSize)) >= this.silenceRms) voiced = true;
+      if (rms(this.buffer.subarray(i, i + this.frameSize)) >= this.threshold) voiced = true;
     }
     this.speech = voiced || forced;
     this.silentFrames = 0;
@@ -255,6 +306,7 @@ export class StreamingTranscriber {
     this.buffer.copyWithin(0, count, this.filled);
     this.filled -= count;
     this.sentAt = Math.max(0, this.sentAt - count);
+    this.stableFrom = Math.max(0, this.stableFrom - count);
     if (this.pending) this.pending.length = Math.max(0, this.pending.length - count);
   }
 }

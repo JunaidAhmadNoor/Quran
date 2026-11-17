@@ -9,7 +9,7 @@ import {
   type MatcherEvent,
   type WordState,
 } from '@tilawah/recitation';
-import { Ear, Lightbulb, Mic, RotateCcw, Square, TriangleAlert } from 'lucide-react';
+import { Ear, Lightbulb, Mic, MicOff, RotateCcw, Square, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
@@ -99,6 +99,11 @@ function saveLocally(entry: object): void {
   }
 }
 
+/** Frame loudness that counts as hearing the user, and how long without it before saying so. */
+const HEARD_RMS = 0.004;
+const QUIET_MS = 6000;
+const noSubscribe = () => () => undefined;
+
 export function Practice({ surah, ayahs, listenUrls, signedIn, initialMode = 'reveal' }: Props) {
   const t = useTranslations('memorize');
   const ts = useTranslations('surah');
@@ -123,6 +128,15 @@ export function Practice({ surah, ayahs, listenUrls, signedIn, initialMode = 're
   const [save, setSave] = useState<SaveState>(null);
   const [device, setDevice] = useState<string | null>(null);
   const [sizeMb, setSizeMb] = useState<number | null>(null);
+  const [quiet, setQuiet] = useState(false);
+  const [heardText, setHeardText] = useState('');
+  // ?debug on the URL shows what the recognizer heard (for checking a microphone or accent).
+  const debug = useSyncExternalStore(
+    noSubscribe,
+    () => new URLSearchParams(window.location.search).has('debug'),
+    () => false,
+  );
+  const ring = useRef<HTMLSpanElement>(null);
 
   // Session state read by engine callbacks: kept in refs so callbacks never see stale values.
   const session = useRef({
@@ -134,6 +148,7 @@ export function Practice({ surah, ayahs, listenUrls, signedIn, initialMode = 're
     tick: 0,
     audio: null as HTMLAudioElement | null,
     listenAyah: 0,
+    heardAt: 0,
   });
   /** Read through a function: TypeScript would otherwise assume it cannot change across an await. */
   const isActive = () => session.current.active;
@@ -232,6 +247,8 @@ export function Practice({ surah, ayahs, listenUrls, signedIn, initialMode = 're
         return;
       }
       setDevice(s.engine.device ?? null);
+      s.heardAt = Date.now();
+      setQuiet(false);
       setPhase('active');
       startTicking();
     } catch (e) {
@@ -334,6 +351,7 @@ export function Practice({ surah, ayahs, listenUrls, signedIn, initialMode = 're
     s.listenAyah = 0;
     setStates(expected.map(() => 'hidden'));
     setHint(null);
+    setHeardText('');
     setWrongAyah(null);
     setResult(null);
     setSave(null);
@@ -341,6 +359,17 @@ export function Practice({ surah, ayahs, listenUrls, signedIn, initialMode = 're
       if (!s.active || !s.matcher) return;
       onEvents(s.matcher.hear(words, Date.now()));
     });
+    engine.onLevel?.((rms) => {
+      // Level ring: about 0.0005 (silence) to 0.1 (loud), on a log scale.
+      const v = Math.min(1, Math.max(0, (Math.log10(Math.max(rms, 1e-5)) + 3.3) / 2.3));
+      if (ring.current) ring.current.style.transform = `scale(${String(1 + v * 0.5)})`;
+      const now = Date.now();
+      if (rms >= HEARD_RMS) {
+        s.heardAt = now;
+        setQuiet(false);
+      } else if (s.heardAt > 0 && now - s.heardAt > QUIET_MS) setQuiet(true);
+    });
+    engine.onTranscript?.((text) => setHeardText(text));
     engine.onError((e) => {
       // Recognition keeps failing: stop and say so instead of listening silently.
       console.error('Speech recognition failed', e);
@@ -540,6 +569,14 @@ export function Practice({ surah, ayahs, listenUrls, signedIn, initialMode = 're
       {phase === 'preparing' || phase === 'active' ? (
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="relative flex size-20 items-center justify-center">
+            {phase === 'active' && listen?.stage !== 'playing' ? (
+              <span
+                ref={ring}
+                aria-hidden
+                data-testid="mic-level"
+                className="absolute inset-0 rounded-full bg-primary/25 transition-transform duration-100 motion-reduce:hidden"
+              />
+            ) : null}
             {reciting ? (
               <span
                 aria-hidden
@@ -588,7 +625,12 @@ export function Practice({ surah, ayahs, listenUrls, signedIn, initialMode = 're
 
       {/* Spoken feedback for screen readers; the visual hint sits on the word itself. */}
       <div aria-live="polite" className="min-h-6 text-center text-sm">
-        {wrongAyah ? (
+        {quiet && phase === 'active' && listen?.stage !== 'playing' ? (
+          <p className="inline-flex items-center gap-2 rounded-control border border-accent/40 px-3 py-1 text-text">
+            <MicOff aria-hidden className="size-4 text-accent" />
+            {t('quietMic')}
+          </p>
+        ) : wrongAyah ? (
           <p className="inline-flex items-center gap-2 rounded-control border border-danger/40 px-3 py-1 text-danger">
             <TriangleAlert aria-hidden className="size-4" />
             {t('wrongAyah', wrongAyah)}
@@ -609,6 +651,16 @@ export function Practice({ surah, ayahs, listenUrls, signedIn, initialMode = 're
       {busy && device ? (
         <p className="text-center text-xs text-muted">
           {t('deviceNote', { device: device === 'webgpu' ? 'WebGPU' : 'WebAssembly' })}
+        </p>
+      ) : null}
+      {debug && busy ? (
+        <p
+          lang="ar"
+          dir="rtl"
+          data-testid="heard-text"
+          className="text-center font-quran text-lg text-muted"
+        >
+          {heardText || '…'}
         </p>
       ) : null}
     </div>

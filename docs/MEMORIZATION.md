@@ -109,6 +109,25 @@ every pause longer than 0.1 s inside the recitation):
 | Continuous, no pauses | 92.9%                   | **97.5%**       |
 | Normal pace           | 95.4%                   | **98.3%**       |
 
+### Microphone level and stalls
+
+- **Silence threshold follows the room.** A frame is speech when its RMS is at least 3× the
+  quietest frame and 5% of the loudest frame of the last 5 s (bounded to 0.002–0.03), so echoes
+  and breaths after a phrase still count as a pause. A fixed 0.01 missed quiet microphones:
+  Al-Ikhlas at 0.5% volume (`EVAL_GAIN=0.005`) went from 1/15 words to 15/15.
+- **Stall cut.** With two ayahs in one buffer (no pause detected), Whisper can return only the
+  first one on every pass, so nothing new appears. When the text has not changed for 3 s of new
+  audio and is fully revealed, the buffer is cut where it stopped changing (1 s overlap; repeated
+  words dropped). Alafasy 1:1-7 at 0.5% volume: 20/29 → 29/29.
+- **Level ring and "We can't hear you".** The ring around the microphone follows the input level;
+  after 6 s below 0.004 RMS the screen asks the user to check the selected microphone.
+- **Stall watchdog.** A recognition pass that has not returned after 20 s stops the session with
+  the "recognition failed" message. If that happened on WebGPU, the browser uses WebAssembly from
+  then on (`localStorage['tilawah.speech.gpuStalled']`; remove it to try the GPU again).
+- **`?debug`** on a practice URL shows the raw text of each recognition pass under the verses, to
+  check what the model hears from a given microphone or voice. It stays in the page.
+- **Measuring in installed Chrome:** `EVAL_CHANNEL=chrome EVAL_WEBGPU=1 EVAL_ONLY=112,1`.
+
 ## Measured accuracy and latency (fixed segments, before streaming)
 
 Measured with `scripts/evaluate-speech.mjs` on 10 recordings (10 reciters from everyayah.com,

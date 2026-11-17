@@ -15,6 +15,8 @@ export type PracticeEngine = RecognitionEngine & {
   dispose?: () => void;
   plan?: () => Promise<{ sizeMb: number; probeUrl: string }>;
   device?: 'webgpu' | 'wasm' | null;
+  onLevel?: (cb: (rms: number) => void) => void;
+  onTranscript?: (cb: (text: string) => void) => void;
 };
 
 /** Keeps a loaded model for a short while after leaving the practice screen, so moving to

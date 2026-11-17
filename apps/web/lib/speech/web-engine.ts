@@ -4,11 +4,13 @@
 // Worker → words. Nothing is uploaded or stored.
 import {
   StreamingTranscriber,
+  rms,
   type RecognitionEngine,
   type TranscriptionJob,
 } from '@tilawah/recitation';
 import {
   BASE_MODEL,
+  GPU_STALLED_KEY,
   TINY_MODEL,
   detectDevice,
   encoderFile,
@@ -19,6 +21,8 @@ import {
 } from './models';
 import type { WorkerRequest, WorkerResponse } from './whisper.worker';
 
+const STALL_MS = 20_000;
+
 export class WebSpeechEngine implements RecognitionEngine {
   private worker: Worker | null = null;
   private partial: (words: string[]) => void = () => undefined;
@@ -26,8 +30,11 @@ export class WebSpeechEngine implements RecognitionEngine {
   private stream: MediaStream | null = null;
   private context: AudioContext | null = null;
   private transcriber: StreamingTranscriber | null = null;
+  private level: (rms: number) => void = () => undefined;
+  private transcript: (text: string) => void = () => undefined;
   private sentAt = 0;
   private failures = 0;
+  private watchdog = 0;
   model: SpeechModel = pickModel();
   /** The device in use once loaded (null before). */
   device: SpeechDevice | null = null;
@@ -107,6 +114,8 @@ export class WebSpeechEngine implements RecognitionEngine {
     });
     const context = new AudioContext();
     this.context = context;
+    // Created after the model loaded, possibly without a recent click: make sure audio flows.
+    if (context.state === 'suspended') await context.resume();
     await context.audioWorklet.addModule('/worklets/capture-processor.js');
     const source = context.createMediaStreamSource(this.stream);
     const capture = new AudioWorkletNode(context, 'capture-processor');
@@ -118,9 +127,21 @@ export class WebSpeechEngine implements RecognitionEngine {
         this.partial(words);
       },
     );
-    capture.port.onmessage = (event: MessageEvent<Float32Array>) =>
+    capture.port.onmessage = (event: MessageEvent<Float32Array>) => {
+      this.level(rms(event.data));
       this.transcriber?.push(event.data);
+    };
     source.connect(capture);
+  }
+
+  /** Microphone loudness (RMS of each ~100 ms frame), for a level meter. */
+  onLevel(cb: (rms: number) => void): void {
+    this.level = cb;
+  }
+
+  /** Raw text of each recognition pass (shown on the practice screen with ?debug). */
+  onTranscript(cb: (text: string) => void): void {
+    this.transcript = cb;
   }
 
   async stop(): Promise<void> {
@@ -142,6 +163,7 @@ export class WebSpeechEngine implements RecognitionEngine {
 
   /** Frees the model (call when leaving the practice screen). */
   dispose(): void {
+    window.clearTimeout(this.watchdog);
     void this.stop();
     this.worker?.terminate();
     this.worker = null;
@@ -156,6 +178,19 @@ export class WebSpeechEngine implements RecognitionEngine {
   private transcribe(job: TranscriptionJob): void {
     if (!this.worker) return;
     this.sentAt = performance.now();
+    // A pass takes about a second; one that never returns (a stalled GPU) would otherwise leave
+    // the screen listening forever.
+    window.clearTimeout(this.watchdog);
+    this.watchdog = window.setTimeout(() => {
+      if (this.device === 'webgpu') {
+        try {
+          localStorage.setItem(GPU_STALLED_KEY, '1'); // use WebAssembly from now on
+        } catch {
+          // storage unavailable: the GPU is tried again next time
+        }
+      }
+      this.error(new Error('Speech recognition stopped responding'));
+    }, STALL_MS);
     this.worker.postMessage(
       { type: 'transcribe', id: job.id, audio: job.audio } satisfies WorkerRequest,
       [job.audio.buffer],
@@ -163,8 +198,10 @@ export class WebSpeechEngine implements RecognitionEngine {
   }
 
   private onWorkerMessage(message: WorkerResponse): void {
+    window.clearTimeout(this.watchdog);
     if (message.type === 'result') {
       this.failures = 0;
+      this.transcript(message.text);
       // Visible in the browser's performance panel and to the measurement script (MEMORIZATION.md).
       performance.measure('tilawah:recognize', {
         start: this.sentAt,

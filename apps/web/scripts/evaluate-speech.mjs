@@ -23,6 +23,8 @@ const RATE = Number(process.env.EVAL_RATE ?? 1);
 // EVAL_SQUEEZE=1: remove pauses inside each recitation (silences longer than 0.1 s), so the
 // reciter never stops: the hardest case for segmenting at pauses.
 const SQUEEZE = process.env.EVAL_SQUEEZE === '1';
+// EVAL_GAIN=0.1: a quiet microphone.
+const GAIN = Number(process.env.EVAL_GAIN ?? 1);
 
 function squeeze(samples) {
   const frame = SR / 20; // 50 ms
@@ -122,7 +124,7 @@ async function buildWav(page, files, out) {
   let o = 44;
   for (const p of seq)
     for (const x of p) {
-      pcm.writeInt16LE(Math.round(Math.max(-1, Math.min(1, x)) * 32767), o);
+      pcm.writeInt16LE(Math.round(Math.max(-1, Math.min(1, x * GAIN)) * 32767), o);
       o += 2;
     }
   writeFileSync(out, pcm);
@@ -131,6 +133,7 @@ async function buildWav(page, files, out) {
 
 async function run(c, wav, speechEnd, profile) {
   const context = await chromium.launchPersistentContext(profile, {
+    ...(process.env.EVAL_CHANNEL ? { channel: process.env.EVAL_CHANNEL } : {}),
     args: [
       '--use-fake-device-for-media-stream',
       '--use-fake-ui-for-media-stream',
@@ -195,7 +198,11 @@ async function run(c, wav, speechEnd, profile) {
 }
 
 const casesFile = process.argv[2];
-const cases = casesFile ? JSON.parse(readFileSync(casesFile, 'utf8')) : await builtInCases();
+const cases = (
+  casesFile ? JSON.parse(readFileSync(casesFile, 'utf8')) : await builtInCases()
+).filter(
+  (c) => !process.env.EVAL_ONLY || process.env.EVAL_ONLY.split(',').includes(String(c.surah)),
+);
 const work = join(audioDir, '_work');
 mkdirSync(work, { recursive: true });
 const decoder = await chromium.launch();
