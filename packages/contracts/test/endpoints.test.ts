@@ -70,8 +70,6 @@ describe('endpoint registry', () => {
       'PATCH /playlists/{id}',
       'DELETE /playlists/{id}',
       'GET /me/library',
-      'POST /me/memorization/sessions',
-      'GET /me/memorization/progress',
       'GET /moderation/queue',
       'POST /moderation/recitations/{id}/decision',
       'GET /health',

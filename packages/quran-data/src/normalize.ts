@@ -1,5 +1,5 @@
-// Arabic normalization for comparing what was heard with the expected Quran text.
-// Used only for matching; the displayed text is never normalized.
+// Arabic normalization for search (spelling and diacritics ignored).
+// Used only for comparing; the displayed text is never normalized.
 
 const LETTER_MAP: Record<string, string> = {
   ٱ: 'ا', // ٱ alef wasla → ا

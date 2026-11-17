@@ -1,7 +1,7 @@
 # @tilawah/core
 
 All business rules live here: who may upload, moderation transitions, play counting, likes,
-playlists, memorization progress. Implemented in **Phase 2**, test-first.
+playlists, hadith. Implemented in **Phase 2**, test-first.
 
 - `services/` take plain inputs (already validated by `@tilawah/contracts`) plus an `Actor`
   (`{ userId, role, verifiedReciter } | null`) and return plain objects or throw a `DomainError`.

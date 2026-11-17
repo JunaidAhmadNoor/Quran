@@ -11,7 +11,6 @@ in-memory database (cached afterwards, also in CI).
 | -------------------------------- | ------------------------------ | ------------------------------------- | ---------------------------------------- |
 | Contract                         | Vitest + Zod                   | `packages/contracts/test`             | `pnpm --filter @tilawah/contracts test`  |
 | Quran data integrity             | Vitest                         | `packages/quran-data/test`            | `pnpm --filter @tilawah/quran-data test` |
-| Normalization + matcher (unit)   | Vitest                         | `packages/recitation/test`            | `pnpm --filter @tilawah/recitation test` |
 | Database indexes                 | Vitest + mongodb-memory-server | `packages/db/test`                    | `pnpm --filter @tilawah/db test`         |
 | Services and rules               | Vitest + mongodb-memory-server | `packages/core/test`                  | `pnpm --filter @tilawah/core test`       |
 | R2                               | aws-sdk-client-mock            | `packages/core/test/r2.test.ts`       | (part of core)                           |
@@ -33,16 +32,9 @@ block is intact; 114 surahs and 6,236 ayahs; the generated files are up to date;
 generated words reproduces every source line byte-for-byte (so the derivation changes
 nothing); the bismillah split keeps each surah's own spelling (95 and 97 carry a shadda).
 
-**Recitation (87 tests).** 42 table-driven normalization cases (harakat, tatweel,
-alef forms, ة/ه, ى/ي, hamza carriers, Uthmani small waw/yeh, pause marks, Farsi letters,
-punctuation). The matcher against the real Tanzil text: exact match, small pronunciation
-differences, too-different words rejected, skipped word marked missed, window of 3, repeated
-words and isti'adha ignored, the bismillah said before a surah ignored, أعوذ still matched when
-it is the expected word, wrong ayah detected (inside the range and in the wider surah), hints at
-6 s and 12 s with a fake clock, hints postponed while speech is still being heard, hinted words
-recorded, completion and summary, the dagger alef read both ways, re-sync after dropped words (and
-no jump on one misheard word or to another ayah). The pause-based `AudioChunker`, `FakeEngine`,
-`dropOverlap` and the echo filter (`freshWords`).
+**Arabic normalization.** 42 table-driven cases in `packages/quran-data/test/normalize.test.ts`
+(harakat, tatweel, alef forms, ة/ه, ى/ي, hamza carriers, Uthmani small waw/yeh, pause marks,
+Farsi letters, punctuation), used by surah search.
 
 **Database (4 tests).** Unique indexes the rules depend on, TTL indexes, duplicate likes
 rejected, transactions available.
@@ -62,8 +54,7 @@ rejected, transactions available.
 - Plays (once per listener per 6 h), trending (7 days), reports (one open per user), edits
   sending approved recitations back to review, removal and audio deletion with retry,
   moderation transitions and report resolution, admin rules, mode switching, reciter stats,
-  library, playlists, account deletion, memorization checked against the real word count,
-  rate limiter windows, maintenance purge, health.
+  library, playlists, account deletion, rate limiter windows, maintenance purge, health.
 
 **API integration (66 tests).** Through the **real generated route files**:
 
@@ -124,15 +115,6 @@ accounts, a real 12-second MP3):
 failure names the page. axe runs on Chromium: its results depend on the DOM, and it occasionally
 hung inside WebKit; WebKit and the phone project run every user flow.
 
-- memorization with a scripted fake speech engine: a signed-in session is saved and shows in
-  progress, "Practise these again" opens the right range; a signed-out session stays in the
-  browser.
-
-**Real speech model (opt-in).** `E2E_SPEECH_WAV=<wav> pnpm e2e --project=chromium speech-model`
-makes a WAV Chromium's microphone and requires ≥ 80% on Al-Ikhlas with no CSP errors.
-`scripts/evaluate-speech.mjs` measures 10 recordings on WebGPU or WebAssembly; results are in
-[MEMORIZATION.md](MEMORIZATION.md).
-
 ## Screenshots
 
 `docs/screenshots/` holds every page in light and dark mode (desktop) plus Arabic at phone
@@ -157,7 +139,6 @@ production build:
 | `/surahs/2?view=read` | 78          | 100           | 100            | 100 | 4.7 s |
 | `/recitations/{id}`   | 98          | 100           | 100            | 100 | 0.8 s |
 | `/reciters/{id}`      | 99          | 100           | 100            | 100 | 0.6 s |
-| `/memorize`           | 99          | 100           | 100            | 100 | 0.9 s |
 
 The spec's target (90+ on `/` and `/surahs/[n]`) is met in all four categories. The full reading
 view of the longest surah (`?view=read` on Al-Baqarah, 286 ayahs) is the one page below 90 on
@@ -166,8 +147,8 @@ that matters. `/auth/*` pages are `noindex` on purpose.
 
 ## Coverage gates
 
-`packages/core` and `packages/recitation` fail their test run below 80% line coverage
-(`vitest.config.ts`). Current: core 98.6%, recitation 98.4%. Reports: `packages/*/coverage/`.
+`packages/core` fails its test run below 80% line coverage (`vitest.config.ts`). Current:
+core 98.6%. Reports: `packages/*/coverage/`.
 
 ## CI (`.github/workflows/ci.yml`)
 

@@ -97,7 +97,7 @@ test('switching to Arabic lays the site out right-to-left without horizontal scr
   await page.getByRole('menuitemradio', { name: 'العربية' }).click();
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
-  for (const path of ['/', '/surahs', '/surahs/2', '/memorize']) {
+  for (const path of ['/', '/surahs', '/surahs/2', '/hadith']) {
     await page.goto(path);
     const overflow = await page.evaluate(() => {
       let worst = 0;
@@ -211,7 +211,7 @@ test('staff see only their work; an admin verifies a reciter', async ({ page }) 
   await openNav(page);
   const nav = page.getByRole('navigation', { name: 'Main' }).last();
   await expect(nav.getByRole('link', { name: 'Moderation' })).toBeVisible();
-  await expect(nav.getByRole('link', { name: 'Memorize' })).toHaveCount(0);
+  await expect(nav.getByRole('link', { name: 'Hadith' })).toHaveCount(0);
   await page.goto('/library');
   await expect(page).toHaveURL(/\/moderation$/);
 
@@ -235,7 +235,7 @@ test('staff see only their work; an admin verifies a reciter', async ({ page }) 
 });
 
 test('visitors are sent to sign-in and land on the page they wanted', async ({ page }) => {
-  for (const path of ['/surahs/112', '/memorize/112', '/library']) {
+  for (const path of ['/surahs/112', '/hadith/bukhari', '/library']) {
     await page.goto(path);
     await expect(page).toHaveURL(new RegExp(`/auth/sign-in\\?next=${encodeURIComponent(path)}`));
   }

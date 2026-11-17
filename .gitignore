@@ -19,6 +19,6 @@ blob-report/
 *.log
 .data/
 
-# Speech runtime and models (copied/converted locally; production models are served from R2)
+# Leftover local files of the removed memorization feature (safe to delete)
 apps/web/public/ort/
 apps/web/public/models/

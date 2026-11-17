@@ -118,7 +118,6 @@ export class AccountService {
     }
     await repos.likes.deleteByUser(me.userId);
     await repos.playlists.deleteByOwner(me.userId);
-    await repos.memorization.deleteByUser(me.userId);
     await repos.users.deleteWithAuthRecords(me.userId);
   }
 }

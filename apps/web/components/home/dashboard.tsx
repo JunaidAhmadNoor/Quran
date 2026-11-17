@@ -1,11 +1,6 @@
-// The home page for signed-in users: their progress first, then what is new.
-import type {
-  MemorizationProgress,
-  RecitationPage,
-  ReciterStats,
-  SurahSummary,
-} from '@tilawah/contracts';
-import { BookOpenCheck, LayoutDashboard, Library, Upload } from 'lucide-react';
+// The home page for signed-in users: quick actions, then what is new.
+import type { RecitationPage, ReciterStats } from '@tilawah/contracts';
+import { BookOpen, LayoutDashboard, Library, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { ContinueListening } from '@/components/home/continue-listening';
@@ -19,31 +14,18 @@ import type { z } from 'zod';
 
 interface Props {
   me: Me;
-  surahs: z.output<typeof SurahSummary>[];
-  progress: z.output<typeof MemorizationProgress>[];
   stats: z.output<typeof ReciterStats> | null;
   trending: z.output<typeof RecitationPage>;
   newest: z.output<typeof RecitationPage>;
   reciters: { id: string; name: string }[];
 }
 
-export async function Dashboard({
-  me,
-  surahs,
-  progress,
-  stats,
-  trending,
-  newest,
-  reciters,
-}: Props) {
+export async function Dashboard({ me, stats, trending, newest, reciters }: Props) {
   const t = await getTranslations('home');
   const tn = await getTranslations('nav');
   const tc = await getTranslations('common');
   const nf = new Intl.NumberFormat(await getLocale());
   const reciter = me.mode === 'reciter';
-  const recent = [...progress]
-    .sort((a, b) => Date.parse(b.lastPracticedAt) - Date.parse(a.lastPracticedAt))
-    .slice(0, 4);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -59,9 +41,9 @@ export async function Dashboard({
           </div>
           <div className="flex flex-wrap gap-2">
             <Button asChild>
-              <Link href="/memorize">
-                <BookOpenCheck />
-                {t('quickMemorize')}
+              <Link href="/surahs">
+                <BookOpen />
+                {tn('surahs')}
               </Link>
             </Button>
             {reciter ? (
@@ -95,69 +77,6 @@ export async function Dashboard({
 
       <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="min-w-0 space-y-12">
-          {/* Memorization progress */}
-          <section aria-labelledby="progress">
-            <SectionHeading id="progress">{t('progressTitle')}</SectionHeading>
-            {recent.length === 0 ? (
-              <EmptyState
-                title={t('progressEmpty')}
-                action={
-                  <Button asChild>
-                    <Link href="/memorize">{t('practiceCta')}</Link>
-                  </Button>
-                }
-              />
-            ) : (
-              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {recent.map((p) => {
-                  const surah = surahs[p.surah - 1];
-                  const total = surah?.ayahCount ?? p.lastAyah;
-                  const pct = Math.round((p.lastAyah / total) * 100);
-                  const next = Math.min(total, p.lastAyah + 1);
-                  return (
-                    <li key={p.surah}>
-                      <Card className="flex h-full flex-col p-5">
-                        <div className="flex items-baseline justify-between gap-3">
-                          <span className="font-medium text-text">{surah?.nameTransliterated}</span>
-                          <span lang="ar" className="font-quran text-xl text-muted">
-                            {surah?.nameArabic}
-                          </span>
-                        </div>
-                        <div
-                          role="progressbar"
-                          aria-label={surah?.nameTransliterated}
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                          aria-valuenow={pct}
-                          className="mt-4 h-2 overflow-hidden rounded-full bg-border"
-                        >
-                          <div className="h-full bg-primary" style={{ width: `${String(pct)}%` }} />
-                        </div>
-                        <div className="mt-2 flex justify-between text-xs text-muted">
-                          <span>
-                            {t('progressAyahs', {
-                              last: nf.format(p.lastAyah),
-                              total: nf.format(total),
-                            })}
-                          </span>
-                          <span>
-                            {t('progressBest', { pct: Math.round(p.bestAccuracy * 100) })}
-                          </span>
-                        </div>
-                        <Link
-                          href={`/memorize/${String(p.surah)}?from=${String(p.lastAyah >= total ? 1 : next)}&to=${String(total)}`}
-                          className="mt-4 text-sm text-primary underline-offset-4 hover:underline"
-                        >
-                          {t('progressContinue')}
-                        </Link>
-                      </Card>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-
           <section aria-labelledby="popular">
             <SectionHeading id="popular">{t('popularWeek')}</SectionHeading>
             {trending.items.length > 0 ? (

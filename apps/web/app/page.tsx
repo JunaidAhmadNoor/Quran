@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: { absolute: t('metaTitle') }, description: t('landingBody') };
 }
 
-/** Visitors get the landing page; signed-in users get their own home (progress first). */
+/** Visitors get the landing page; signed-in users get their own home. */
 export default async function HomePage() {
   await sendStaffToWork();
   const { core, actor } = await getServerContext();
@@ -31,8 +31,7 @@ export default async function HomePage() {
     );
   }
 
-  const [progress, stats, trending, newest, reciters] = await Promise.all([
-    core.memorization.progress(actor),
+  const [stats, trending, newest, reciters] = await Promise.all([
     me.mode === 'reciter' ? core.account.reciterStats(actor) : Promise.resolve(null),
     core.recitations.list(actor, { sort: 'trending', limit: 6 }),
     core.recitations.list(actor, { sort: 'newest', limit: 6 }),
@@ -41,8 +40,6 @@ export default async function HomePage() {
   return (
     <Dashboard
       me={me}
-      surahs={surahs}
-      progress={progress.items}
       stats={stats}
       trending={trending}
       newest={newest}

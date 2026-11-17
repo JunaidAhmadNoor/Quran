@@ -1,6 +1,5 @@
 'use client';
-import { surahs } from '@tilawah/quran-data';
-import { normalizeArabic } from '@tilawah/recitation';
+import { normalizeArabic, surahs } from '@tilawah/quran-data';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';

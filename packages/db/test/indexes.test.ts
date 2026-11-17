@@ -17,7 +17,6 @@ describe('indexes', () => {
     expect(await indexNames('users')).toContain('{"email":1}');
     expect(await indexNames('likes')).toContain('{"userId":1,"recitationId":1}');
     expect(await indexNames('recitations')).toContain('{"audioKey":1}');
-    expect(await indexNames('memorizationProgress')).toContain('{"userId":1,"surah":1}');
   });
 
   it('expires rate-limit records and old sessions', async () => {

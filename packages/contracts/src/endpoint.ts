@@ -19,7 +19,6 @@ export type Tag =
   | 'Reciters'
   | 'Playlists'
   | 'Me'
-  | 'Memorization'
   | 'Moderation'
   | 'Admin';
 

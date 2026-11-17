@@ -1,11 +1,4 @@
-import type {
-  MemorizationProgressDoc,
-  MemorizationSessionDoc,
-  Models,
-  PlaylistDoc,
-  ReportDoc,
-  Connection,
-} from '@tilawah/db';
+import type { Models, PlaylistDoc, ReportDoc } from '@tilawah/db';
 import type { ReportStatus } from '@tilawah/contracts';
 import type { CursorState } from '../cursor';
 import { afterCursor, oid } from './keyset';
@@ -123,58 +116,5 @@ export class ReportRepository {
       { recitationId: oid(recitationId), status: 'open' },
       { $set: { status: 'actioned', resolution: { note, decidedAt: at, decidedBy: oid(by) } } },
     );
-  }
-}
-
-export class MemorizationRepository {
-  constructor(
-    private readonly models: Models,
-    private readonly connection: Connection,
-  ) {}
-
-  /** Inserts the session and raises the surah's progress in one transaction. */
-  async saveSession(
-    doc: Omit<MemorizationSessionDoc, '_id' | 'userId'> & { userId: string },
-    accuracy: number,
-  ): Promise<{ id: string; progress: MemorizationProgressDoc }> {
-    const session = await this.connection.startSession();
-    let id = '';
-    try {
-      await session.withTransaction(async () => {
-        const [created] = await this.models.MemorizationSession.create(
-          [{ ...doc, userId: oid(doc.userId) }],
-          { session },
-        );
-        id = created?._id.toHexString() ?? '';
-        await this.models.MemorizationProgress.updateOne(
-          { userId: oid(doc.userId), surah: doc.surah },
-          {
-            $max: { lastAyah: doc.ayahTo, bestAccuracy: accuracy, lastPracticedAt: doc.endedAt },
-          },
-          { upsert: true, session },
-        );
-      });
-    } finally {
-      await session.endSession();
-    }
-    const progress = await this.models.MemorizationProgress.findOne({
-      userId: oid(doc.userId),
-      surah: doc.surah,
-    }).lean<MemorizationProgressDoc>();
-    if (!progress) throw new Error('Progress missing after save');
-    return { id, progress };
-  }
-
-  listProgress(userId: string): Promise<MemorizationProgressDoc[]> {
-    return this.models.MemorizationProgress.find({ userId: oid(userId) })
-      .sort({ surah: 1 })
-      .lean<MemorizationProgressDoc[]>();
-  }
-
-  async deleteByUser(userId: string): Promise<void> {
-    await Promise.all([
-      this.models.MemorizationSession.deleteMany({ userId: oid(userId) }),
-      this.models.MemorizationProgress.deleteMany({ userId: oid(userId) }),
-    ]);
   }
 }

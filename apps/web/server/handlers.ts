@@ -51,9 +51,6 @@ export const handlers: HandlerMap = {
   getLibrary: ({ core, actor, query }) => core.account.library(actor, query),
   listMyRecitations: ({ core, actor, query }) => core.recitations.listMine(actor, query),
 
-  createMemorizationSession: ({ core, actor, body }) => core.memorization.saveSession(actor, body),
-  getMemorizationProgress: ({ core, actor }) => core.memorization.progress(actor),
-
   getModerationQueue: ({ core, actor, query }) => core.moderation.queue(actor, query),
   decideRecitation: ({ core, actor, params, body }) =>
     core.moderation.decideRecitation(actor, params.id, body),

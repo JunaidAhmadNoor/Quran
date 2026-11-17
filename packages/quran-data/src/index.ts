@@ -89,8 +89,4 @@ export function loadSurahText(surah: number): Promise<SurahText> {
   return pending;
 }
 
-/** Number of recitable words in an ayah range (used to verify memorization sessions). */
-export async function countWords(surah: number, ayahFrom: number, ayahTo: number): Promise<number> {
-  const text = await loadSurahText(surah);
-  return text.ayahs.slice(ayahFrom - 1, ayahTo).reduce((sum, ayah) => sum + ayah.words.length, 0);
-}
+export { normalizeArabic, normalizeWords } from './normalize';

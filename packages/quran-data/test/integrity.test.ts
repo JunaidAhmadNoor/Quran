@@ -6,7 +6,6 @@ import checksums from '../checksums.json' with { type: 'json' };
 import {
   AYAH_COUNT,
   SURAH_COUNT,
-  countWords,
   getSurahMeta,
   isValidAyahRange,
   loadSurahText,
@@ -89,10 +88,6 @@ describe('runtime API', () => {
     expect(ayah2?.text).toContain('ۛ');
     expect(ayah2?.words.some((w) => w.text === 'ۛ')).toBe(false);
     expect(ayah2?.words).toHaveLength(7);
-  });
-
-  it('counts the words of Al-Ikhlas', async () => {
-    expect(await countWords(112, 1, 4)).toBe(15);
   });
 
   it('exposes metadata', () => {

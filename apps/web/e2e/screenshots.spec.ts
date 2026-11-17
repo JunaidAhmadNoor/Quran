@@ -31,8 +31,6 @@ for (const scheme of ['light', 'dark'] as const) {
       ['surah', '/surahs/1'],
       ['recitation', `/recitations/${first?.id ?? ''}`],
       ['reciter', `/reciters/${first?.reciter.id ?? ''}`],
-      ['memorize', '/memorize'],
-      ['memorize-practice', '/memorize/112?from=1&to=4'],
       ['sign-in', '/auth/sign-in'],
       ['sign-up', '/auth/sign-up'],
       ['reset-password', '/auth/reset-password'],

@@ -111,7 +111,6 @@ export function buildOpenApiDocument({ version }: BuildOptions) {
       { name: 'Reciters' },
       { name: 'Playlists' },
       { name: 'Me' },
-      { name: 'Memorization' },
       { name: 'Moderation' },
       { name: 'Admin' },
     ],

@@ -15,11 +15,6 @@ import {
   UserAccount,
 } from './schemas/me';
 import {
-  CreateMemorizationSessionBody,
-  CreateMemorizationSessionResponse,
-  MemorizationProgressResponse,
-} from './schemas/memorization';
-import {
   Hadith,
   HadithBook,
   HadithBookParams,
@@ -513,7 +508,7 @@ export const endpoints = {
     tag: 'Me',
     summary: 'Delete the account and its data',
     description:
-      'Requires a session created in the last 24 hours. Deletes the user, sessions, likes, playlists and memorization data; the user’s recitations become removed and their audio is deleted. Cannot be undone.',
+      'Requires a session created in the last 24 hours. Deletes the user, sessions, likes and playlists; the user’s recitations become removed and their audio is deleted. Cannot be undone.',
     successStatus: 204,
     errors: ['REAUTH_REQUIRED', 'CONFLICT'],
     rateLimit: 'write',
@@ -554,34 +549,6 @@ export const endpoints = {
     query: MyRecitationsQuery,
     successStatus: 200,
     response: MyRecitationPage,
-    errors: [],
-    cache: 'private',
-  }),
-
-  // Memorization
-  createMemorizationSession: defineEndpoint({
-    operationId: 'createMemorizationSession',
-    method: 'POST',
-    path: '/me/memorization/sessions',
-    auth: 'user',
-    tag: 'Memorization',
-    summary: 'Save a practice session and update progress',
-    body: CreateMemorizationSessionBody,
-    successStatus: 201,
-    response: CreateMemorizationSessionResponse,
-    errors: ['INVALID_AYAH_RANGE'],
-    rateLimit: 'session',
-    cache: 'none',
-  }),
-  getMemorizationProgress: defineEndpoint({
-    operationId: 'getMemorizationProgress',
-    method: 'GET',
-    path: '/me/memorization/progress',
-    auth: 'user',
-    tag: 'Memorization',
-    summary: 'Progress for every surah the caller has practised',
-    successStatus: 200,
-    response: MemorizationProgressResponse,
     errors: [],
     cache: 'private',
   }),

@@ -1,12 +1,10 @@
 import type { Db, MongoClient } from 'mongodb';
 import mongoose, { type Connection } from 'mongoose';
-import { memorizationProgressSchema, memorizationSessionSchema } from './models/memorization';
 import { playStatDailySchema, rateLimitSchema } from './models/operational';
 import { recitationSchema } from './models/recitations';
 import { likeSchema, playlistSchema, reportSchema } from './models/social';
 import { userSchema } from './models/users';
 
-export type { MemorizationProgressDoc, MemorizationSessionDoc } from './models/memorization';
 export type { PlayStatDailyDoc, RateLimitDoc } from './models/operational';
 export type { RecitationDoc } from './models/recitations';
 export type { LikeDoc, PlaylistDoc, ReportDoc } from './models/social';
@@ -21,8 +19,6 @@ export function createModels(connection: Connection) {
     Like: connection.model('Like', likeSchema),
     Playlist: connection.model('Playlist', playlistSchema),
     Report: connection.model('Report', reportSchema),
-    MemorizationSession: connection.model('MemorizationSession', memorizationSessionSchema),
-    MemorizationProgress: connection.model('MemorizationProgress', memorizationProgressSchema),
     RateLimit: connection.model('RateLimit', rateLimitSchema),
     PlayStatDaily: connection.model('PlayStatDaily', playStatDailySchema),
   };

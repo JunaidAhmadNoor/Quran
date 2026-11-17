@@ -36,9 +36,6 @@
       "name": "Me"
     },
     {
-      "name": "Memorization"
-    },
-    {
       "name": "Moderation"
     },
     {
@@ -2706,7 +2703,7 @@
         ],
         "x-auth": "user",
         "x-cache": "none",
-        "description": "Requires a session created in the last 24 hours. Deletes the user, sessions, likes, playlists and memorization data; the user’s recitations become removed and their audio is deleted. Cannot be undone.",
+        "description": "Requires a session created in the last 24 hours. Deletes the user, sessions, likes and playlists; the user’s recitations become removed and their audio is deleted. Cannot be undone.",
         "x-rate-limit": {
           "name": "write",
           "limit": 120,
@@ -3057,153 +3054,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "INTERNAL_ERROR: Unexpected server error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/me/memorization/sessions": {
-      "post": {
-        "operationId": "createMemorizationSession",
-        "summary": "Save a practice session and update progress",
-        "tags": [
-          "Memorization"
-        ],
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "bearerAuth": []
-          }
-        ],
-        "x-auth": "user",
-        "x-cache": "none",
-        "x-rate-limit": {
-          "name": "session",
-          "limit": 120,
-          "windowSec": 3600
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateMemorizationSessionBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateMemorizationSessionResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "INVALID_AYAH_RANGE: The ayah range does not exist in that surah.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "INTERNAL_ERROR: Unexpected server error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/me/memorization/progress": {
-      "get": {
-        "operationId": "getMemorizationProgress",
-        "summary": "Progress for every surah the caller has practised",
-        "tags": [
-          "Memorization"
-        ],
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "bearerAuth": []
-          }
-        ],
-        "x-auth": "user",
-        "x-cache": "private",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MemorizationProgressResponse"
                 }
               }
             }
@@ -4211,119 +4061,6 @@
           "removed"
         ]
       },
-      "CreateMemorizationSessionBody": {
-        "type": "object",
-        "properties": {
-          "surah": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 114,
-            "description": "Surah number, 1 to 114."
-          },
-          "ayahFrom": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 286,
-            "description": "Ayah number within the surah (1-based)."
-          },
-          "ayahTo": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 286,
-            "description": "Ayah number within the surah (1-based)."
-          },
-          "mode": {
-            "$ref": "#/components/schemas/MemorizationMode"
-          },
-          "wordsTotal": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 9007199254740991,
-            "description": "Must equal the word count of the range in quran-data; the server checks it."
-          },
-          "wordsCorrect": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "mistakes": {
-            "maxItems": 2000,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Mistake"
-            }
-          },
-          "startedAt": {
-            "$ref": "#/components/schemas/DateTime"
-          },
-          "endedAt": {
-            "$ref": "#/components/schemas/DateTime"
-          }
-        },
-        "required": [
-          "surah",
-          "ayahFrom",
-          "ayahTo",
-          "mode",
-          "wordsTotal",
-          "wordsCorrect",
-          "mistakes",
-          "startedAt",
-          "endedAt"
-        ]
-      },
-      "MemorizationMode": {
-        "type": "string",
-        "enum": [
-          "reveal",
-          "check_ayah",
-          "listen_repeat"
-        ],
-        "description": "reveal = reveal as I recite; check_ayah = check after each ayah; listen_repeat = listen then repeat."
-      },
-      "Mistake": {
-        "type": "object",
-        "properties": {
-          "ayah": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 286,
-            "description": "Ayah number within the surah (1-based)."
-          },
-          "word": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 9007199254740991,
-            "description": "1-based word position within the ayah."
-          },
-          "type": {
-            "$ref": "#/components/schemas/MistakeType"
-          }
-        },
-        "required": [
-          "ayah",
-          "word",
-          "type"
-        ],
-        "description": "A word position only. The words the user said are never sent or stored."
-      },
-      "MistakeType": {
-        "type": "string",
-        "enum": [
-          "missed",
-          "hinted"
-        ],
-        "description": "missed = the word was skipped; hinted = the user needed a hint for it."
-      },
-      "DateTime": {
-        "type": "string",
-        "format": "date-time",
-        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
-        "description": "UTC timestamp in ISO 8601 format.",
-        "examples": [
-          "2026-11-12T08:30:00.000Z"
-        ]
-      },
       "RecitationDecisionBody": {
         "oneOf": [
           {
@@ -4461,6 +4198,15 @@
         ],
         "additionalProperties": false,
         "description": "If the database is unreachable the endpoint returns 503 SERVICE_UNAVAILABLE."
+      },
+      "DateTime": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+        "description": "UTC timestamp in ISO 8601 format.",
+        "examples": [
+          "2026-11-12T08:30:00.000Z"
+        ]
       },
       "ErrorResponse": {
         "type": "object",
@@ -6003,77 +5749,6 @@
         ],
         "additionalProperties": false,
         "description": "The caller’s own uploads in every status, newest first."
-      },
-      "CreateMemorizationSessionResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "$ref": "#/components/schemas/ObjectId"
-          },
-          "accuracy": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1
-          },
-          "progress": {
-            "$ref": "#/components/schemas/MemorizationProgress"
-          }
-        },
-        "required": [
-          "id",
-          "accuracy",
-          "progress"
-        ],
-        "additionalProperties": false
-      },
-      "MemorizationProgress": {
-        "type": "object",
-        "properties": {
-          "surah": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 114,
-            "description": "Surah number, 1 to 114."
-          },
-          "lastAyah": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 286,
-            "description": "Highest ayahTo reached in any session."
-          },
-          "bestAccuracy": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1,
-            "description": "Best wordsCorrect / wordsTotal over all sessions for this surah."
-          },
-          "lastPracticedAt": {
-            "$ref": "#/components/schemas/DateTime"
-          }
-        },
-        "required": [
-          "surah",
-          "lastAyah",
-          "bestAccuracy",
-          "lastPracticedAt"
-        ],
-        "additionalProperties": false
-      },
-      "MemorizationProgressResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "maxItems": 114,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MemorizationProgress"
-            }
-          }
-        },
-        "required": [
-          "items"
-        ],
-        "additionalProperties": false
       },
       "ModerationQueueResponse": {
         "oneOf": [

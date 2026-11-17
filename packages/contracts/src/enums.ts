@@ -77,16 +77,3 @@ export const AudioContentType = z
   .enum(['audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/webm'])
   .meta({ id: 'AudioContentType' });
 export type AudioContentType = z.infer<typeof AudioContentType>;
-
-export const MemorizationMode = z.enum(['reveal', 'check_ayah', 'listen_repeat']).meta({
-  id: 'MemorizationMode',
-  description:
-    'reveal = reveal as I recite; check_ayah = check after each ayah; listen_repeat = listen then repeat.',
-});
-export type MemorizationMode = z.infer<typeof MemorizationMode>;
-
-export const MistakeType = z.enum(['missed', 'hinted']).meta({
-  id: 'MistakeType',
-  description: 'missed = the word was skipped; hinted = the user needed a hint for it.',
-});
-export type MistakeType = z.infer<typeof MistakeType>;

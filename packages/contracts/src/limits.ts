@@ -21,9 +21,6 @@ export const REJECTED_AUDIO_RETENTION_DAYS = 7;
 export const MAX_PLAYLIST_ITEMS = 200;
 export const MAX_PLAYLISTS_PER_USER = 100;
 
-export const MAX_MISTAKES_PER_SESSION = 2000;
-export const MAX_SESSION_DURATION_SEC = 6 * 60 * 60;
-
 export interface RateLimitPolicy {
   /** Requests allowed per window, per signed-in user (or per hashed IP when anonymous). */
   limit: number;
@@ -36,7 +33,6 @@ export const rateLimits = {
   like: { limit: 300, windowSec: 60 * 60 },
   report: { limit: 20, windowSec: 24 * 60 * 60 },
   play: { limit: 600, windowSec: 60 * 60 },
-  session: { limit: 120, windowSec: 60 * 60 },
   /** Hadith search scans a whole collection. */
   search: { limit: 120, windowSec: 60 * 60 },
 } as const satisfies Record<string, RateLimitPolicy>;

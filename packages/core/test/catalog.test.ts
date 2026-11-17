@@ -19,19 +19,6 @@ const errorCode = async (p: Promise<unknown>) => {
   return 'NO_ERROR';
 };
 
-const session = (overrides = {}) => ({
-  surah: 112,
-  ayahFrom: 1,
-  ayahTo: 4,
-  mode: 'reveal' as const,
-  wordsTotal: 15,
-  wordsCorrect: 12,
-  mistakes: [{ ayah: 3, word: 2, type: 'missed' as const }],
-  startedAt: '2026-11-12T08:00:00.000Z',
-  endedAt: '2026-11-12T08:02:00.000Z',
-  ...overrides,
-});
-
 describe('surahs', () => {
   it('lists 114 surahs and serves one with its approved recitations', async () => {
     expect(t.core.surahs.list().items).toHaveLength(114);
@@ -66,41 +53,6 @@ describe('reciters', () => {
       limit: 20,
     });
     expect(profile.reciter.stats).toEqual({ approvedRecitations: 1, totalPlays: 7 });
-  });
-});
-
-describe('memorization', () => {
-  it('saves a session and keeps the best progress', async () => {
-    const { actor } = await createUser(t);
-    const first = await t.core.memorization.saveSession(actor, session());
-    expect(first.accuracy).toBeCloseTo(0.8);
-    expect(first.progress).toMatchObject({ surah: 112, lastAyah: 4, bestAccuracy: 0.8 });
-    await t.core.memorization.saveSession(
-      actor,
-      session({ ayahTo: 2, wordsTotal: 6, wordsCorrect: 3, mistakes: [] }),
-    );
-    const progress = await t.core.memorization.progress(actor);
-    expect(progress.items).toEqual([
-      { surah: 112, lastAyah: 4, bestAccuracy: 0.8, lastPracticedAt: '2026-11-12T08:02:00.000Z' },
-    ]);
-  });
-
-  it('checks the word count and mistake positions against the real text', async () => {
-    const { actor } = await createUser(t);
-    expect(
-      await errorCode(t.core.memorization.saveSession(actor, session({ wordsTotal: 16 }))),
-    ).toBe('VALIDATION_ERROR');
-    expect(
-      await errorCode(
-        t.core.memorization.saveSession(
-          actor,
-          session({ mistakes: [{ ayah: 1, word: 9, type: 'missed' }] }),
-        ),
-      ),
-    ).toBe('VALIDATION_ERROR');
-    expect(await errorCode(t.core.memorization.saveSession(actor, session({ ayahTo: 5 })))).toBe(
-      'INVALID_AYAH_RANGE',
-    );
   });
 });
 

@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Tilawah — Quran recitations',
     short_name: 'Tilawah',
-    description: 'Listen to, share and memorize the recitation of the Quran.',
+    description: 'Listen to and share the recitation of the Quran, and read hadith.',
     start_url: '/',
     display: 'standalone',
     background_color: '#F6F1E7',

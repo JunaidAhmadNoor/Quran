@@ -57,7 +57,7 @@ jobs:
           docker run --rm -v /tmp:/base -v "$PWD/packages/contracts":/head tufin/oasdiff \
             breaking /base/base-openapi.json /head/openapi.json --fail-on ERR
 
-      - name: Unit, integration and contract tests (coverage gates in core and recitation)
+      - name: Unit, integration and contract tests (coverage gate in core)
         run: pnpm test
 
       - run: pnpm build

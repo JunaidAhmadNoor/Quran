@@ -7,7 +7,6 @@ import { AccountService } from './services/account';
 import { ReciterService, SurahService } from './services/catalog';
 import { HadithService } from './services/hadith';
 import { MaintenanceService, HealthService } from './services/maintenance';
-import { MemorizationService } from './services/memorization';
 import { AdminService, ModerationService } from './services/moderation';
 import { PlaylistService } from './services/playlists';
 import { RecitationService } from './services/recitations';
@@ -41,7 +40,6 @@ export function createCore({ database, storage, clock, config }: CoreOptions) {
     reciters: new ReciterService(deps, presenter, recitations),
     playlists,
     account: new AccountService(deps, presenter, recitations, playlists),
-    memorization: new MemorizationService(deps),
     moderation: new ModerationService(deps, presenter, recitations),
     admin: new AdminService(deps, presenter),
     maintenance: new MaintenanceService(deps, recitations),

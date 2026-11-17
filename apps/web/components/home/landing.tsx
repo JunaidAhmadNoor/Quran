@@ -1,10 +1,9 @@
-// The home page for visitors: what Tilawah is, a picture of memorization, and a way in.
-import { BookOpenCheck, Headphones, Mic, ShieldCheck } from 'lucide-react';
+// The home page for visitors: what Tilawah is, a few ayahs, and a way in.
+import { Headphones, Mic, ScrollText, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { getLocale, getTranslations } from 'next-intl/server';
-import { MemorizeDemo } from '@/components/home/memorize-demo';
 import { Button } from '@/components/ui/button';
-import { GirihPattern, StarMark } from '@/components/ui/ornaments';
+import { AyahMarker, GirihPattern, StarMark } from '@/components/ui/ornaments';
 
 interface Props {
   stats: { surahs: number; ayahs: number };
@@ -14,6 +13,7 @@ interface Props {
 
 export async function Landing({ stats, demo, verse }: Props) {
   const t = await getTranslations('home');
+  const ts = await getTranslations('surah');
   const nf = new Intl.NumberFormat(await getLocale());
   const features = [
     {
@@ -29,16 +29,11 @@ export async function Landing({ stats, demo, verse }: Props) {
       href: '/auth/sign-up',
     },
     {
-      icon: BookOpenCheck,
-      title: t('featureMemorizeTitle'),
-      body: t('featureMemorizeBody'),
-      href: '/memorize',
+      icon: ScrollText,
+      title: t('featureHadithTitle'),
+      body: t('featureHadithBody'),
+      href: '/hadith',
     },
-  ];
-  const steps = [
-    { title: t('step1Title'), body: t('step1Body') },
-    { title: t('step2Title'), body: t('step2Body') },
-    { title: t('step3Title'), body: t('step3Body') },
   ];
 
   return (
@@ -74,12 +69,17 @@ export async function Landing({ stats, demo, verse }: Props) {
             </p>
           </div>
           <div className="animate-stagger [--i:3]">
-            <MemorizeDemo
-              title={demo.title}
-              listening={t('demoListening')}
-              caption={t('demoCaption')}
-              ayahs={demo.ayahs}
-            />
+            <figure className="rounded-card border border-border bg-surface p-6 shadow-sm sm:p-8">
+              <figcaption className="text-sm text-muted">{demo.title}</figcaption>
+              <p lang="ar" dir="rtl" className="quran mt-4 text-text">
+                {demo.ayahs.map((a) => (
+                  <span key={a.number}>
+                    {a.words.join(' ')}{' '}
+                    <AyahMarker n={a.number} label={ts('ayahMarker', { n: a.number })} />{' '}
+                  </span>
+                ))}
+              </p>
+            </figure>
           </div>
         </div>
       </section>
@@ -106,7 +106,7 @@ export async function Landing({ stats, demo, verse }: Props) {
           </li>
           <li className="flex items-center justify-center gap-2 py-5 text-sm text-muted">
             <ShieldCheck aria-hidden className="size-4 shrink-0 text-primary" />
-            {t('statPrivate')}
+            {t('statFree')}
           </li>
         </ul>
       </section>
@@ -139,41 +139,6 @@ export async function Landing({ stats, demo, verse }: Props) {
               </li>
             ))}
           </ul>
-        </section>
-
-        {/* How memorization works */}
-        <section
-          aria-labelledby="how"
-          className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]"
-        >
-          <div>
-            <h2 id="how" className="font-display text-3xl text-text">
-              {t('howTitle')}
-            </h2>
-            <p className="mt-3 text-muted">{t('practiceBody')}</p>
-            <Button asChild className="mt-6">
-              <Link href="/memorize">{t('practiceCta')}</Link>
-            </Button>
-          </div>
-          <ol className="space-y-4">
-            {steps.map((s, i) => (
-              <li
-                key={s.title}
-                className="flex gap-4 rounded-card border border-border bg-surface p-5"
-              >
-                <span className="relative flex size-10 shrink-0 items-center justify-center text-accent">
-                  <StarMark className="absolute inset-0 size-full" />
-                  <span className="relative text-sm font-semibold text-text">
-                    {nf.format(i + 1)}
-                  </span>
-                </span>
-                <span>
-                  <span className="block font-medium text-text">{s.title}</span>
-                  <span className="mt-1 block text-sm text-muted">{s.body}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
         </section>
       </div>
 

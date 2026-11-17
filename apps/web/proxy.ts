@@ -9,15 +9,9 @@ function r2Origins(): string {
     .join(' ');
 }
 
-/** Where the speech model is downloaded from when it is not served by this app (see MEMORIZATION.md). */
-function modelOrigin(): string {
-  const base = process.env.NEXT_PUBLIC_SPEECH_MODEL_BASE_URL;
-  return base ? new URL(base).origin : '';
-}
-
 /** Pages anyone may open; everything else needs an account. */
 const PUBLIC_PAGES = [/^\/$/, /^\/auth(\/|$)/];
-/** Static files served from public/ (worklets, ONNX Runtime, models, icons). */
+/** Static files served from public/ (icons and other assets). */
 const ASSET = /\.[a-z0-9]+$/i;
 const SESSION_COOKIES = ['tilawah.session_token', '__Secure-tilawah.session_token'];
 
@@ -43,12 +37,11 @@ export function proxy(request: NextRequest) {
   const r2 = r2Origins();
   const csp = [
     "default-src 'self'",
-    // 'wasm-unsafe-eval': on-device speech recognition compiles WebAssembly (it cannot run JS).
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval'${dev ? " 'unsafe-eval'" : ''}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data: https://lh3.googleusercontent.com",
     `media-src 'self' blob: ${r2}`,
-    `connect-src 'self' ${r2} ${modelOrigin()}`.trim(),
+    `connect-src 'self' ${r2}`,
     "font-src 'self'",
     "worker-src 'self' blob:",
     "object-src 'none'",

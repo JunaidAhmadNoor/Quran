@@ -12,8 +12,6 @@ const SIGNED_IN = [
   '/surahs',
   '/surahs/1',
   '/surahs/1?view=read',
-  '/memorize',
-  '/memorize/112',
   '/hadith',
   '/hadith/bukhari',
   '/hadith/bukhari/1',
@@ -32,10 +30,6 @@ async function seriousViolations(page: Page, path: string): Promise<string[]> {
   await page.waitForTimeout(300); // hydration and entrance animations
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    // The memorization screen's faint verse text is a deliberate low-contrast hint, hidden from
-    // assistive technology (announced as "Hidden word") and switchable to Hidden: WCAG 1.4.3
-    // exempts such decorative text, so only those words are left out of the contrast check.
-    .exclude('[data-decorative-text]')
     .options({ resultTypes: ['violations'] }) // skip detailing passing checks: much faster
     .analyze();
   return results.violations

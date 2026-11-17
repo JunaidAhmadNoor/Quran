@@ -3,11 +3,7 @@ import type { Database } from '@tilawah/db';
 import type { z } from 'zod';
 import type { Clock } from './clock';
 import { LikeRepository, PlayRepository } from './repositories/engagement';
-import {
-  MemorizationRepository,
-  PlaylistRepository,
-  ReportRepository,
-} from './repositories/library';
+import { PlaylistRepository, ReportRepository } from './repositories/library';
 import { RateLimiter } from './repositories/rate-limiter';
 import { RecitationRepository } from './repositories/recitations';
 import { UserRepository } from './repositories/users';
@@ -32,7 +28,6 @@ export function createRepositories(database: Database, clock: Clock) {
     plays: new PlayRepository(models),
     playlists: new PlaylistRepository(models),
     reports: new ReportRepository(models),
-    memorization: new MemorizationRepository(models, connection),
     rateLimiter: new RateLimiter(models, clock),
   };
 }

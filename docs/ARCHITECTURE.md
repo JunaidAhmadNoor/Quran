@@ -1,7 +1,7 @@
 # Tilawah — Architecture
 
-Status: **Phase 3 (frontend) complete, waiting for review.** Everything is implemented except
-the speech engine and the memorization practice screen (Phase 4). The decision log in
+Status: **built and tested.** The memorization feature (Phase 4) was removed on 2026-11-17 at
+the owner's request (§14). The decision log in
 [§18](#18-decision-log) records what was decided; §19 and §20 list what Phases 2 and 3 settled
 or changed.
 
@@ -189,7 +189,7 @@ sign-in is needed.
 
 | Mode                   | What the user sees                                                                                                                                                                              |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **listener** (default) | Home, browse surahs, player, library, playlists, memorization.                                                                                                                                  |
+| **listener** (default) | Home, browse surahs, player, library, playlists, hadith.                                                                                                                                        |
 | **reciter**            | Reciter dashboard: my uploads and their review status, plays/likes stats (`GET /me/reciter/stats`), storage used, upload button, public profile preview. The player and library stay available. |
 
 Rules:
@@ -211,7 +211,7 @@ Rules:
 
 | Capability                                                  | user | user + verified badge | moderator  |   admin    |
 | ----------------------------------------------------------- | :--: | :-------------------: | :--------: | :--------: |
-| Listen, like, report, playlists, memorize, switch modes     |  ✓   |           ✓           |     ✓      |     ✓      |
+| Listen, like, report, playlists, hadith, switch modes       |  ✓   |           ✓           |     ✓      |     ✓      |
 | Upload (reciter profile on)                                 |  ✓   |           ✓           |     ✓      |     ✓      |
 | Uploads skip the review queue                               |      |           ✓           |     ✓      |     ✓      |
 | Verified badge on profile and recitations                   |      |           ✓           | if granted | if granted |
@@ -255,11 +255,10 @@ sequenceDiagram
 
 **Object keys**
 
-| Prefix                               | Contents                   | Lifetime                                                    |
-| ------------------------------------ | -------------------------- | ----------------------------------------------------------- |
-| `incoming/{userId}/{uploadId}.{ext}` | Unconfirmed uploads        | R2 lifecycle rule deletes after 1 day (abandoned uploads)   |
-| `audio/{recitationId}.{ext}`         | Confirmed recitations      | Deleted immediately when `removed`; 7 days after `rejected` |
-| `models/whisper-…/…`                 | Phase 4 speech model files | Permanent                                                   |
+| Prefix                               | Contents              | Lifetime                                                    |
+| ------------------------------------ | --------------------- | ----------------------------------------------------------- |
+| `incoming/{userId}/{uploadId}.{ext}` | Unconfirmed uploads   | R2 lifecycle rule deletes after 1 day (abandoned uploads)   |
+| `audio/{recitationId}.{ext}`         | Confirmed recitations | Deleted immediately when `removed`; 7 days after `rejected` |
 
 The copy-on-confirm step is why abandoned uploads clean themselves up: only `incoming/` has a
 lifecycle rule. `recitations.audioKey` has a unique index, so the same token cannot be
@@ -313,7 +312,7 @@ handle both.
   (D14). Each surah keeps its own spelling: in 95 and 97 Tanzil writes بِّسْمِ with a shadda,
   so there is no single shared bismillah string.
 - Pause marks (ۖ ۗ ۚ …), rub-el-hizb (۞) and sajdah (۩) are standalone tokens in Tanzil. They stay
-  in each ayah's `text` but are not `words`, so memorization positions count recitable words only.
+  in each ayah's `text` but are not `words`, so they are not counted as words.
 - The API serves the text (`GET /surahs/{n}/text`) with `Cache-Control: public, immutable` and
   an ETag of the checksum. The mobile app bundles `@tilawah/quran-data` directly for offline use.
 - Attribution required by the Tanzil license (text source + link to tanzil.net) is shown in the
@@ -327,14 +326,13 @@ handle both.
 upsert per limited request. It lives in MongoDB rather than process memory so it stays correct
 if Railway runs more than one replica. Policies (in `packages/contracts/src/limits.ts`):
 
-| Policy    | Limit / window | Used by                                                               |
-| --------- | -------------- | --------------------------------------------------------------------- |
-| `upload`  | 20 / hour      | presign, confirm                                                      |
-| `write`   | 120 / hour     | edits, deletes, playlists, profile, mode switch, moderation decisions |
-| `like`    | 300 / hour     | like, unlike                                                          |
-| `report`  | 20 / day       | report                                                                |
-| `play`    | 600 / hour     | play counting                                                         |
-| `session` | 120 / hour     | saving memorization sessions                                          |
+| Policy   | Limit / window | Used by                                                               |
+| -------- | -------------- | --------------------------------------------------------------------- |
+| `upload` | 20 / hour      | presign, confirm                                                      |
+| `write`  | 120 / hour     | edits, deletes, playlists, profile, mode switch, moderation decisions |
+| `like`   | 300 / hour     | like, unlike                                                          |
+| `report` | 20 / day       | report                                                                |
+| `play`   | 600 / hour     | play counting                                                         |
 
 **Plays (D11).** The client calls `POST /recitations/{id}/play` once playback passes 30 seconds
 (or half the duration for short clips). The server inserts a de-duplication marker
@@ -385,8 +383,8 @@ long-lived Node process, surah metadata and text are loaded into memory once at 
   `.env.example` lists them). Nothing secret has a `NEXT_PUBLIC_` prefix.
 - Headers: HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`
   (microphone only for self), `frame-ancestors 'none'` are set now in
-  [next.config.ts](../apps/web/next.config.ts). The full CSP (R2 for `media-src`/`connect-src`,
-  `wasm-unsafe-eval` and `worker-src blob:` for the Phase 4 model) lands in Phase 3.
+  [next.config.ts](../apps/web/next.config.ts). The per-request CSP with a script nonce (R2 for
+  `media-src`/`connect-src`) is set in [proxy.ts](../apps/web/proxy.ts).
 - **Database network access.** MongoDB stays on Atlas (confirmed). Railway's outbound IPs are
   not fixed, so Atlas's IP access list allows `0.0.0.0/0`. That is acceptable only with TLS
   (Atlas default), a long random password, and a database user limited to `readWrite` on the
@@ -427,18 +425,12 @@ long-lived Node process, surah metadata and text are loaded into memory once at 
 - [x] Everything the site can do has an endpoint (profile, mode, own uploads, stats,
       moderation, roles).
 
-## 14. Memorization
+## 14. Memorization (removed)
 
-Detail, measurements and limits: [MEMORIZATION.md](MEMORIZATION.md).
-
-`packages/recitation` holds the `RecognitionEngine` interface, `FakeEngine`, Arabic
-normalization, the pause-based `AudioChunker` and the matcher (window of the next 3 words,
-normalized Levenshtein ≥ 0.8, skipped words marked `missed`, unmatched words ignored, hints after
-6 s without progress, re-sync after dropped words). The web engine runs
-`tarteel-ai/whisper-base-ar-quran` with transformers.js in a Web Worker, fed by an AudioWorklet:
-on WebGPU an fp32 encoder + 4-bit decoder (142 MB), otherwise uint8 on multithreaded WebAssembly
-(110 MB); the tiny model on low-memory devices. Sessions are saved through `POST /me/memorization/sessions`
-when signed in and in `localStorage` otherwise.
+Built in Phase 4 (on-device Whisper speech recognition, practice screen, `/me/memorization/*`
+endpoints, `memorizationSessions` and `memorizationProgress` collections) and removed on
+2026-11-17 at the owner's request. The code is in git history (branch `phase-4`, commit
+`5aa300a`). Arabic normalization moved to `@tilawah/quran-data` for surah search.
 
 ## 15. Services and limits
 
@@ -587,37 +579,11 @@ change before Phase 2.
   carry none; the file then goes through the same presigned upload and review as a picked file.
   The audio stays on the device until Upload. Known limit: Chrome's WebM recordings have no seek
   index, so seeking in them can be less precise than in MP3 files.
-- **The memorization page** has the range picker and the hidden-word layout with manual reveal;
-  Phase 4 drives the same component from speech recognition.
 
-## 21. What Phase 4 settled or changed
+## 21. What else changed during Phase 4
 
-- **Segments end at pauses, not every 2.5 s.** Fixed chunks cut long words ("ٱلصَّمَدُ") in half
-  and cost accuracy (80% → 100% on the same Al-Ikhlas recording). The chunker now ends a segment
-  at a 0.35 s pause and only cuts continuous speech at 5 s, with overlap.
-- **Hints wait for silence.** Recognition takes 0.7–1.6 s per segment, so a hint timer started at
-  the last revealed word fired while the user was still speaking. The matcher's clock is now
-  pushed forward while speech is buffered or being recognized (`touch`), so a hint means a real
-  pause.
-- **Cross-origin isolation site-wide** (`COOP: same-origin`, `COEP: credentialless`): WebAssembly
-  recognition went from about 4 s to about 1.6 s per segment with threads. `credentialless` keeps
-  cross-origin images and audio working without CORP headers. The headers apply to every page,
-  because client-side navigation would otherwise reach the practice page without them.
-- **`'wasm-unsafe-eval'` in the CSP**, and the model origin in `connect-src` when it is hosted
-  separately. ONNX Runtime binaries are self-hosted (`/ort/`), never loaded from a CDN.
-- **Model kept for 30 s after leaving** the practice screen, so "Practise these again" and range
-  changes do not reload it; then the worker is terminated to free its memory.
-- **Listen then repeat uses single-ayah recitations only** (no per-ayah timestamps exist); other
-  ayahs are recited from memory with a notice.
-- **Two model variants per device.** WebGPU gets an fp32 encoder + 4-bit decoder (0.67 s per
-  segment); WebAssembly gets uint8 (1.6 s). The uint8 files stalled on WebGPU in manual testing
-  (no integer kernels). A warm-up run after loading compiles kernels before the first phrase.
-- **Matcher re-sync**: two consecutive heard words matching within the next 10 words (same or next
-  ayah) move the pointer, so dropped words become missed instead of stalling the session; jumps
-  further away are reported as the wrong ayah.
-- **Dagger alef** is compared both dropped and as ا (recognizers write مالك for مَـٰلِكِ): 90.8% →
-  95.4% on the 10-recording evaluation.
-- **The manual reveal component was removed**; the practice screen replaces it.
+The memorization changes are gone with the feature (§14). These remain:
+
 - **Email verification is required to sign in for ordinary users** (`role: user`) whenever email
   is configured (`EMAIL_TRANSPORT=brevo`). Sign-up sends the link and does not sign in; the link
   verifies and signs in. A blocked sign-in returns `403 EMAIL_NOT_VERIFIED` and the form offers to
@@ -625,7 +591,7 @@ change before Phase 2.
   `EMAIL_TRANSPORT=none` (tests, offline development) nothing can be verified, so it is not enforced.
 - **Staff have their own area.** Moderators and admins see only Moderation (and Users for admins)
   in the header, with no mode switch or upload button; listener pages (home, library, studio,
-  upload, memorize) redirect them to `/moderation`. Public surah and recitation pages stay
+  upload) redirect them to `/moderation`. Public surah and recitation pages stay
   reachable for context.
 - **Admin Users page** (`/admin/users`): overview totals (`GET /admin/stats`: accounts, reciters,
   staff, unverified emails, recitations by status, open reports, plays this week, stored audio)

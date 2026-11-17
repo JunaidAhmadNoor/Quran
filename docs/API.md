@@ -103,14 +103,13 @@ With `sort=newest`, pages are stable even when new items are added.
 
 Per signed-in user, or per hashed IP when anonymous. Exceeding one returns `429 RATE_LIMITED`.
 
-| Policy    | Limit      | Endpoints                                                                         |
-| --------- | ---------- | --------------------------------------------------------------------------------- |
-| `upload`  | 20 / hour  | `POST /uploads/presign`, `POST /recitations`                                      |
-| `like`    | 300 / hour | `POST`/`DELETE /recitations/{id}/like`                                            |
-| `report`  | 20 / day   | `POST /recitations/{id}/report`                                                   |
-| `play`    | 600 / hour | `POST /recitations/{id}/play` (plus once-per-6-hours de-duplication per listener) |
-| `session` | 120 / hour | `POST /me/memorization/sessions`                                                  |
-| `write`   | 120 / hour | every other `POST`/`PUT`/`PATCH`/`DELETE`                                         |
+| Policy   | Limit      | Endpoints                                                                         |
+| -------- | ---------- | --------------------------------------------------------------------------------- |
+| `upload` | 20 / hour  | `POST /uploads/presign`, `POST /recitations`                                      |
+| `like`   | 300 / hour | `POST`/`DELETE /recitations/{id}/like`                                            |
+| `report` | 20 / day   | `POST /recitations/{id}/report`                                                   |
+| `play`   | 600 / hour | `POST /recitations/{id}/play` (plus once-per-6-hours de-duplication per listener) |
+| `write`  | 120 / hour | every other `POST`/`PUT`/`PATCH`/`DELETE`                                         |
 
 The OpenAPI document repeats these per operation as `x-rate-limit`.
 
@@ -260,21 +259,9 @@ Better Auth.
 playsLast7Days, storage { usedBytes, quotaBytes }` for the reciter dashboard.
 
 `DELETE /me` needs a session created in the last 24 hours (`REAUTH_REQUIRED` otherwise),
-deletes the user, sessions, likes, playlists and memorization data, and marks the user's
+deletes the user, sessions, likes and playlists, and marks the user's
 recitations removed with their audio deleted. The last remaining admin cannot delete their
 account (`CONFLICT`).
-
-### Memorization
-
-| Method | Path                        | Auth | Body                            | Success | Response                            |
-| ------ | --------------------------- | ---- | ------------------------------- | ------- | ----------------------------------- |
-| POST   | `/me/memorization/sessions` | user | `CreateMemorizationSessionBody` | 201     | `{ id, accuracy, progress }`        |
-| GET    | `/me/memorization/progress` | user | —                               | 200     | `{ items: MemorizationProgress[] }` |
-
-Session body: `surah, ayahFrom, ayahTo, mode (reveal|check_ayah|listen_repeat), wordsTotal,
-wordsCorrect, mistakes [{ ayah, word, type: missed|hinted }], startedAt, endedAt`. The server
-checks that `wordsTotal` equals the real word count of the range. No audio or recognized text
-is ever sent.
 
 ### Moderation
 

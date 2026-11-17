@@ -260,30 +260,6 @@ describe('signed-in endpoints', () => {
     expect((await call('deletePlaylist', { as, params })).status).toBe(204);
   });
 
-  it('memorization sessions and progress', async () => {
-    const { actor } = await createUser(t);
-    const as = actor.userId;
-    const saved = await call('createMemorizationSession', {
-      as,
-      body: {
-        surah: 112,
-        ayahFrom: 1,
-        ayahTo: 4,
-        mode: 'reveal',
-        wordsTotal: 15,
-        wordsCorrect: 15,
-        mistakes: [],
-        startedAt: '2026-11-12T08:00:00.000Z',
-        endedAt: '2026-11-12T08:01:00.000Z',
-      },
-    });
-    expect(saved.status).toBe(201);
-    expect((await call('getMemorizationProgress', { as })).json.items[0]).toMatchObject({
-      surah: 112,
-      bestAccuracy: 1,
-    });
-  });
-
   it('DELETE /me', async () => {
     const { actor } = await createUser(t);
     expect((await call('deleteMe', { as: actor.userId })).status).toBe(204);

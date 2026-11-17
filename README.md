@@ -1,10 +1,10 @@
 # Tilawah (working name)
 
 A Spotify-style platform only for Quran recitations: listen to community recitations of all
-114 surahs, upload your own (reviewed before publishing), and practise memorization with
-hidden-text word reveal.
+114 surahs, upload your own (reviewed before publishing), and read Sahih al-Bukhari and Sahih
+Muslim in Arabic, English and Urdu.
 
-**Status: Phase 3 (frontend) complete, awaiting review.** API and website are built and tested; memorization with speech recognition comes in Phase 4. Screenshots: [docs/screenshots](docs/screenshots).
+**Status:** API and website are built and tested. The memorization feature (Phase 4) was removed. Screenshots: [docs/screenshots](docs/screenshots).
 
 | Doc                                                                | What it covers                                                                 |
 | ------------------------------------------------------------------ | ------------------------------------------------------------------------------ |

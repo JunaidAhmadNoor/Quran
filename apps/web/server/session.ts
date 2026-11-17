@@ -48,7 +48,7 @@ export async function orNotFound<T>(promise: Promise<T>): Promise<T> {
 
 /**
  * Moderators and admins work in the moderation area: listener pages (home, library, studio,
- * upload, memorize) send them there. Public surah and recitation pages stay reachable from it.
+ * upload) send them there. Public surah and recitation pages stay reachable from it.
  */
 export async function sendStaffToWork(): Promise<void> {
   const { actor } = await getServerContext();

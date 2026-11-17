@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { levenshtein, normalizeArabic, normalizeWords, similarity } from '../src';
+import { normalizeArabic, normalizeWords } from '../src';
 
 describe('normalizeArabic', () => {
   it.each([
@@ -71,18 +71,5 @@ describe('normalizeArabic', () => {
   it('splits into words', () => {
     expect(normalizeWords('قُلْ هُوَ ٱللَّهُ أَحَدٌ')).toEqual(['قل', 'هو', 'الله', 'احد']);
     expect(normalizeWords('ۚ')).toEqual([]);
-  });
-});
-
-describe('similarity', () => {
-  it.each([
-    ['', '', 0, 1],
-    ['abc', '', 3, 0],
-    ['الكتب', 'الكتاب', 1, 5 / 6],
-    ['الرحمن', 'الرحمن', 0, 1],
-    ['قل', 'هو', 2, 0],
-  ])('%s vs %s', (a, b, distance, score) => {
-    expect(levenshtein(a, b)).toBe(distance);
-    expect(similarity(a, b)).toBeCloseTo(score);
   });
 });

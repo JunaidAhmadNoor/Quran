@@ -46,7 +46,6 @@ function useNav() {
   const items = [
     { href: '/', label: t('home') },
     { href: '/surahs', label: t('surahs') },
-    { href: '/memorize', label: t('memorize') },
     { href: '/hadith', label: t('hadith') },
     { href: '/library', label: t('library') },
   ];

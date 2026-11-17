@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CreateMemorizationSessionBody,
   CreateReportBody,
   ErrorResponse,
   ListRecitationsQuery,
@@ -120,32 +119,6 @@ describe('moderation decisions', () => {
         resolveReports: true,
       },
     );
-  });
-});
-
-describe('memorization sessions', () => {
-  const base = {
-    surah: 112,
-    ayahFrom: 1,
-    ayahTo: 4,
-    mode: 'reveal',
-    wordsTotal: 15,
-    wordsCorrect: 14,
-    mistakes: [{ ayah: 3, word: 2, type: 'missed' }],
-    startedAt: '2026-11-12T08:00:00.000Z',
-    endedAt: '2026-11-12T08:03:00.000Z',
-  } as const;
-
-  it('accepts a valid session', () => {
-    expect(CreateMemorizationSessionBody.safeParse(base).success).toBe(true);
-  });
-
-  it.each([
-    ['more correct than total', { wordsCorrect: 16 }],
-    ['ends before it starts', { endedAt: '2026-11-12T07:59:00.000Z' }],
-    ['mistake outside range', { mistakes: [{ ayah: 5, word: 1, type: 'missed' }] }],
-  ])('rejects a session that has %s', (_label, patch) => {
-    expect(CreateMemorizationSessionBody.safeParse({ ...base, ...patch }).success).toBe(false);
   });
 });
 

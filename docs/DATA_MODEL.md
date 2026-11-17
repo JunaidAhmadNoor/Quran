@@ -138,38 +138,11 @@ Max 100 playlists per user.
 | `{ recitationId: 1, status: 1 }`                                      | open-report count per item; resolve on remove (spec: `{recitationId}`) |
 | `{ recitationId: 1, reporterId: 1 }` unique, partial `status: "open"` | `ALREADY_REPORTED`                                                     |
 
-### `memorizationSessions`
+### `memorizationSessions`, `memorizationProgress` (removed)
 
-| Field                         | Type                                              | Notes                               |
-| ----------------------------- | ------------------------------------------------- | ----------------------------------- |
-| `userId`                      | ObjectId → users                                  |                                     |
-| `surah`, `ayahFrom`, `ayahTo` | int                                               |                                     |
-| `mode` †                      | `reveal \| check_ayah \| listen_repeat`           |                                     |
-| `wordsTotal`                  | int                                               | must equal the range's word count   |
-| `wordsCorrect`                | int ≤ wordsTotal                                  |                                     |
-| `mistakes`                    | `{ ayah, word, type: missed \| hinted }[]` ≤ 2000 | positions only, never what was said |
-| `startedAt`, `endedAt`        | date                                              |                                     |
-
-| Index                         | Serves                   |
-| ----------------------------- | ------------------------ |
-| `{ userId: 1, surah: 1 }`     | per-surah history (spec) |
-| `{ endedAt: 1 }` TTL 365 days | retention (D12)          |
-
-### `memorizationProgress`
-
-| Field             | Type       | Notes                                           |
-| ----------------- | ---------- | ----------------------------------------------- |
-| `userId`          | ObjectId   |                                                 |
-| `surah`           | int        |                                                 |
-| `lastAyah`        | int        | highest `ayahTo` reached in any session         |
-| `bestAccuracy`    | number 0–1 | best `wordsCorrect / wordsTotal` for this surah |
-| `lastPracticedAt` | date       |                                                 |
-
-| Index                            | Serves                                       |
-| -------------------------------- | -------------------------------------------- |
-| `{ userId: 1, surah: 1 }` unique | upsert on session save; progress list (spec) |
-
-Updated in the same transaction as the session insert.
+Used by the memorization feature, removed on 2026-11-17. The app no longer reads or writes them;
+a database that has them can drop both: `db.memorizationSessions.drop()` and
+`db.memorizationProgress.drop()`.
 
 ---
 
@@ -218,21 +191,17 @@ and a 6-hour expiry, where `listener` is the user id or `HMAC(IP_HASH_SECRET, ip
 
 ## 4. Size budget (512 MB cap)
 
-Estimate at **10,000 users, 5,000 recitations, 200,000 likes, 100,000 memorization sessions
-per year**, uncompressed, including indexes:
+Estimate at **10,000 users, 5,000 recitations, 200,000 likes**, uncompressed, including indexes:
 
-| Collection                  | Docs    | ≈ Size       |
-| --------------------------- | ------- | ------------ |
-| users + sessions + accounts | 30k     | 12 MB        |
-| recitations                 | 5k      | 5 MB         |
-| likes                       | 200k    | 35 MB        |
-| playlists                   | 2k      | 5 MB         |
-| reports                     | 1k      | < 1 MB       |
-| memorizationSessions (1 yr) | 100k    | 45 MB        |
-| memorizationProgress        | 50k     | 7 MB         |
-| rateLimits + playStatsDaily | rolling | 5 MB         |
-| **Total**                   |         | **≈ 115 MB** |
+| Collection                  | Docs    | ≈ Size      |
+| --------------------------- | ------- | ----------- |
+| users + sessions + accounts | 30k     | 12 MB       |
+| recitations                 | 5k      | 5 MB        |
+| likes                       | 200k    | 35 MB       |
+| playlists                   | 2k      | 5 MB        |
+| reports                     | 1k      | < 1 MB      |
+| rateLimits + playStatsDaily | rolling | 5 MB        |
+| **Total**                   |         | **≈ 63 MB** |
 
-Headroom is ~4×. The fastest-growing items are likes and sessions; the session TTL (D12) caps
-the latter. Phase 2 adds a `pnpm --filter db stats` script that prints `dbStats` so the
+Headroom is ~8×. The fastest-growing item is likes. Phase 2 adds a `pnpm --filter db stats` script that prints `dbStats` so the
 real number can be checked against this table.
