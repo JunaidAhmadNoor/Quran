@@ -17,9 +17,21 @@ export const AccountMode = z.enum(['listener', 'reciter']).meta({
 export type AccountMode = z.infer<typeof AccountMode>;
 
 export const RecitationStatus = z
-  .enum(['pending', 'approved', 'rejected', 'removed'])
-  .meta({ id: 'RecitationStatus' });
+  .enum(['private', 'pending', 'approved', 'rejected', 'removed'])
+  .meta({
+    id: 'RecitationStatus',
+    description:
+      'private = visible only to the uploader and never reviewed; pending = waiting for a moderator.',
+  });
 export type RecitationStatus = z.infer<typeof RecitationStatus>;
+
+/** Chosen by the uploader. Public recitations are reviewed before they are published. */
+export const RecitationVisibility = z.enum(['public', 'private']).meta({
+  id: 'RecitationVisibility',
+  description:
+    'public = sent to moderators (or published at once for verified reciters); private = only the uploader can see and play it.',
+});
+export type RecitationVisibility = z.infer<typeof RecitationVisibility>;
 
 export const RecitationStyle = z
   .enum(['murattal', 'mujawwad', 'teaching'])

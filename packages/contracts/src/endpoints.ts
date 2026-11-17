@@ -246,7 +246,7 @@ export const endpoints = {
     tag: 'Recitations',
     summary: 'Confirm an upload and create the recitation',
     description:
-      'The server checks the upload token, confirms the object exists in R2 with the presigned size and type, and creates the record. Status is pending, or approved immediately for verified reciters.',
+      'The server checks the upload token, confirms the object exists in R2 with the presigned size and type, and creates the record. Status is private when visibility is private; otherwise pending, or approved immediately for verified reciters.',
     body: CreateRecitationBody,
     successStatus: 201,
     response: RecitationDetail,

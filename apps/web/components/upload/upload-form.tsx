@@ -5,10 +5,12 @@ import {
   MAX_UPLOAD_BYTES,
   RecitationStyle,
   Riwayah,
+  type RecitationStatus,
+  type RecitationVisibility,
 } from '@tilawah/contracts';
 import { surahs } from '@tilawah/quran-data';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle2, FileAudio } from 'lucide-react';
+import { CheckCircle2, FileAudio, Globe, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -42,7 +44,7 @@ type Phase =
   | { step: 'file' }
   | { step: 'rights' }
   | { step: 'uploading'; pct: number; confirming: boolean }
-  | { step: 'done'; status: 'pending' | 'approved' | 'rejected' | 'removed' };
+  | { step: 'done'; status: RecitationStatus };
 
 const STEPS = ['step1', 'step2', 'step3', 'step4'] as const;
 
@@ -57,6 +59,7 @@ export function UploadForm({ initialSurah }: { initialSurah?: number }) {
   /** Known for recordings (Chrome's recordings carry no duration in their metadata). */
   const [knownDuration, setKnownDuration] = useState<number | null>(null);
   const [rights, setRights] = useState(false);
+  const [visibility, setVisibility] = useState<RecitationVisibility>('public');
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<DetailsIn, unknown, DetailsOut>({
@@ -112,6 +115,7 @@ export function UploadForm({ initialSurah }: { initialSurah?: number }) {
           style: details.style,
           riwayah: details.riwayah,
           durationSec,
+          visibility,
         },
       });
       setPhase({ step: 'done', status: created.status });
@@ -138,6 +142,7 @@ export function UploadForm({ initialSurah }: { initialSurah?: number }) {
     setKnownDuration(null);
     setSource('file');
     setRights(false);
+    setVisibility('public');
     setDetails(null);
     setPhase({ step: 'details' });
   };
@@ -320,6 +325,43 @@ export function UploadForm({ initialSurah }: { initialSurah?: number }) {
 
       {phase.step === 'rights' ? (
         <div className="space-y-6">
+          <fieldset>
+            <legend className="mb-2 text-sm font-medium text-text">{t('visibilityLabel')}</legend>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(['public', 'private'] as const).map((value) => {
+                const Icon = value === 'public' ? Globe : Lock;
+                return (
+                  <label
+                    key={value}
+                    className={cn(
+                      'flex cursor-pointer items-start gap-3 rounded-card border bg-surface p-4 transition-colors',
+                      visibility === value
+                        ? 'border-primary ring-1 ring-primary'
+                        : 'border-border hover:bg-surface-raised',
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="visibility"
+                      value={value}
+                      checked={visibility === value}
+                      onChange={() => setVisibility(value)}
+                      className="mt-1 size-4 accent-primary"
+                    />
+                    <span>
+                      <span className="flex items-center gap-1.5 font-medium text-text">
+                        <Icon aria-hidden className="size-4 text-primary" />
+                        {t(value === 'public' ? 'public' : 'private')}
+                      </span>
+                      <span className="mt-0.5 block text-sm text-muted">
+                        {t(value === 'public' ? 'publicHint' : 'privateHint')}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
           <label className="flex items-start gap-3 rounded-card border border-border bg-surface p-4 text-text">
             <input
               type="checkbox"
@@ -373,10 +415,16 @@ export function UploadForm({ initialSurah }: { initialSurah?: number }) {
         <div role="status" className="rounded-card border border-border bg-surface p-8 text-center">
           <CheckCircle2 aria-hidden className="mx-auto mb-3 size-10 text-success" />
           <h2 className="font-display text-2xl text-text">
-            {phase.status === 'approved' ? t('approvedTitle') : t('pendingTitle')}
+            {phase.status === 'approved'
+              ? t('approvedTitle')
+              : phase.status === 'private'
+                ? t('privateTitle')
+                : t('pendingTitle')}
           </h2>
           {phase.status !== 'approved' ? (
-            <p className="mx-auto mt-2 max-w-sm text-sm text-muted">{t('pendingBody')}</p>
+            <p className="mx-auto mt-2 max-w-sm text-sm text-muted">
+              {t(phase.status === 'private' ? 'privateBody' : 'pendingBody')}
+            </p>
           ) : null}
           <div className="mt-6 flex justify-center gap-3">
             <Button variant="secondary" onClick={reset}>

@@ -203,6 +203,7 @@ describe('admin', () => {
       pending: 1,
       rejected: 0,
       removed: 0,
+      private: 0,
     });
     // Regex characters in the search are taken literally.
     expect((await t.core.admin.listUsers(admin, { q: '.*', limit: 20 })).items).toHaveLength(0);

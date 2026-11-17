@@ -32,6 +32,7 @@ test('sign up → switch to reciter → upload → moderator approves → appear
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.locator('#audio-file').setInputFiles(FIXTURE);
   await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('radio', { name: /^Public/ })).toBeChecked(); // the default
   await page.getByLabel(/my own recitation/).check();
   await page.getByRole('button', { name: 'Upload' }).click();
   await expect(page.getByText('Uploaded. Waiting for review.')).toBeVisible();
@@ -150,7 +151,7 @@ test('switching language does not interrupt playback', async ({ page }) => {
   ).toBeVisible();
 });
 
-test('a reciter records in the browser and uploads the recording', async ({
+test('a reciter records in the browser, uploads privately, then makes it public', async ({
   page,
   browserName,
 }) => {
@@ -172,9 +173,11 @@ test('a reciter records in the browser and uploads the recording', async ({
   await expect(page.getByLabel('Listen to your recording')).toBeVisible();
   await page.getByRole('button', { name: 'Use this recording' }).click();
 
+  await expect(page.getByRole('radio', { name: /^Public/ })).toBeChecked();
+  await page.getByRole('radio', { name: /^Private/ }).check();
   await page.getByLabel(/my own recitation/).check();
   await page.getByRole('button', { name: 'Upload' }).click();
-  await expect(page.getByText('Uploaded. Waiting for review.')).toBeVisible();
+  await expect(page.getByText('Saved privately.')).toBeVisible();
 
   const mine = await page.request.get('/api/v1/me/recitations');
   const items = (
@@ -188,8 +191,15 @@ test('a reciter records in the browser and uploads the recording', async ({
     }
   ).items;
   const uploaded = items.find((r) => r.title === title);
-  expect(uploaded).toMatchObject({ status: 'pending', stream: { contentType: 'audio/webm' } });
+  expect(uploaded).toMatchObject({ status: 'private', stream: { contentType: 'audio/webm' } });
   expect(uploaded?.durationSec).toBeGreaterThanOrEqual(4);
+
+  await page.goto('/studio');
+  const row = page.getByRole('listitem').filter({ hasText: title });
+  await expect(row.getByText('Private', { exact: true })).toBeVisible();
+  await row.getByRole('button', { name: 'Make public' }).click();
+  await expect(page.getByText(/^Sent for review/)).toBeVisible();
+  await expect(row.getByText('Waiting for review')).toBeVisible();
 });
 
 test('signing out stops playback and clears the queue and history', async ({ page }) => {

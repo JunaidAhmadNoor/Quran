@@ -53,11 +53,13 @@ export default async function RecitationPage({ params }: Props) {
           role="status"
           className="mb-6 rounded-card border border-border bg-surface px-4 py-3 text-sm text-muted"
         >
-          {recitation.status === 'pending'
-            ? t('pendingNotice')
-            : recitation.status === 'rejected'
-              ? t('rejectedNotice', { reason: recitation.moderationNote ?? '' })
-              : t('removedNotice')}
+          {recitation.status === 'private'
+            ? t('privateNotice')
+            : recitation.status === 'pending'
+              ? t('pendingNotice')
+              : recitation.status === 'rejected'
+                ? t('rejectedNotice', { reason: recitation.moderationNote ?? '' })
+                : t('removedNotice')}
         </p>
       ) : null}
       <header className="mb-8">
@@ -110,9 +112,11 @@ export default async function RecitationPage({ params }: Props) {
               ) : null}
             </span>
           </Link>
-          <div className="mt-3 border-t border-border pt-2">
-            <ReportDialog id={recitation.id} />
-          </div>
+          {recitation.status === 'approved' ? (
+            <div className="mt-3 border-t border-border pt-2">
+              <ReportDialog id={recitation.id} />
+            </div>
+          ) : null}
         </Card>
       </div>
 

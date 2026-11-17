@@ -90,7 +90,12 @@ export class AccountService {
     ]);
     const since = utcDay(new Date(this.deps.clock.now().getTime() - 6 * DAY_MS));
     return {
-      recitations: { pending: stats.pending, approved: stats.approved, rejected: stats.rejected },
+      recitations: {
+        pending: stats.pending,
+        approved: stats.approved,
+        rejected: stats.rejected,
+        private: stats.private,
+      },
       totalPlays: stats.totalPlays,
       totalLikes: stats.totalLikes,
       playsLast7Days: await plays.playsSince(

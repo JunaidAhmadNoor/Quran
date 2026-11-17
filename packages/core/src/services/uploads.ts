@@ -150,7 +150,8 @@ export class UploadService {
         audioDeletedAt: null,
         durationSec: body.durationSec,
         sizeBytes: ticket.sizeBytes,
-        status: autoApproves(me) ? 'approved' : 'pending',
+        status:
+          body.visibility === 'private' ? 'private' : autoApproves(me) ? 'approved' : 'pending',
         playCount: 0,
         likeCount: 0,
         rightsConfirmedAt: new Date(ticket.rightsConfirmedAt),

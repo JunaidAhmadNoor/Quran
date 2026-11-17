@@ -17,7 +17,13 @@ export const ListUsersQuery = PageQuery.extend({
 const count = z.int().min(0);
 
 export const AdminUser = UserAccount.extend({
-  recitations: z.object({ approved: count, pending: count, rejected: count, removed: count }),
+  recitations: z.object({
+    approved: count,
+    pending: count,
+    rejected: count,
+    removed: count,
+    private: count,
+  }),
 }).meta({
   id: 'AdminUser',
   description: 'An account as admins see it, with its recitation counts.',
@@ -39,7 +45,13 @@ export const AdminStats = z
       emailNotVerified: count,
       newLast7Days: count,
     }),
-    recitations: z.object({ pending: count, approved: count, rejected: count, removed: count }),
+    recitations: z.object({
+      pending: count,
+      approved: count,
+      rejected: count,
+      removed: count,
+      private: count,
+    }),
     openReports: count,
     playsLast7Days: count,
     storageBytes: count.meta({ description: 'Audio stored for recitations that are not removed.' }),

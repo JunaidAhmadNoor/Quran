@@ -144,7 +144,8 @@
     "alreadyReported": "You have already reported this recitation.",
     "signInToLike": "Sign in to like recitations",
     "signInToReport": "Sign in to report",
-    "waveform": "Waveform. Click to seek."
+    "waveform": "Waveform. Click to seek.",
+    "privateNotice": "Private. Only you can see and play it."
   },
   "reciter": {
     "since": "Reciting on Tilawah since {date}",
@@ -172,7 +173,7 @@
     "title": "Upload a recitation",
     "step1": "Surah and ayahs",
     "step2": "Audio",
-    "step3": "Permission",
+    "step3": "Sharing",
     "step4": "Upload",
     "surah": "Surah",
     "from": "From ayah",
@@ -221,7 +222,14 @@
     "recordDenied": "Microphone access was blocked. Allow it in your browser’s site settings, or choose a file instead.",
     "recordNoDevice": "No microphone was found.",
     "recordUnsupported": "This browser cannot record audio. Choose a file instead.",
-    "recordFailed": "Recording stopped unexpectedly. Please try again."
+    "recordFailed": "Recording stopped unexpectedly. Please try again.",
+    "visibilityLabel": "Who can listen?",
+    "public": "Public",
+    "publicHint": "A moderator reviews it, then everyone can listen.",
+    "private": "Private",
+    "privateHint": "Only you can see and play it. It is not reviewed. You can make it public later.",
+    "privateTitle": "Saved privately.",
+    "privateBody": "Only you can see and play it. You can make it public from your reciter studio at any time."
   },
   "library": {
     "title": "Library",
@@ -255,7 +263,14 @@
     "uploads": "My uploads",
     "empty": "You have not uploaded a recitation yet.",
     "reason": "Reason: {reason}",
-    "publicProfile": "View public profile"
+    "publicProfile": "View public profile",
+    "private": "Private",
+    "makePublic": "Make public",
+    "makePrivate": "Make private",
+    "madePrivate": "Now private. Making it public again sends it for review.",
+    "madePending": "Sent for review. It becomes public once a moderator approves it.",
+    "madePublished": "Published.",
+    "error": "Something went wrong. Please try again."
   },
   "settings": {
     "title": "Settings",

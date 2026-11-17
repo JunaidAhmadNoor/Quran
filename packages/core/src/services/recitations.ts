@@ -1,4 +1,4 @@
-import { PLAY_DEDUPE_WINDOW_SEC } from '@tilawah/contracts';
+import { PLAY_DEDUPE_WINDOW_SEC, type RecitationStatus } from '@tilawah/contracts';
 import type { RecitationDoc } from '@tilawah/db';
 import { isValidAyahRange } from '@tilawah/quran-data';
 import { autoApproves, isStaff, requireActor, type Actor } from '../actor';
@@ -13,9 +13,13 @@ import type { PublicFilters } from '../repositories/recitations';
 type ListQuery = Out<typeof C.ListRecitationsQuery>;
 type Page = Out<typeof C.RecitationPage>;
 
-export const canSee = (doc: RecitationDoc, actor: Actor | null): boolean =>
-  doc.status === 'approved' ||
-  (actor !== null && (actor.userId === doc.uploaderId.toHexString() || isStaff(actor)));
+/** Approved: everyone. Private: only the uploader (not staff). Other statuses: uploader and staff. */
+export const canSee = (doc: RecitationDoc, actor: Actor | null): boolean => {
+  if (doc.status === 'approved') return true;
+  if (actor === null) return false;
+  if (actor.userId === doc.uploaderId.toHexString()) return true;
+  return doc.status !== 'private' && isStaff(actor);
+};
 
 const CONTENT_FIELDS = ['surah', 'ayahFrom', 'ayahTo', 'riwayah'] as const;
 
@@ -92,12 +96,24 @@ export class RecitationService {
       );
     }
 
-    const contentChanged = CONTENT_FIELDS.some((f) => body[f] !== undefined && body[f] !== doc[f]);
+    const { visibility, ...fields } = body;
+    let status: RecitationStatus | undefined;
+    if (visibility !== undefined) {
+      if (!isOwner) throw forbidden('Only the uploader can change who sees a recitation');
+      if (doc.status === 'rejected')
+        throw conflict('A rejected recitation cannot change visibility');
+      if (visibility === 'private') status = 'private';
+      else if (doc.status === 'private') status = autoApproves(me) ? 'approved' : 'pending';
+    }
+    const contentChanged = CONTENT_FIELDS.some(
+      (f) => fields[f] !== undefined && fields[f] !== doc[f],
+    );
     const backToReview =
-      isOwner && !autoApproves(me) && doc.status === 'approved' && contentChanged;
+      isOwner && !autoApproves(me) && (status ?? doc.status) === 'approved' && contentChanged;
+    if (backToReview) status = 'pending';
     const updated = await this.deps.repos.recitations.update(id, {
-      ...body,
-      ...(backToReview ? { status: 'pending' as const } : {}),
+      ...fields,
+      ...(status ? { status } : {}),
     });
     if (!updated) throw notFound('Recitation');
     const [detail] = await this.presenter.details([updated], me);

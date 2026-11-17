@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Upload } from 'lucide-react';
 import { ModeSwitch } from '@/components/layout/mode-switch';
+import { VisibilityToggle } from '@/components/studio/visibility-toggle';
 import { Button } from '@/components/ui/button';
 import { Card, SectionHeading, StatusBadge } from '@/components/ui/misc';
 import { EmptyState } from '@/components/ui/states';
@@ -45,6 +46,7 @@ export default async function StudioPage() {
   const numbers = [
     { label: t('approved'), value: stats.recitations.approved },
     { label: t('pending'), value: stats.recitations.pending },
+    { label: t('private'), value: stats.recitations.private },
     { label: t('plays'), value: stats.totalPlays },
     { label: t('playsWeek'), value: stats.playsLast7Days },
     { label: t('likes'), value: stats.totalLikes },
@@ -67,7 +69,7 @@ export default async function StudioPage() {
           </Button>
         </div>
       </div>
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {numbers.map((n) => (
           <Card key={n.label} className="p-4">
             <dt className="text-xs text-muted">{n.label}</dt>
@@ -131,7 +133,10 @@ export default async function StudioPage() {
                     </p>
                   ) : null}
                 </div>
-                <StatusBadge status={r.status}>{t(r.status)}</StatusBadge>
+                <div className="flex items-center gap-2">
+                  <StatusBadge status={r.status}>{t(r.status)}</StatusBadge>
+                  <VisibilityToggle id={r.id} status={r.status} />
+                </div>
               </li>
             ))}
           </ul>

@@ -186,6 +186,7 @@ export class AdminService {
           pending: 0,
           rejected: 0,
           removed: 0,
+          private: 0,
         },
       })),
       nextCursor: result.nextCursor,

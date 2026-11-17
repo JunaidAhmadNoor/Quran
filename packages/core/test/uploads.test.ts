@@ -24,6 +24,7 @@ const meta = {
   style: 'murattal' as const,
   riwayah: 'hafs' as const,
   durationSec: 30,
+  visibility: 'public' as const,
 };
 
 const errorCode = async (p: Promise<unknown>) => {
@@ -149,5 +150,61 @@ describe('confirm', () => {
       durationSec: 100_000,
     });
     expect(await errorCode(res)).toBe('VALIDATION_ERROR');
+  });
+});
+
+describe('private recitations', () => {
+  it('stay with the uploader, skip review, and can be published later', async () => {
+    const { actor } = await createUser(t, { reciter: true });
+    const { actor: listener } = await createUser(t);
+    const { actor: moderator } = await createUser(t, { role: 'moderator' });
+    const { presigned } = await upload(actor);
+    const created = await t.core.uploads.confirm(actor, {
+      uploadToken: presigned.uploadToken,
+      ...meta,
+      visibility: 'private',
+    });
+    expect(created.status).toBe('private');
+    expect((await t.core.recitations.get(actor, created.id)).stream.url).toBeTruthy();
+    expect(await errorCode(t.core.recitations.get(listener, created.id))).toBe('NOT_FOUND');
+    expect(await errorCode(t.core.recitations.get(moderator, created.id))).toBe('NOT_FOUND');
+    const queue = await t.core.moderation.queue(moderator, { kind: 'recitations', limit: 20 });
+    expect(queue.counts.pendingRecitations).toBe(0);
+    expect((await t.core.account.reciterStats(actor)).recitations.private).toBe(1);
+
+    const published = await t.core.recitations.update(actor, created.id, { visibility: 'public' });
+    expect(published.status).toBe('pending');
+    const hidden = await t.core.recitations.update(actor, created.id, { visibility: 'private' });
+    expect(hidden.status).toBe('private');
+  });
+
+  it('publishes at once for verified reciters and hides approved ones again', async () => {
+    const { user, actor } = await createUser(t, { verifiedReciter: true });
+    const { actor: listener } = await createUser(t);
+    const doc = await insertRecitation(t, user, { status: 'private' });
+    const id = doc._id.toHexString();
+    expect((await t.core.recitations.update(actor, id, { visibility: 'public' })).status).toBe(
+      'approved',
+    );
+    expect((await t.core.recitations.get(listener, id)).id).toBe(id);
+    await t.core.recitations.update(actor, id, { visibility: 'private' });
+    expect(await errorCode(t.core.recitations.get(listener, id))).toBe('NOT_FOUND');
+  });
+
+  it('only the uploader changes visibility, and not for rejected recitations', async () => {
+    const { user, actor } = await createUser(t, { reciter: true });
+    const { actor: moderator } = await createUser(t, { role: 'moderator' });
+    const pending = await insertRecitation(t, user, { status: 'pending' });
+    const rejected = await insertRecitation(t, user, { status: 'rejected' });
+    expect(
+      await errorCode(
+        t.core.recitations.update(moderator, pending._id.toHexString(), { visibility: 'private' }),
+      ),
+    ).toBe('FORBIDDEN');
+    expect(
+      await errorCode(
+        t.core.recitations.update(actor, rejected._id.toHexString(), { visibility: 'private' }),
+      ),
+    ).toBe('CONFLICT');
   });
 });

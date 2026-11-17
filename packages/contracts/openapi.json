@@ -927,7 +927,7 @@
         ],
         "x-auth": "user",
         "x-cache": "none",
-        "description": "The server checks the upload token, confirms the object exists in R2 with the presigned size and type, and creates the record. Status is pending, or approved immediately for verified reciters.",
+        "description": "The server checks the upload token, confirms the object exists in R2 with the presigned size and type, and creates the record. Status is private when visibility is private; otherwise pending, or approved immediately for verified reciters.",
         "x-rate-limit": {
           "name": "upload",
           "limit": 20,
@@ -3937,6 +3937,10 @@
             "exclusiveMinimum": 0,
             "maximum": 21600,
             "description": "Read by the client from the audio metadata."
+          },
+          "visibility": {
+            "default": "public",
+            "$ref": "#/components/schemas/RecitationVisibility"
           }
         },
         "required": [
@@ -3945,6 +3949,14 @@
           "style",
           "durationSec"
         ]
+      },
+      "RecitationVisibility": {
+        "type": "string",
+        "enum": [
+          "public",
+          "private"
+        ],
+        "description": "public = sent to moderators (or published at once for verified reciters); private = only the uploader can see and play it."
       },
       "UpdateRecitationBody": {
         "type": "object",
@@ -3977,9 +3989,12 @@
             "minimum": 1,
             "maximum": 286,
             "description": "Ayah number within the surah (1-based)."
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/RecitationVisibility"
           }
         },
-        "description": "Owners may change any field. If a non-verified owner changes surah, ayah range or riwayah of an approved recitation, it returns to pending."
+        "description": "Owners may change any field. If a non-verified owner changes surah, ayah range or riwayah of an approved recitation, it returns to pending. visibility (owner only): private hides it from everyone else; public sends a private recitation to review (published at once for verified reciters). Rejected and removed recitations cannot change visibility."
       },
       "CreateReportBody": {
         "type": "object",
@@ -4164,11 +4179,13 @@
       "RecitationStatus": {
         "type": "string",
         "enum": [
+          "private",
           "pending",
           "approved",
           "rejected",
           "removed"
-        ]
+        ],
+        "description": "private = visible only to the uploader and never reviewed; pending = waiting for a moderator."
       },
       "RecitationDecisionBody": {
         "oneOf": [
@@ -5755,12 +5772,18 @@
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 9007199254740991
+              },
+              "private": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               }
             },
             "required": [
               "pending",
               "approved",
-              "rejected"
+              "rejected",
+              "private"
             ],
             "additionalProperties": false
           },
@@ -6243,13 +6266,19 @@
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 9007199254740991
+              },
+              "private": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               }
             },
             "required": [
               "pending",
               "approved",
               "rejected",
-              "removed"
+              "removed",
+              "private"
             ],
             "additionalProperties": false
           },
@@ -6402,13 +6431,19 @@
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 9007199254740991
+              },
+              "private": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               }
             },
             "required": [
               "approved",
               "pending",
               "rejected",
-              "removed"
+              "removed",
+              "private"
             ],
             "additionalProperties": false
           }

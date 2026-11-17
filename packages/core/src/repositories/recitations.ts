@@ -131,7 +131,7 @@ export class RecitationRepository {
   /** Bytes of audio a user currently keeps in storage. */
   /** Recitation counts per status for several uploaders at once (admin user list). */
   async statusCountsByUploader(uploaderIds: string[]) {
-    const empty = () => ({ approved: 0, pending: 0, rejected: 0, removed: 0 });
+    const empty = () => ({ approved: 0, pending: 0, rejected: 0, removed: 0, private: 0 });
     const result = new Map<string, ReturnType<typeof empty>>();
     if (uploaderIds.length === 0) return result;
     const rows = await this.models.Recitation.aggregate<{
@@ -161,7 +161,7 @@ export class RecitationRepository {
         { $group: { _id: null, total: { $sum: '$sizeBytes' } } },
       ]),
     ]);
-    const counts = { approved: 0, pending: 0, rejected: 0, removed: 0 };
+    const counts = { approved: 0, pending: 0, rejected: 0, removed: 0, private: 0 };
     for (const r of statuses) counts[r._id] = r.count;
     return { counts, storageBytes: storage[0]?.total ?? 0 };
   }
@@ -198,6 +198,7 @@ export class RecitationRepository {
       pending: by('pending')?.count ?? 0,
       approved: by('approved')?.count ?? 0,
       rejected: by('rejected')?.count ?? 0,
+      private: by('private')?.count ?? 0,
       approvedPlays: by('approved')?.plays ?? 0,
       totalPlays: live.reduce((n, r) => n + r.plays, 0),
       totalLikes: live.reduce((n, r) => n + r.likes, 0),

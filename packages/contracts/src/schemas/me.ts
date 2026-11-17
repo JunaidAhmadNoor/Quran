@@ -77,6 +77,7 @@ export const ReciterStats = z
       pending: z.int().min(0),
       approved: z.int().min(0),
       rejected: z.int().min(0),
+      private: z.int().min(0),
     }),
     totalPlays: z.int().min(0),
     totalLikes: z.int().min(0),

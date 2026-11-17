@@ -60,7 +60,7 @@ describe('listener and reciter modes', () => {
     await t.core.recitations.recordPlay('ip:a', approved._id.toHexString());
     const stats = await t.core.account.reciterStats(actor);
     expect(stats).toEqual({
-      recitations: { pending: 1, approved: 1, rejected: 0 },
+      recitations: { pending: 1, approved: 1, rejected: 0, private: 0 },
       totalPlays: 1,
       totalLikes: 2,
       playsLast7Days: 1,

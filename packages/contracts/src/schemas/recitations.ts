@@ -17,6 +17,7 @@ import {
   AudioContentType,
   RecitationSort,
   RecitationStatus,
+  RecitationVisibility,
   RecitationStyle,
   ReportReason,
   ReportStatus,
@@ -107,6 +108,7 @@ export const CreateRecitationBody = z
       .positive()
       .max(MAX_DURATION_SEC)
       .meta({ description: 'Read by the client from the audio metadata.' }),
+    visibility: RecitationVisibility.default('public'),
   })
   .meta({ id: 'CreateRecitationBody' });
 
@@ -118,6 +120,7 @@ export const UpdateRecitationBody = z
     surah: SurahNumber,
     ayahFrom: AyahNumber,
     ayahTo: AyahNumber,
+    visibility: RecitationVisibility,
   })
   .partial()
   .refine(nonEmptyPatch, NON_EMPTY_PATCH_MESSAGE)
@@ -125,7 +128,7 @@ export const UpdateRecitationBody = z
   .meta({
     id: 'UpdateRecitationBody',
     description:
-      'Owners may change any field. If a non-verified owner changes surah, ayah range or riwayah of an approved recitation, it returns to pending.',
+      'Owners may change any field. If a non-verified owner changes surah, ayah range or riwayah of an approved recitation, it returns to pending. visibility (owner only): private hides it from everyone else; public sends a private recitation to review (published at once for verified reciters). Rejected and removed recitations cannot change visibility.',
   });
 
 export const PlayResponse = z

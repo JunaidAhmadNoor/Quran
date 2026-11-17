@@ -29,6 +29,7 @@ export function VerifiedBadge({ label, className }: { label: string; className?:
 }
 
 const STATUS_STYLE = {
+  private: 'border-accent/60 text-text',
   pending: 'border-muted/40 text-muted',
   approved: 'border-success/50 text-success',
   rejected: 'border-danger/50 text-danger',
