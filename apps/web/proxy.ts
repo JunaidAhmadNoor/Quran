@@ -10,7 +10,7 @@ function r2Origins(): string {
 }
 
 /** Pages anyone may open; everything else needs an account. */
-const PUBLIC_PAGES = [/^\/$/, /^\/auth(\/|$)/];
+const PUBLIC_PAGES = [/^\/$/, /^\/auth(\/|$)/, /^\/(privacy|terms|opengraph-image)$/];
 /** Static files served from public/ (icons and other assets). */
 const ASSET = /\.[a-z0-9]+$/i;
 const SESSION_COOKIES = ['tilawah.session_token', '__Secure-tilawah.session_token'];

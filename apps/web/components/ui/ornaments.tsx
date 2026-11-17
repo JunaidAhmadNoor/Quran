@@ -19,6 +19,23 @@ export function StarMark({ className }: { className?: string }) {
   );
 }
 
+/** The eight-point star without its centre, to frame a number. */
+export function StarFrame({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 48 48"
+      aria-hidden
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <rect x="9" y="9" width="30" height="30" rx="2" />
+      <rect x="9" y="9" width="30" height="30" rx="2" transform="rotate(45 24 24)" />
+    </svg>
+  );
+}
+
 /** Ayah number in a small brass rosette, as in a printed mushaf. */
 export function AyahMarker({
   n,

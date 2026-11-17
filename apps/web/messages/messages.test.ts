@@ -56,7 +56,7 @@ describe('UI messages', () => {
           correct: 12,
           heard: 3,
           expected: 1,
-          device: 'WASM',
+          year: 2026,
         });
         expect(String(formatted), `${locale}:${key}`).not.toBe('');
       }

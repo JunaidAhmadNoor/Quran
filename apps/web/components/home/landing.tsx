@@ -1,20 +1,26 @@
 // The home page for visitors: what Tilawah is, a few ayahs, and a way in.
-import { Headphones, Mic, ScrollText, ShieldCheck } from 'lucide-react';
+import { Headphones, Mic, Play, ScrollText, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { AyahMarker, GirihPattern, StarMark } from '@/components/ui/ornaments';
+import { cn } from '@/lib/utils';
+
+/** Heights of the decorative waveform bars, in percent. */
+const BARS = [40, 65, 90, 55, 75, 100, 60, 85, 45, 70, 95, 50, 80, 60, 35, 70, 90, 55, 40, 65];
 
 interface Props {
   stats: { surahs: number; ayahs: number };
-  demo: { title: string; ayahs: { number: number; words: string[] }[] };
+  demo: { name: string; nameArabic: string; ayahs: { number: number; words: string[] }[] };
   verse: string;
 }
 
 export async function Landing({ stats, demo, verse }: Props) {
   const t = await getTranslations('home');
   const ts = await getTranslations('surah');
-  const nf = new Intl.NumberFormat(await getLocale());
+  const locale = await getLocale();
+  const nf = new Intl.NumberFormat(locale);
+  const surahName = locale === 'en' ? demo.name : demo.nameArabic;
   const features = [
     {
       icon: Headphones,
@@ -37,7 +43,8 @@ export async function Landing({ stats, demo, verse }: Props) {
   ];
 
   return (
-    <div>
+    // The closing band meets the footer (cancels the page's bottom padding).
+    <div className="-mb-16">
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-border">
         <GirihPattern className="opacity-[0.04]" />
@@ -69,17 +76,51 @@ export async function Landing({ stats, demo, verse }: Props) {
             </p>
           </div>
           <div className="animate-stagger [--i:3]">
-            <figure className="rounded-card border border-border bg-surface p-6 shadow-sm sm:p-8">
-              <figcaption className="text-sm text-muted">{demo.title}</figcaption>
-              <p lang="ar" dir="rtl" className="quran mt-4 text-text">
-                {demo.ayahs.map((a) => (
-                  <span key={a.number}>
-                    {a.words.join(' ')}{' '}
-                    <AyahMarker n={a.number} label={ts('ayahMarker', { n: a.number })} />{' '}
+            <div className="relative pb-10">
+              <figure className="relative rounded-card border border-border bg-surface p-6 pb-16 shadow-sm sm:p-8 sm:pb-16">
+                <figcaption className="flex items-center justify-between text-sm text-muted">
+                  <span>{surahName}</span>
+                  <span className="tabular-nums">
+                    {nf.format(1)}:{nf.format(2)}–{nf.format(4)}
                   </span>
-                ))}
-              </p>
-            </figure>
+                </figcaption>
+                <p lang="ar" dir="rtl" className="quran mt-4 text-text">
+                  {demo.ayahs.map((a) => (
+                    <span key={a.number}>
+                      {a.words.join(' ')}{' '}
+                      <AyahMarker n={a.number} label={ts('ayahMarker', { n: a.number })} />{' '}
+                    </span>
+                  ))}
+                </p>
+              </figure>
+              {/* A picture of the player (decorative): listening is the heart of the site. */}
+              <div
+                aria-hidden
+                className="absolute bottom-0 end-4 flex w-[min(20rem,85%)] items-center gap-3 rounded-card border border-border bg-surface-raised p-3 shadow-lg sm:end-8"
+              >
+                <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-control bg-primary text-primary-contrast">
+                  <StarMark className="absolute -end-3 -top-3 size-9 text-accent opacity-70" />
+                  <span lang="ar" className="relative font-quran text-lg">
+                    {demo.nameArabic}
+                  </span>
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-text">{surahName}</span>
+                  <span className="mt-1.5 flex h-5 items-center gap-[3px]">
+                    {BARS.map((h, i) => (
+                      <span
+                        key={i}
+                        className={cn('w-[3px] rounded-full', i < 11 ? 'bg-primary' : 'bg-border')}
+                        style={{ height: `${String(h)}%` }}
+                      />
+                    ))}
+                  </span>
+                </span>
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-contrast">
+                  <Play className="size-4 fill-current" />
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

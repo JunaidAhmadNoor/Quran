@@ -86,7 +86,7 @@
     "finalTitle": "Begin today",
     "finalBody": "An account saves your likes and playlists on every device.",
     "greeting": "Assalamu alaikum, {name}",
-    "greetingBody": "Pick up where you left off.",
+    "greetingBody": "What would you like to listen to today?",
     "quickUpload": "Upload a recitation",
     "quickStudio": "Reciter studio",
     "studioTitle": "Your recitations",
@@ -95,7 +95,9 @@
     "studioPlays": "{n} plays this week",
     "featureHadithTitle": "Read hadith",
     "featureHadithBody": "Sahih al-Bukhari and Sahih Muslim in Arabic, with English and Urdu translations.",
-    "statFree": "Reviewed before publishing"
+    "statFree": "Reviewed before publishing",
+    "hadithOfDay": "Hadith of the day",
+    "readHadith": "Read the full hadith"
   },
   "surahs": {
     "title": "Surahs",
@@ -330,7 +332,14 @@
   "footer": {
     "textSource": "Quran text: Tanzil Quran Text (Uthmani, version 1.1), © Tanzil Project, used verbatim under CC BY 3.0.",
     "tanzil": "tanzil.net",
-    "audio": "Recitations are shared by their reciters."
+    "audio": "Recitations are shared by their reciters.",
+    "explore": "Explore",
+    "about": "About",
+    "privacy": "Privacy policy",
+    "terms": "Terms of use",
+    "contact": "Contact",
+    "hadithSource": "Hadith texts and translations:",
+    "copyright": "© {year} Tilawah. Free, without ads."
   },
   "reportReasons": {
     "wrong_surah": "Wrong surah or ayahs",
@@ -391,7 +400,7 @@
     "statReciters": "Reciters",
     "statVerified": "{n} verified",
     "statStaff": "Staff",
-    "statStaffDetail": "{mods} moderators · {admins} admins",
+    "statStaffDetail": "{mods, plural, one {# moderator} other {# moderators}} · {admins, plural, one {# admin} other {# admins}}",
     "statUnverified": "Email not verified",
     "statRecitations": "Published recitations",
     "statPending": "{n} waiting for review",
@@ -445,5 +454,41 @@
     "resultsCount": "{count, plural, one {# result} other {# results}} for “{q}”",
     "clear": "Clear search",
     "read": "Read"
+  },
+  "legal": {
+    "updated": "Last updated: 17 November 2026",
+    "contactLine": "Questions: <link>{email}</link>",
+    "privacy": {
+      "title": "Privacy policy",
+      "intro": "Tilawah is a free, ad-free place to listen to and share Quran recitations and to read hadith. This page explains what we store about you and why.",
+      "s1Title": "What we store",
+      "s1Body": "Your name, email address and password (stored only as a secure hash). If you sign in with Google, the name and email address Google shares with us. Anything you add yourself: a bio and country on a reciter profile, the recitations you upload, your likes, playlists and reports.",
+      "s2Title": "What we do not do",
+      "s2Body": "No advertising, no analytics or tracking cookies, and we never sell or share your data for marketing. IP addresses are kept only as one-way hashes in short-lived records that limit abuse; your sessions do not record your IP address or device.",
+      "s3Title": "Cookies",
+      "s3Body": "Sign-in cookies keep you signed in, and one cookie remembers your language. Your theme and player settings stay in your browser.",
+      "s4Title": "Who can see what",
+      "s4Body": "Approved recitations and reciter profiles are visible to signed-in members. Your email address is visible only to you and to administrators. Moderators review uploaded recitations and reports before anything is published.",
+      "s5Title": "Services we use",
+      "s5Body": "Hosting (Railway), database (MongoDB Atlas), audio storage (Cloudflare R2), email delivery (Brevo) and, if you choose it, Google sign-in. They process data only to run Tilawah.",
+      "s6Title": "Keeping and deleting your data",
+      "s6Body": "You can delete your account at any time in Settings. This deletes your account, likes and playlists, removes your recitations and deletes their audio. The audio of rejected recitations is deleted after 7 days."
+    },
+    "terms": {
+      "title": "Terms of use",
+      "intro": "By creating an account or using Tilawah you agree to these terms.",
+      "s1Title": "Your account",
+      "s1Body": "Give a real email address and keep your password private. You are responsible for what happens under your account.",
+      "s2Title": "Sharing recitations",
+      "s2Body": "Upload only recitations you recorded yourself or have permission to share. Every recitation is reviewed before it is published, and we may reject or remove any recitation. You keep the rights to your recordings and allow Tilawah to store and stream them on the site until you delete them.",
+      "s3Title": "Respectful use",
+      "s3Body": "Treat the Quran, the hadith and other members with respect. Do not upload anything unrelated or offensive, misuse reports, or try to disrupt or copy the service in bulk.",
+      "s4Title": "Texts on Tilawah",
+      "s4Body": "The Quran text is the Tanzil Uthmani text, used verbatim under CC BY 3.0. Hadith texts and translations come from the hadith-api dataset; the translators are named on each page. Translations convey meaning and are not the original text.",
+      "s5Title": "No guarantee",
+      "s5Body": "Tilawah is provided as it is, free of charge. We work to keep it accurate and available but cannot promise it will always be. For religious rulings, consult qualified scholars.",
+      "s6Title": "Changes",
+      "s6Body": "We may update these terms. Material changes will be shown on the site, and using Tilawah after that means you accept them. We may suspend accounts that break these terms."
+    }
   }
 }

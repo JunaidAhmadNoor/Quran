@@ -16,8 +16,11 @@ import './globals.css';
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('common');
   return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
     title: { default: t('appName'), template: `%s · ${t('appName')}` },
     description: t('tagline'),
+    openGraph: { type: 'website', siteName: t('appName'), description: t('tagline') },
+    twitter: { card: 'summary_large_image' },
     applicationName: t('appName'),
     appleWebApp: { capable: true, title: t('appName'), statusBarStyle: 'default' },
   };
@@ -48,7 +51,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               {t('skipToContent')}
             </a>
             <SiteHeader />
-            <main id="main" className="min-h-[60vh] pb-28">
+            <main id="main" className="min-h-[60vh] pb-16">
               {children}
             </main>
             <SiteFooter />

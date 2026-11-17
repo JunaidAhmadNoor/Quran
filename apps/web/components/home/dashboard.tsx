@@ -1,6 +1,6 @@
 // The home page for signed-in users: quick actions, then what is new.
-import type { RecitationPage, ReciterStats } from '@tilawah/contracts';
-import { BookOpen, LayoutDashboard, Library, Upload } from 'lucide-react';
+import type { Hadith, RecitationPage, ReciterStats } from '@tilawah/contracts';
+import { BookOpen, LayoutDashboard, Library, ScrollText, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { ContinueListening } from '@/components/home/continue-listening';
@@ -18,13 +18,16 @@ interface Props {
   trending: z.output<typeof RecitationPage>;
   newest: z.output<typeof RecitationPage>;
   reciters: { id: string; name: string }[];
+  hadith: (z.output<typeof Hadith> & { bookName: { en: string; ar: string; ur: string } }) | null;
 }
 
-export async function Dashboard({ me, stats, trending, newest, reciters }: Props) {
+export async function Dashboard({ me, stats, trending, newest, reciters, hadith }: Props) {
   const t = await getTranslations('home');
   const tn = await getTranslations('nav');
   const tc = await getTranslations('common');
-  const nf = new Intl.NumberFormat(await getLocale());
+  const locale = await getLocale();
+  const nf = new Intl.NumberFormat(locale);
+  const th = await getTranslations('hadith');
   const reciter = me.mode === 'reciter';
 
   return (
@@ -108,6 +111,51 @@ export async function Dashboard({ me, stats, trending, newest, reciters }: Props
         </div>
 
         <aside className="space-y-8">
+          {hadith ? (
+            <section
+              aria-labelledby="hadith-today"
+              className="relative overflow-hidden rounded-card border border-border bg-surface p-6"
+            >
+              <GirihPattern className="opacity-[0.04]" />
+              <div className="relative">
+                <h2
+                  id="hadith-today"
+                  className="flex items-center gap-2 font-display text-xl text-text"
+                >
+                  <ScrollText aria-hidden className="size-5 text-accent" />
+                  {t('hadithOfDay')}
+                </h2>
+                <p className="mt-1 text-xs text-muted">
+                  {hadith.bookName[locale === 'ar' || locale === 'ur' ? locale : 'en']} ·{' '}
+                  {th('hadithN', { n: nf.format(hadith.number) })}
+                </p>
+                <p
+                  lang="ar"
+                  dir="rtl"
+                  className="mt-4 line-clamp-6 font-quran text-xl leading-loose text-text"
+                >
+                  {hadith.text.ar}
+                </p>
+                {locale === 'ur' ? (
+                  <p
+                    lang="ur"
+                    dir="rtl"
+                    className="mt-3 line-clamp-4 font-[family-name:var(--font-nastaliq)] leading-[2.2] text-muted"
+                  >
+                    {hadith.text.ur}
+                  </p>
+                ) : locale === 'en' ? (
+                  <p className="mt-3 line-clamp-5 text-sm text-muted">{hadith.text.en}</p>
+                ) : null}
+                <Link
+                  href={`/hadith/${hadith.book}/n/${String(hadith.number)}`}
+                  className="mt-4 inline-block text-sm text-primary underline-offset-4 hover:underline"
+                >
+                  {t('readHadith')}
+                </Link>
+              </div>
+            </section>
+          ) : null}
           {stats ? (
             <Card className="p-6">
               <h2 className="font-display text-xl text-text">{t('studioTitle')}</h2>

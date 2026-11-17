@@ -25,17 +25,22 @@ export default async function HomePage() {
     return (
       <Landing
         stats={{ surahs: surahs.length, ayahs: surahs.reduce((n, s) => n + s.ayahCount, 0) }}
-        demo={{ title: `${surahs[0]?.nameTransliterated ?? ''} · 1:2–4`, ayahs: demoAyahs }}
+        demo={{
+          name: surahs[0]?.nameTransliterated ?? '',
+          nameArabic: surahs[0]?.nameArabic ?? '',
+          ayahs: demoAyahs,
+        }}
         verse={muzzammil.ayahs[3]?.text ?? ''}
       />
     );
   }
 
-  const [stats, trending, newest, reciters] = await Promise.all([
+  const [stats, trending, newest, reciters, hadith] = await Promise.all([
     me.mode === 'reciter' ? core.account.reciterStats(actor) : Promise.resolve(null),
     core.recitations.list(actor, { sort: 'trending', limit: 6 }),
     core.recitations.list(actor, { sort: 'newest', limit: 6 }),
     core.reciters.listVerified({ limit: 8 }),
+    core.hadith.ofTheDay(new Date()).catch(() => null),
   ]);
   return (
     <Dashboard
@@ -44,6 +49,7 @@ export default async function HomePage() {
       trending={trending}
       newest={newest}
       reciters={reciters.items}
+      hadith={hadith ? { ...hadith, bookName: core.hadith.getBook(hadith.book).name } : null}
     />
   );
 }

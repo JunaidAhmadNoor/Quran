@@ -34,19 +34,23 @@ for (const scheme of ['light', 'dark'] as const) {
       ['sign-in', '/auth/sign-in'],
       ['sign-up', '/auth/sign-up'],
       ['reset-password', '/auth/reset-password'],
+      ['privacy', '/privacy'],
       ['not-found', '/surahs/999'],
+      ['hadith', '/hadith'],
+      ['hadith-book', '/hadith/bukhari'],
+      ['hadith-section', '/hadith/bukhari/1'],
     ];
     await page.context().clearCookies();
     // The landing and sign-in pages as a visitor; the rest needs an account.
     for (const [name, path] of pages.filter(([n]) =>
-      ['home', 'sign-in', 'sign-up', 'reset-password'].includes(n),
+      ['home', 'sign-in', 'sign-up', 'reset-password', 'privacy'].includes(n),
     )) {
       await page.goto(path);
       await shot(page, name === 'home' ? 'landing' : name, scheme);
     }
     await signInViaApi(page, accounts.listener);
     for (const [name, path] of pages.filter(
-      ([n]) => !['sign-in', 'sign-up', 'reset-password'].includes(n),
+      ([n]) => !['sign-in', 'sign-up', 'reset-password', 'privacy'].includes(n),
     )) {
       await page.goto(path);
       await shot(page, name, scheme);
@@ -107,6 +111,15 @@ for (const scheme of ['light', 'dark'] as const) {
     await signInViaApi(page, accounts.moderator);
     await page.goto('/moderation');
     await shot(page, 'moderation', scheme);
+  });
+
+  test(`admin (${scheme})`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto('/');
+    await signInViaApi(page, accounts.admin);
+    await page.goto('/admin/users');
+    await shot(page, 'admin-users', scheme);
   });
 
   test(`Arabic, phone width (${scheme})`, async ({ page, context, baseURL }) => {

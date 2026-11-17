@@ -398,14 +398,14 @@ long-lived Node process, surah metadata and text are loaded into memory once at 
 ## 12. Privacy
 
 - Data collected is limited to the fields in [DATA_MODEL.md](DATA_MODEL.md).
-- **Microphone audio never leaves the device.** Recognition runs in a Web Worker (web) or
-  natively (mobile). Only word positions of mistakes and counts are saved, and only when the
-  user is signed in. The practice screen says so.
+- **Recordings made in the browser stay on the device until the user presses Upload.**
 - IPs exist only as keyed hashes in TTL-expiring rate-limit records. Better Auth's IP and
   user-agent tracking on sessions is turned off.
 - Emails are returned only to their owner (`GET /me`) and to admins (`/admin/users`).
 - A listener-only account has no public page. A public reciter profile exists only after the
   user chooses reciter mode, and the switch screen says so.
+- The public privacy policy (`/privacy`) and terms of use (`/terms`) describe this in plain
+  language (messages files, three languages).
 - `DELETE /me` (D15) deletes the account and its data; the user's recitations become removed
   and their audio is deleted.
 

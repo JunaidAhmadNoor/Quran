@@ -66,6 +66,23 @@ const EnvSchema = z
         path: ['AUTH_RATE_LIMIT'],
       });
     }
+    // A real deployment (not the local E2E stack, which uses disk storage) needs working email for
+    // verification and password reset, and HTTPS so session cookies are Secure.
+    const live = env.NODE_ENV === 'production' && env.STORAGE_DRIVER !== 'local';
+    if (live && env.EMAIL_TRANSPORT === 'none') {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Production needs EMAIL_TRANSPORT=brevo (sign-up verification and password reset)',
+        path: ['EMAIL_TRANSPORT'],
+      });
+    }
+    if (live && !env.BETTER_AUTH_URL.startsWith('https://')) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Production must be served over HTTPS',
+        path: ['BETTER_AUTH_URL'],
+      });
+    }
     if (env.EMAIL_TRANSPORT === 'brevo' && (!env.BREVO_API_KEY || !env.EMAIL_FROM)) {
       ctx.addIssue({
         code: 'custom',

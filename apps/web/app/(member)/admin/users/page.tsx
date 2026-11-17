@@ -37,8 +37,8 @@ export default async function AdminUsersPage() {
       label: t('statStaff'),
       value: nf.format(stats.users.moderators + stats.users.admins),
       detail: t('statStaffDetail', {
-        mods: nf.format(stats.users.moderators),
-        admins: nf.format(stats.users.admins),
+        mods: stats.users.moderators,
+        admins: stats.users.admins,
       }),
     },
     { label: t('statUnverified'), value: nf.format(stats.users.emailNotVerified) },

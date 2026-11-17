@@ -2,7 +2,7 @@
 import { ChevronUp, X } from 'lucide-react';
 import { m } from 'motion/react';
 import { useTranslations } from 'next-intl';
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { Button } from '@/components/ui/button';
 import { currentTrack, usePlayer } from '@/lib/player-store';
 import { RepeatButton, SeekBar, SpeedMenu, TransportControls } from './controls';
@@ -24,7 +24,17 @@ export function PlayerBar() {
   const position = usePlayer((s) => s.position);
   const duration = usePlayer((s) => s.duration);
   const expanded = usePlayer((s) => s.expanded);
-  if (!hydrated || !track) return null;
+  const visible = hydrated && track !== undefined;
+  // Room at the bottom of the page for the fixed bar, only while it is shown (globals.css).
+  useEffect(() => {
+    const root = document.documentElement;
+    if (visible) root.dataset.player = 'open';
+    else delete root.dataset.player;
+    return () => {
+      delete root.dataset.player;
+    };
+  }, [visible]);
+  if (!visible) return null;
   const progress = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
 
   return (

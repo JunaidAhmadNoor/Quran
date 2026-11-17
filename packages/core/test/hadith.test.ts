@@ -65,6 +65,18 @@ describe('HadithService', () => {
     expect(res.items.map((h) => h.number)).toEqual([100]);
   });
 
+  it('picks a short saying of the Prophet for the day, the same all day', async () => {
+    const day = new Date('2026-11-17T08:00:00Z');
+    const a = await service.ofTheDay(day);
+    const b = await service.ofTheDay(new Date('2026-11-17T23:00:00Z'));
+    expect(b.number).toBe(a.number);
+    expect(a.text.ar && a.text.en && a.text.ur).toBeTruthy();
+    expect(a.text.en?.length).toBeLessThanOrEqual(360);
+    expect(a.text.en).toMatch(/^Narrated [^:]+:\s*(The Prophet|Allah's Messenger)/);
+    const next = await service.ofTheDay(new Date('2026-11-18T08:00:00Z'));
+    expect(next.number).not.toBe(a.number);
+  });
+
   it('normalizes text for search', () => {
     expect(searchable('إِنَّمَا الأَعْمَالُ')).toBe('انما الاعمال');
     expect(searchable('Intentions!')).toBe('intentions');

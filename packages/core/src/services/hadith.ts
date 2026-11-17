@@ -8,6 +8,7 @@ import {
   type BookId,
   type HadithRecord,
 } from '@tilawah/hadith-data';
+import { DAY_MS } from '../clock';
 import type { C, Out } from '../context';
 import { decodeCursor, encodeCursor, filtersHash } from '../cursor';
 import { notFound } from '../errors';
@@ -94,6 +95,40 @@ export class HadithService {
       items: rows.map((h) => present(id, n, h)),
       nextCursor: next < file.hadiths.length ? encodeCursor({ f: hash, o: next }) : null,
     };
+  }
+
+  private daily: Promise<{ section: number; record: HadithRecord }[]> | null = null;
+
+  /**
+   * One hadith for the day, the same for everyone on a given UTC day: a short saying of the
+   * Prophet ﷺ from Sahih al-Bukhari ("Narrated …: The Prophet said, …") with all three languages,
+   * leaving out narrations that only point to another one ("similar", "the same", "as below").
+   */
+  async ofTheDay(now: Date): Promise<HadithOut> {
+    this.daily ??= (async () => {
+      const direct = /^Narrated [^:]+:\s*(The Prophet|Allah's Messenger)\s*\([^)]*\)\s*said/;
+      const list: { section: number; record: HadithRecord }[] = [];
+      for (const meta of books.bukhari.sections) {
+        const file = await loadSection('bukhari', meta.n);
+        for (const h of file?.hadiths ?? []) {
+          if (
+            h.ar !== '' &&
+            h.ur !== '' &&
+            h.en.length >= 80 &&
+            h.en.length <= 360 &&
+            direct.test(h.en) &&
+            !/similar|the same|as below|as above/i.test(h.en)
+          )
+            list.push({ section: meta.n, record: h });
+        }
+      }
+      return list;
+    })();
+    const list = await this.daily;
+    const day = Math.floor(now.getTime() / DAY_MS);
+    const pick = list[(day * 7919) % Math.max(1, list.length)];
+    if (!pick) throw notFound('Hadith');
+    return present('bukhari', pick.section, pick.record);
   }
 
   async getHadith(id: string, number: number): Promise<HadithOut> {

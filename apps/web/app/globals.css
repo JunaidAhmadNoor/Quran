@@ -105,6 +105,11 @@
     opacity: 0;
   }
 }
+/* The fixed player bar covers the bottom of the page: leave room for it while it is shown. */
+html[data-player] body {
+  padding-bottom: 6rem;
+}
+
 @layer utilities {
   .animate-page {
     animation: fade-in 150ms var(--ease-mushaf) both;

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input, Select } from '@/components/ui/field';
+import { StarFrame } from '@/components/ui/ornaments';
 import { EmptyState } from '@/components/ui/states';
 import { cn, mushafNumber } from '@/lib/utils';
 
@@ -109,10 +110,11 @@ export function SurahGrid() {
             <li key={s.number}>
               <Link
                 href={`/surahs/${s.number}`}
-                className="flex items-center gap-4 rounded-card border border-border bg-surface p-4 transition-colors duration-150 hover:bg-surface-raised"
+                className="group flex items-center gap-4 rounded-card border border-border bg-surface p-4 transition-colors duration-150 hover:border-primary/40 hover:bg-surface-raised"
               >
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-control border border-accent/50 font-sans text-sm text-text tabular-nums">
-                  {s.number}
+                <span className="relative flex size-11 shrink-0 items-center justify-center font-sans text-xs font-semibold text-text tabular-nums">
+                  <StarFrame className="absolute inset-0 size-full text-accent transition-transform duration-300 group-hover:rotate-45 motion-reduce:transition-none" />
+                  <span className="relative">{s.number}</span>
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-display text-lg text-text">
