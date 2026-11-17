@@ -406,8 +406,11 @@ long-lived Node process, surah metadata and text are loaded into memory once at 
   user chooses reciter mode, and the switch screen says so.
 - The public privacy policy (`/privacy`) and terms of use (`/terms`) describe this in plain
   language (messages files, three languages).
-- `DELETE /me` (D15) deletes the account and its data; the user's recitations become removed
-  and their audio is deleted.
+- `DELETE /me` (D15) and `DELETE /admin/users/{id}` delete the account and everything tied to it
+  (`ErasureService`): recitations and their audio files, likes (counters given back), playlists,
+  reports, play stats, playlist entries in other users' playlists, sessions and sign-in links. If
+  an audio delete fails, that recitation stays `removed` until the maintenance job retries it.
+  Admin accounts must be demoted before an admin can delete them.
 
 ## 13. Mobile readiness checklist
 
@@ -456,7 +459,7 @@ are recorded here and applied with Railway's current configuration method at tha
 | Service       | Settings                                                                                                                                                                                                                                                                                                                       |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `web`         | Root: repository root. Build: `pnpm turbo run build --filter=@tilawah/web`. Start: `pnpm --filter @tilawah/web start` (Next reads Railway's `PORT`). Health check: `GET /api/v1/health`. Restart on failure. Variables: everything in `.env.example`, with `NEXT_PUBLIC_APP_URL` and `BETTER_AUTH_URL` set to the Railway URL. |
-| `maintenance` | Same image, cron schedule daily at 03:00 UTC, command `pnpm --filter @tilawah/web maintenance`: deletes audio of recitations rejected more than 7 days ago, retries failed R2 deletions, and prints `dbStats` against the size budget.                                                                                         |
+| `maintenance` | Same image, cron schedule daily at 03:00 UTC, command `pnpm --filter @tilawah/web maintenance`: deletes audio of recitations rejected more than 7 days ago, retries failed R2 deletions, removes data left by deleted users (including orphaned sign-in links), and prints `dbStats` against the size budget.                  |
 
 Deploys happen from `main` after CI passes. Node and pnpm versions come from `.nvmrc` and
 `packageManager`.

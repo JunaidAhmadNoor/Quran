@@ -2703,7 +2703,7 @@
         ],
         "x-auth": "user",
         "x-cache": "none",
-        "description": "Requires a session created in the last 24 hours. Deletes the user, sessions, likes and playlists; the user’s recitations become removed and their audio is deleted. Cannot be undone.",
+        "description": "Requires a session created in the last 24 hours. Deletes the user, sessions and sign-in links, likes, playlists and reports, and their recitations with the audio files. Cannot be undone.",
         "x-rate-limit": {
           "name": "write",
           "limit": 120,
@@ -3659,6 +3659,115 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED: No valid session cookie or bearer token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN: Signed in, but not allowed to do this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND: The resource does not exist or is not visible to the caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT: The resource is not in a state that allows this action.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: Too many requests. Retry after the number of seconds in details.retryAfterSec.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR: Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteUser",
+        "summary": "Delete an account and all its data",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-auth": "admin",
+        "x-cache": "none",
+        "description": "Deletes the user, their sessions and sign-in links, likes, playlists and reports, and their recitations with the audio files. Admin accounts must be changed to another role first; admins delete their own account from Settings. Cannot be undone.",
+        "x-rate-limit": {
+          "name": "write",
+          "limit": 120,
+          "windowSec": 3600
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/ObjectId"
+            },
+            "required": true,
+            "description": "MongoDB ObjectId as 24 lowercase hex characters."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success, no content"
           },
           "400": {
             "description": "VALIDATION_ERROR: The request did not match the schema. details.issues lists each problem.",

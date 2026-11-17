@@ -234,6 +234,27 @@ test('staff see only their work; an admin verifies a reciter', async ({ page }) 
   await expect(row.getByLabel('Verified reciter')).toHaveCount(0);
 });
 
+test('an admin deletes an account', async ({ page, request, baseURL }) => {
+  const email = `delete-me-${Date.now()}@tilawah.dev`;
+  const created = await request.post('/api/auth/sign-up/email', {
+    data: { name: 'Delete Me', email, password: 'tilawah-demo-123' },
+    headers: { origin: baseURL ?? '' },
+  });
+  expect(created.ok()).toBe(true);
+
+  await signIn(page, accounts.admin);
+  await page.goto('/admin/users');
+  await page.getByRole('searchbox', { name: 'Search name or email' }).fill(email);
+  const row = page.getByRole('row').filter({ hasText: email });
+  await row.getByRole('button', { name: 'Manage' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Manage account' });
+  await dialog.getByRole('button', { name: 'Delete account' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Delete Me');
+  await dialog.getByRole('button', { name: 'Delete permanently' }).click();
+  await expect(page.getByText('Account deleted.')).toBeVisible();
+  await expect(row).toHaveCount(0);
+});
+
 test('visitors are sent to sign-in and land on the page they wanted', async ({ page }) => {
   for (const path of ['/surahs/112', '/hadith/bukhari', '/library']) {
     await page.goto(path);

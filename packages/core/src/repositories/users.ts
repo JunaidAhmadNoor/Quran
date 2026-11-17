@@ -106,4 +106,34 @@ export class UserRepository {
       this.models.User.deleteOne({ _id: userId }),
     ]);
   }
+
+  /**
+   * Deletes sessions and sign-in links whose user no longer exists (for example a user deleted
+   * directly in the database). A leftover Google link otherwise blocks that Google account from
+   * signing in again.
+   */
+  async deleteOrphanAuthRecords(): Promise<number> {
+    const db = this.models.User.db;
+    let deleted = 0;
+    for (const name of ['accounts', 'sessions']) {
+      const collection = db.collection(name);
+      // userId may be an ObjectId or a string; compare as hex strings.
+      const ids = [...new Set((await collection.distinct('userId')).map(String))].filter((id) =>
+        /^[0-9a-f]{24}$/i.test(id),
+      );
+      if (ids.length === 0) continue;
+      const existing = new Set(
+        (await this.models.User.find({ _id: { $in: ids.map(oid) } }, { _id: 1 }).lean()).map((u) =>
+          u._id.toHexString(),
+        ),
+      );
+      const missing = ids.filter((id) => !existing.has(id));
+      if (missing.length === 0) continue;
+      const result = await collection.deleteMany({
+        userId: { $in: [...missing.map(oid), ...missing] },
+      });
+      deleted += result.deletedCount;
+    }
+    return deleted;
+  }
 }

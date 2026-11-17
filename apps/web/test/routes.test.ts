@@ -329,6 +329,15 @@ describe('staff endpoints', () => {
       body: { verifiedReciter: true },
     });
     expect(updated.json.verifiedReciter).toBe(true);
+    expect(
+      (await call('deleteUser', { as: moderator.userId, params: { id: id(user) } })).status,
+    ).toBe(403);
+    expect((await call('deleteUser', { as: admin.userId, params: { id: id(user) } })).status).toBe(
+      204,
+    );
+    expect(
+      (await call('listUsers', { as: admin.userId, query: { q: user.email } })).json.items,
+    ).toHaveLength(0);
   });
 });
 

@@ -3,12 +3,14 @@ import type { Database } from '@tilawah/db';
 import { DAY_MS } from '../clock';
 import type { ServiceDeps } from '../context';
 import { DomainError } from '../errors';
+import type { ErasureService } from './erasure';
 import type { RecitationService } from './recitations';
 
 export class MaintenanceService {
   constructor(
     private readonly deps: ServiceDeps,
     private readonly recitations: RecitationService,
+    private readonly erasure: ErasureService,
   ) {}
 
   /** Deletes audio of removed recitations and of rejected ones past retention. */
@@ -19,6 +21,11 @@ export class MaintenanceService {
     const due = await this.deps.repos.recitations.audioToPurge(cutoff);
     for (const doc of due) await this.recitations.purgeAudio(doc);
     return { purged: due.length };
+  }
+
+  /** Removes records left by deleted users (after purgeAudio, so retried audio deletes count). */
+  cleanUp() {
+    return this.erasure.cleanUp();
   }
 }
 

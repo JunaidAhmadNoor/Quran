@@ -1,9 +1,9 @@
 'use client';
 // Admin: every account with its key data, search and role filter, and a dialog to grant the
-// verified-reciter badge or change the role.
+// verified-reciter badge, change the role or delete the account.
 import type { AdminUserPage, Role } from '@tilawah/contracts';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { BadgeCheck, MailCheck, MailWarning, Search } from 'lucide-react';
+import { BadgeCheck, MailCheck, MailWarning, Search, Trash2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDeferredValue, useState } from 'react';
 import { toast } from 'sonner';
@@ -187,11 +187,13 @@ function ManageDialog({
   const qc = useQueryClient();
   const [draft, setDraft] = useState<{ role: Role; verifiedReciter: boolean } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   // Reset the form whenever a different account is opened.
   const [openedFor, setOpenedFor] = useState<string | null>(null);
   if (user && openedFor !== user.id) {
     setOpenedFor(user.id);
     setDraft({ role: user.role, verifiedReciter: user.verifiedReciter });
+    setConfirmDelete(false);
   }
 
   const isSelf = user?.id === selfId;
@@ -220,6 +222,23 @@ function ManageDialog({
       setSaving(false);
     }
   };
+
+  const remove = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await api.deleteUser({ params: { id: user.id } });
+      await qc.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success(t('deleted'));
+      onClose();
+    } catch (error) {
+      toast.error(error instanceof ApiError ? error.message : t('error'));
+    } finally {
+      setSaving(false);
+    }
+  };
+  // Admins delete their own account in Settings; other admins must be demoted first.
+  const blocked = isSelf ? t('deleteSelf') : user?.role === 'admin' ? t('deleteAdmin') : null;
 
   return (
     <Dialog
@@ -274,6 +293,36 @@ function ManageDialog({
                 {t('save')}
               </Button>
             </div>
+
+            <section
+              aria-labelledby="manage-delete"
+              className="space-y-3 rounded-card border border-danger/40 p-4"
+            >
+              <h3 id="manage-delete" className="font-medium text-danger">
+                {t('deleteTitle')}
+              </h3>
+              <p className="text-sm text-muted">{blocked ?? t('deleteHint')}</p>
+              {blocked ? null : confirmDelete ? (
+                <div className="space-y-3">
+                  <p role="alert" className="text-sm font-medium text-text">
+                    {t('deleteConfirm', { name: user.name })}
+                  </p>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="ghost" onClick={() => setConfirmDelete(false)}>
+                      {tc('cancel')}
+                    </Button>
+                    <Button variant="danger" onClick={() => void remove()} disabled={saving}>
+                      {t('deleteConfirmButton')}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button variant="secondary" onClick={() => setConfirmDelete(true)}>
+                  <Trash2 aria-hidden className="size-4 text-danger" />
+                  {t('deleteButton')}
+                </Button>
+              )}
+            </section>
           </div>
         ) : null}
       </DialogContent>

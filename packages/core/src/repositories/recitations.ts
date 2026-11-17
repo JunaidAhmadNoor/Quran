@@ -208,6 +208,34 @@ export class RecitationRepository {
     return this.models.Recitation.find({ uploaderId: oid(uploaderId) }).lean<RecitationDoc[]>();
   }
 
+  /**
+   * Deletes removed recitations whose uploader no longer exists and whose audio is already gone,
+   * with the likes, reports, play stats and playlist entries that point to them.
+   */
+  async deleteOrphans(): Promise<number> {
+    const { Recitation, Like, Report, PlayStatDaily, Playlist } = this.models;
+    const rows = await Recitation.aggregate<{ _id: Types.ObjectId }>([
+      { $match: { status: 'removed', audioDeletedAt: { $ne: null } } },
+      { $lookup: { from: 'users', localField: 'uploaderId', foreignField: '_id', as: 'uploader' } },
+      { $match: { uploader: { $size: 0 } } },
+      { $project: { _id: 1 } },
+    ]);
+    const ids = rows.map((r) => r._id);
+    if (ids.length === 0) return 0;
+    const ref = { recitationId: { $in: ids } };
+    await Promise.all([
+      Like.deleteMany(ref),
+      Report.deleteMany(ref),
+      PlayStatDaily.deleteMany(ref),
+      Playlist.updateMany(
+        { recitationIds: { $in: ids } },
+        { $pull: { recitationIds: { $in: ids } } },
+      ),
+    ]);
+    await Recitation.deleteMany({ _id: { $in: ids } });
+    return ids.length;
+  }
+
   /** Recitations whose audio is due for deletion: removed, or rejected before `rejectedBefore`. */
   audioToPurge(rejectedBefore: Date): Promise<RecitationDoc[]> {
     return this.models.Recitation.find({

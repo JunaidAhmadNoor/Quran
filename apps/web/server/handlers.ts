@@ -66,6 +66,10 @@ export const handlers: HandlerMap = {
   adminStats: ({ core, actor }) => core.admin.stats(actor),
   listUsers: ({ core, actor, query }) => core.admin.listUsers(actor, query),
   updateUser: ({ core, actor, params, body }) => core.admin.updateUser(actor, params.id, body),
+  deleteUser: async ({ core, actor, params }) => {
+    await core.admin.deleteUser(actor, params.id);
+    return undefined;
+  },
 };
 
 /** Builds the Next.js route export for one endpoint. */

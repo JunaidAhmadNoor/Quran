@@ -5,6 +5,7 @@ import { Presenter } from './presenter';
 import { hashIp } from './repositories/rate-limiter';
 import { AccountService } from './services/account';
 import { ReciterService, SurahService } from './services/catalog';
+import { ErasureService } from './services/erasure';
 import { HadithService } from './services/hadith';
 import { MaintenanceService, HealthService } from './services/maintenance';
 import { AdminService, ModerationService } from './services/moderation';
@@ -27,6 +28,7 @@ export function createCore({ database, storage, clock, config }: CoreOptions) {
   const presenter = new Presenter(deps);
   const recitations = new RecitationService(deps, presenter);
   const playlists = new PlaylistService(deps, presenter);
+  const erasure = new ErasureService(deps, recitations);
 
   return {
     clock,
@@ -39,10 +41,10 @@ export function createCore({ database, storage, clock, config }: CoreOptions) {
     uploads: new UploadService(deps, presenter),
     reciters: new ReciterService(deps, presenter, recitations),
     playlists,
-    account: new AccountService(deps, presenter, recitations, playlists),
+    account: new AccountService(deps, presenter, playlists, erasure),
     moderation: new ModerationService(deps, presenter, recitations),
-    admin: new AdminService(deps, presenter),
-    maintenance: new MaintenanceService(deps, recitations),
+    admin: new AdminService(deps, presenter, erasure),
+    maintenance: new MaintenanceService(deps, recitations, erasure),
     health: new HealthService(database),
   };
 }

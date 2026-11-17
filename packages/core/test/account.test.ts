@@ -152,21 +152,70 @@ describe('account deletion', () => {
     expect(await errorCode(t.core.account.deleteAccount(actor))).toBe('CONFLICT');
   });
 
-  it('deletes the user’s data, removes their recitations and gives likes back', async () => {
-    const { user: owner } = await createUser(t, { reciter: true });
+  it('deletes everything tied to the user, including recitations and their audio', async () => {
+    const { user: owner, actor: ownerActor } = await createUser(t, { reciter: true });
     const { user, actor } = await createUser(t, { reciter: true });
     const theirs = await insertRecitation(t, owner, { likeCount: 0 });
     const mine = await insertRecitation(t, user);
+    const mineId = mine._id.toHexString();
     await t.core.recitations.like(actor, theirs._id.toHexString());
+    await t.core.recitations.like(ownerActor, mineId);
+    await t.core.recitations.report(actor, theirs._id.toHexString(), { reason: 'other' });
+    await t.core.recitations.report(ownerActor, mineId, { reason: 'other' });
+    await t.core.recitations.recordPlay('listener-a', mineId);
     await t.core.playlists.create(actor, { name: 'p', isPublic: false, recitationIds: [] });
+    const other = await t.core.playlists.create(ownerActor, {
+      name: 'q',
+      isPublic: false,
+      recitationIds: [mineId, theirs._id.toHexString()],
+    });
 
     await t.core.account.deleteAccount(actor);
 
     const { models } = t.db.database;
     expect(await models.User.findById(user._id)).toBeNull();
-    expect(await models.Playlist.countDocuments({ ownerId: user._id })).toBe(0);
-    expect((await models.Recitation.findById(theirs._id).lean())?.likeCount).toBe(0);
-    expect((await models.Recitation.findById(mine._id).lean())?.status).toBe('removed');
+    expect(await models.Recitation.findById(mine._id)).toBeNull();
     expect(t.storage.objects.has(mine.audioKey)).toBe(false);
+    expect(await models.Playlist.countDocuments({ ownerId: user._id })).toBe(0);
+    expect(await models.Like.countDocuments({ recitationId: mine._id })).toBe(0);
+    expect(await models.Like.countDocuments({ userId: user._id })).toBe(0);
+    expect(await models.Report.countDocuments({ reporterId: user._id })).toBe(0);
+    expect(await models.Report.countDocuments({ recitationId: mine._id })).toBe(0);
+    expect(await models.PlayStatDaily.countDocuments({ recitationId: mine._id })).toBe(0);
+    expect((await models.Recitation.findById(theirs._id).lean())?.likeCount).toBe(0);
+    const kept = await models.Playlist.findById(other.id).lean();
+    expect(kept?.recitationIds.map(String)).toEqual([theirs._id.toHexString()]);
+  });
+
+  it('keeps a recitation hidden until a failed audio delete succeeds, then cleans it up', async () => {
+    const { user, actor } = await createUser(t, { reciter: true });
+    const mine = await insertRecitation(t, user);
+    t.storage.failDeletes = true;
+    await t.core.account.deleteAccount(actor);
+    const { models } = t.db.database;
+    expect((await models.Recitation.findById(mine._id).lean())?.status).toBe('removed');
+    expect(t.storage.objects.has(mine.audioKey)).toBe(true);
+
+    t.storage.failDeletes = false;
+    await t.core.maintenance.purgeAudio();
+    expect(await t.core.maintenance.cleanUp()).toEqual({ recitations: 1, authRecords: 0 });
+    expect(t.storage.objects.has(mine.audioKey)).toBe(false);
+    expect(await models.Recitation.findById(mine._id)).toBeNull();
+  });
+
+  it('removes sign-in links and sessions left by a user deleted outside the app', async () => {
+    const { user } = await createUser(t);
+    const { user: keep } = await createUser(t);
+    const { db, models } = t.db.database;
+    await db.collection('accounts').insertMany([
+      { providerId: 'google', accountId: 'g-1', userId: user._id },
+      { providerId: 'google', accountId: 'g-2', userId: keep._id.toHexString() },
+    ]);
+    await db.collection('sessions').insertOne({ token: 's', userId: user._id });
+    await models.User.deleteOne({ _id: user._id }); // as if deleted in Atlas
+
+    expect(await t.core.maintenance.cleanUp()).toEqual({ recitations: 0, authRecords: 2 });
+    expect(await db.collection('accounts').countDocuments()).toBe(1);
+    expect(await db.collection('sessions').countDocuments()).toBe(0);
   });
 });

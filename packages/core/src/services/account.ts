@@ -6,8 +6,8 @@ import { decodeCursor, filtersHash, page } from '../cursor';
 import { DomainError, conflict, notFound } from '../errors';
 import type { Presenter } from '../presenter';
 import { cursorOf } from '../repositories/keyset';
+import type { ErasureService } from './erasure';
 import type { PlaylistService } from './playlists';
-import type { RecitationService } from './recitations';
 import { storageQuota } from './uploads';
 
 /** A session younger than this may delete the account. */
@@ -17,8 +17,8 @@ export class AccountService {
   constructor(
     private readonly deps: ServiceDeps,
     private readonly presenter: Presenter,
-    private readonly recitations: RecitationService,
     private readonly playlists: PlaylistService,
+    private readonly erasure: ErasureService,
   ) {}
 
   /** The account view of a user record already loaded for this request (saves a query). */
@@ -101,7 +101,7 @@ export class AccountService {
     };
   }
 
-  /** Deletes the account and its data; recitations become removed and their audio is deleted. */
+  /** Deletes the account and everything tied to it, including recitation audio. */
   async deleteAccount(actor: Actor | null): Promise<void> {
     const me = requireActor(actor);
     const { repos, clock } = this.deps;
@@ -111,13 +111,6 @@ export class AccountService {
     if (me.role === 'admin' && (await repos.users.countAdmins()) <= 1) {
       throw conflict('The last admin cannot delete their account');
     }
-    for (const doc of await repos.recitations.idsByUploader(me.userId)) {
-      if (doc.status !== 'removed')
-        await repos.recitations.update(doc._id.toHexString(), { status: 'removed' });
-      await this.recitations.purgeAudio(doc);
-    }
-    await repos.likes.deleteByUser(me.userId);
-    await repos.playlists.deleteByOwner(me.userId);
-    await repos.users.deleteWithAuthRecords(me.userId);
+    await this.erasure.eraseUser(me.userId);
   }
 }

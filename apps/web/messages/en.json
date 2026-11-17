@@ -269,7 +269,7 @@
     "account": "Account",
     "email": "Email",
     "deleteTitle": "Delete account",
-    "deleteBody": "This deletes your account, likes and playlists. Your recitations are removed. This cannot be undone.",
+    "deleteBody": "This deletes your account, your recitations and their audio, likes, playlists and reports. This cannot be undone.",
     "deleteConfirm": "Type DELETE to confirm",
     "deleteButton": "Delete my account",
     "reauth": "For your safety, sign in again before deleting your account."
@@ -418,7 +418,15 @@
     "manage": "Manage",
     "manageTitle": "Manage account",
     "empty": "No accounts match.",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "deleteTitle": "Delete account",
+    "deleteHint": "Permanently deletes this account with its recitations and audio files, likes, playlists and reports.",
+    "deleteConfirm": "Delete {name}’s account and all of its data? This cannot be undone.",
+    "deleteButton": "Delete account",
+    "deleteConfirmButton": "Delete permanently",
+    "deleteSelf": "Delete your own account from Settings.",
+    "deleteAdmin": "Change this account’s role before deleting it.",
+    "deleted": "Account deleted."
   },
   "hadith": {
     "title": "Hadith",
@@ -472,7 +480,7 @@
       "s5Title": "Services we use",
       "s5Body": "Hosting (Railway), database (MongoDB Atlas), audio storage (Cloudflare R2), email delivery (Brevo) and, if you choose it, Google sign-in. They process data only to run Tilawah.",
       "s6Title": "Keeping and deleting your data",
-      "s6Body": "You can delete your account at any time in Settings. This deletes your account, likes and playlists, removes your recitations and deletes their audio. The audio of rejected recitations is deleted after 7 days."
+      "s6Body": "You can delete your account at any time in Settings. This deletes your account, your recitations and their audio, likes, playlists and reports. Administrators can also delete an account, for example one that breaks the terms, with the same effect. The audio of rejected recitations is deleted after 7 days."
     },
     "terms": {
       "title": "Terms of use",

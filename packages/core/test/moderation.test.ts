@@ -160,6 +160,26 @@ describe('admin', () => {
     );
   });
 
+  it('deletes another account with its data, but not their own or another admin', async () => {
+    const { actor: admin } = await createUser(t, { role: 'admin' });
+    const { actor: otherAdmin } = await createUser(t, { role: 'admin' });
+    const { actor: moderator } = await createUser(t, { role: 'moderator' });
+    const { user: reciter } = await createUser(t, { reciter: true });
+    const recitation = await insertRecitation(t, reciter);
+    const id = reciter._id.toHexString();
+
+    expect(await errorCode(t.core.admin.deleteUser(moderator, id))).toBe('FORBIDDEN');
+    expect(await errorCode(t.core.admin.deleteUser(admin, admin.userId))).toBe('CONFLICT');
+    expect(await errorCode(t.core.admin.deleteUser(admin, otherAdmin.userId))).toBe('CONFLICT');
+
+    await t.core.admin.deleteUser(admin, id);
+    const { models } = t.db.database;
+    expect(await models.User.findById(reciter._id)).toBeNull();
+    expect(await models.Recitation.findById(recitation._id)).toBeNull();
+    expect(t.storage.objects.has(recitation.audioKey)).toBe(false);
+    expect(await errorCode(t.core.admin.deleteUser(admin, id))).toBe('NOT_FOUND');
+  });
+
   it('lists every account newest first, with search, role filter, counts and pages', async () => {
     const { actor: admin } = await createUser(t, { role: 'admin', name: 'Admin Zed' });
     const { user: reciter } = await createUser(t, { reciter: true, name: 'Hafiz Qari' });

@@ -54,6 +54,10 @@ export class PlaylistRepository {
 export class ReportRepository {
   constructor(private readonly models: Models) {}
 
+  async deleteByReporter(reporterId: string): Promise<void> {
+    await this.models.Report.deleteMany({ reporterId: oid(reporterId) });
+  }
+
   findById(id: string): Promise<ReportDoc | null> {
     return this.models.Report.findById(oid(id)).lean<ReportDoc>();
   }

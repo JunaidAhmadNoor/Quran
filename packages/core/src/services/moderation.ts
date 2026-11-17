@@ -7,6 +7,7 @@ import { decodeCursor, filtersHash, page } from '../cursor';
 import { conflict, notFound } from '../errors';
 import type { Presenter } from '../presenter';
 import { cursorOf, oid } from '../repositories/keyset';
+import type { ErasureService } from './erasure';
 import type { RecitationService } from './recitations';
 
 const ALLOWED_FROM: Record<'approve' | 'reject' | 'remove', RecitationStatus[]> = {
@@ -158,6 +159,7 @@ export class AdminService {
   constructor(
     private readonly deps: ServiceDeps,
     private readonly presenter: Presenter,
+    private readonly erasure: ErasureService,
   ) {}
 
   async listUsers(
@@ -224,5 +226,16 @@ export class AdminService {
     });
     if (!updated) throw notFound('User');
     return this.presenter.userAccount(updated);
+  }
+
+  /** Deletes another account and everything tied to it. Admin accounts must be demoted first. */
+  async deleteUser(actor: Actor | null, id: string): Promise<void> {
+    const me = requireAdmin(actor);
+    if (id === me.userId) throw conflict('Delete your own account from Settings');
+    const target = await this.deps.repos.users.findById(id);
+    if (!target) throw notFound('User');
+    if (target.role === 'admin')
+      throw conflict('Change this admin’s role before deleting the account');
+    await this.erasure.eraseUser(id);
   }
 }
